@@ -70,28 +70,43 @@ void RegisterPatchHandHandler() {
 }
 
 void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, const char* dlist2, const char* dlist3, const char* alternateDL) {
-    if (resource == NULL || gfx == NULL || dlist1 == NULL || dlist2 == NULL)
+    if (!resource || !gfx || !dlist1 || !dlist2) {
         return;
+    }
 
-    if (CVarGetInteger(CVAR_SETTING("AltAssets"), 0)) {
-        //if (ResourceGetIsCustomByName(gfx)) {
-        if (ResourceMgr_IsAltAssetsEnabled()) {
-            if (alternateDL == NULL || ResourceGetIsCustomByName(alternateDL) || ResourceMgr_FileExists(alternateDL)) {
-                ResourceMgr_PatchCustomGfxByName(resource, dlist1, 0, gsSPDisplayListOTRFilePath(gfx));
-                if (dlist3 == NULL) {
-                    ResourceMgr_PatchCustomGfxByName(resource, dlist2, 1, gsSPEndDisplayList());
-                } else {
-                    ResourceMgr_PatchCustomGfxByName(resource, dlist2, 1, gsSPDisplayListOTRFilePath(alternateDL));
-                }
-                if (dlist3 != NULL) {
-                    ResourceMgr_PatchCustomGfxByName(resource, dlist3, 2, gsSPEndDisplayList());
-                }
-            }
+    const bool altEnabled = ResourceMgr_IsAltAssetsEnabled();
+
+    const bool gfxExists =
+        ResourceMgr_FileExists(gfx) || ResourceGetIsCustomByName(gfx);
+
+    const bool altDlOk =
+        (alternateDL == nullptr) ||
+        ResourceMgr_FileExists(alternateDL) ||
+        ResourceGetIsCustomByName(alternateDL);
+
+    const bool shouldPatch = altEnabled && gfxExists && altDlOk;
+
+    if (shouldPatch) {
+        ResourceMgr_PatchCustomGfxByName(
+            resource, dlist1, 0,
+            gsSPDisplayListOTRFilePath(gfx));
+
+        if (dlist3 == nullptr) {
+            ResourceMgr_PatchCustomGfxByName(
+                resource, dlist2, 1,
+                gsSPEndDisplayList());
+        } else {
+            ResourceMgr_PatchCustomGfxByName(
+                resource, dlist2, 1,
+                gsSPDisplayListOTRFilePath(alternateDL));
+            ResourceMgr_PatchCustomGfxByName(
+                resource, dlist3, 2,
+                gsSPEndDisplayList());
         }
     } else {
         ResourceMgr_UnpatchGfxByName(resource, dlist1);
         ResourceMgr_UnpatchGfxByName(resource, dlist2);
-        if (dlist3 != NULL) {
+        if (dlist3) {
             ResourceMgr_UnpatchGfxByName(resource, dlist3);
         }
     }
