@@ -47,7 +47,6 @@ DEFINE_HOOK(OnPlayerHealthChange, (int16_t amount));
 DEFINE_HOOK(OnPlayerBottleUpdate, (int16_t contents));
 DEFINE_HOOK(OnPlayerHoldUpShield, ());
 DEFINE_HOOK(OnPlayerFirstPersonControl, (Player * player));
-DEFINE_HOOK(OnPlayerEnteringFPS, ());
 DEFINE_HOOK(OnPlayerProcessStick, ());
 DEFINE_HOOK(OnPlayerShieldControl, (float_t * sp50, float_t* sp54));
 DEFINE_HOOK(OnPlayDestroy, ());
