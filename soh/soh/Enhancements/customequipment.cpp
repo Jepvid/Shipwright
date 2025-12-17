@@ -23,24 +23,16 @@ static void PatchCustomEquipment() {
         return;
     }
 
+    UpdatePatchHand();
     UpdatePatchCustomEquipmentDlists();
 }
 
-static void PatchHand() {
-    if (!GameInteractor::IsSaveLoaded() || gPlayState == NULL) {
-        return;
-    }
-    UpdatePatchHand();
-}
 
 static void RegisterCustomEquipmentShipInit() {
     COND_HOOK(OnPlayerChangeItem, true, PatchCustomEquipment);
     COND_HOOK(OnPlayerAiming, true, PatchCustomEquipment);
     COND_HOOK(OnSceneSpawnActors, true, PatchCustomEquipment);
     COND_HOOK(OnAssetAltChange, true, PatchCustomEquipment);
-
-    COND_HOOK(OnSceneSpawnActors, true, PatchHand);
-    COND_HOOK(OnAssetAltChange, true, PatchHand);
 }
 
 void UpdatePatchHand() {
