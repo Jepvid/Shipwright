@@ -5868,7 +5868,7 @@ s32 func_8083AD4C(PlayState* play, Player* this) {
     } else {
         camMode = CAM_MODE_FIRSTPERSON;
     }
-
+    GameInteractor_ExecuteOnPlayerEnteringFPS();
     return Camera_ChangeMode(Play_GetCamera(play, 0), camMode);
 }
 

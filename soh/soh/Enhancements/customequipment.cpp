@@ -30,7 +30,7 @@ static void UpdateCustomEquipment() {
 
 static void PatchCustomEquipment() {
     COND_HOOK(OnPlayerChangeItem, true, UpdateCustomEquipment);
-    COND_HOOK(OnPlayerAiming, true, UpdateCustomEquipment);
+    COND_HOOK(OnPlayerEnteringFPS, true, UpdateCustomEquipment);
     COND_HOOK(OnSceneSpawnActors, true, UpdateCustomEquipment);
     COND_HOOK(OnAssetAltChange, true, UpdateCustomEquipment);
 }
