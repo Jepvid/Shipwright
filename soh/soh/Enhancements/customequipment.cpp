@@ -312,8 +312,6 @@ void UpdatePatchCustomEquipmentDlists() {
     }
 }
 
-static RegisterShipInitFunc initFunc(RegisterCustomEquipmentShipInit);
-
 //void RegisterPatchCustomEquipmentDlistsHandler() {
 //    GameInteractor::Instance->RegisterGameHook<GameInteractor::OnPlayerUpdate>([]() {
 //        static uint16_t lastItemOnB = gSaveContext.equips.buttonItems[0];
