@@ -424,6 +424,11 @@ void ResourceMgr_UnpatchGfxByName(const char* path, const char* patchName) {
         if (itPath->second.empty()) originalGfx.erase(itPath);
         return;
     }
+
+
+    if (!ResourceMgr_IsAltAssetsEnabled()) {
+        rm->UnloadResource(path);
+    }
     
     auto loaded = rm->LoadResource(path);
 
