@@ -110,26 +110,30 @@ void PatchOrUnpatch(const char* resource, const char* gfx,
         ResourceMgr_FileExists(alternateDL) ||
         ResourceGetIsCustomByName(alternateDL);
 
-    if (!gfxExists || !altDlOk) {
-        return;
-    }
+    const bool shouldPatch = altEnabled && gfxExists && altDlOk;
 
-    // Patch only — no unloads, no reloads
-    ResourceMgr_PatchCustomGfxByName(
-        resource, dlist1, 0,
-        gsSPDisplayListOTRFilePath(gfx));
-
-    if (dlist3 == nullptr) {
+    if (shouldPatch) {
         ResourceMgr_PatchCustomGfxByName(
-            resource, dlist2, 1,
-            gsSPEndDisplayList());
+            resource, dlist1, 0,
+            gsSPDisplayListOTRFilePath(gfx));
+            if (dlist3 == nullptr) {
+            ResourceMgr_PatchCustomGfxByName(
+                resource, dlist2, 1,
+                gsSPEndDisplayList());
+        } else {
+            ResourceMgr_PatchCustomGfxByName(
+                resource, dlist2, 1,
+                gsSPDisplayListOTRFilePath(alternateDL));
+            ResourceMgr_PatchCustomGfxByName(
+                resource, dlist3, 2,
+                gsSPEndDisplayList());
+        }
     } else {
-        ResourceMgr_PatchCustomGfxByName(
-            resource, dlist2, 1,
-            gsSPDisplayListOTRFilePath(alternateDL));
-        ResourceMgr_PatchCustomGfxByName(
-            resource, dlist3, 2,
-            gsSPEndDisplayList());
+        ResourceMgr_UnpatchGfxByName(resource, dlist1);
+        ResourceMgr_UnpatchGfxByName(resource, dlist2);
+        if (dlist3) {
+            ResourceMgr_UnpatchGfxByName(resource, dlist3);
+        }
     }
 }
 
