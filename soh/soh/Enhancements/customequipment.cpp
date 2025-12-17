@@ -18,6 +18,9 @@ extern void Overlay_DisplayText(float duration, const char* text);
 static void UpdatePatchCustomEquipmentDlists();
 static void UpdatePatchHand();
 
+static bool sLastAltAssetsEnabled = false;
+
+
 static void UpdateCustomEquipment() {
     if (!GameInteractor::IsSaveLoaded() || gPlayState == NULL) {
         return;
@@ -25,6 +28,7 @@ static void UpdateCustomEquipment() {
 
     UpdatePatchHand();
     UpdatePatchCustomEquipmentDlists();
+    
 }
 
 
@@ -86,9 +90,9 @@ void UpdatePatchHand() {
 }
 
 void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, const char* dlist2, const char* dlist3, const char* alternateDL) {
-    if (!resource || !gfx || !dlist1 || !dlist2) {
-        return;
-    }
+    //if (!resource || !gfx || !dlist1 || !dlist2) {
+    //    return;
+    //}
 
     const bool altEnabled = ResourceMgr_IsAltAssetsEnabled();
 
