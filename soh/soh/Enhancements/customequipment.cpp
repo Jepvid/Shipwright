@@ -18,7 +18,7 @@ extern void Overlay_DisplayText(float duration, const char* text);
 static void UpdatePatchCustomEquipmentDlists();
 static void UpdatePatchHand();
 
-static void PatchCustomEquipment() {
+static void UpdateCustomEquipment() {
     if (!GameInteractor::IsSaveLoaded() || gPlayState == NULL) {
         return;
     }
@@ -28,14 +28,14 @@ static void PatchCustomEquipment() {
 }
 
 
-static void RegisterCustomEquipmentShipInit() {
-    COND_HOOK(OnPlayerChangeItem, true, PatchCustomEquipment);
-    COND_HOOK(OnPlayerAiming, true, PatchCustomEquipment);
-    COND_HOOK(OnSceneSpawnActors, true, PatchCustomEquipment);
-    COND_HOOK(OnAssetAltChange, true, PatchCustomEquipment);
+static void PatchCustomEquipment() {
+    COND_HOOK(OnPlayerChangeItem, true, UpdateCustomEquipment);
+    COND_HOOK(OnPlayerAiming, true, UpdateCustomEquipment);
+    COND_HOOK(OnSceneSpawnActors, true, UpdateCustomEquipment);
+    COND_HOOK(OnAssetAltChange, true, UpdateCustomEquipment);
 }
 
-static RegisterShipInitFunc initFunc(RegisterPatchCustomEquipment);
+static RegisterShipInitFunc initFunc(PatchCustomEquipment);
 
 void UpdatePatchHand() {
     if ((CVarGetInteger(CVAR_ENHANCEMENT("EquipmentAlwaysVisible"), 0)) && LINK_IS_CHILD) {
@@ -84,12 +84,6 @@ void UpdatePatchHand() {
         ResourceMgr_UnpatchGfxByName(gLinkAdultLeftHandHoldingHammerNearDL, "hammerHand2");
     }
 }
-
-//void RegisterPatchHandHandler() {
-//    GameInteractor::Instance->RegisterGameHook<GameInteractor::OnSceneSpawnActors>([]() { 
-//        UpdatePatchHand(); 
-//    });
-//}
 
 void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, const char* dlist2, const char* dlist3, const char* alternateDL) {
     if (!resource || !gfx || !dlist1 || !dlist2) {
@@ -311,35 +305,3 @@ void UpdatePatchCustomEquipmentDlists() {
         }
     }
 }
-
-//void RegisterPatchCustomEquipmentDlistsHandler() {
-//    GameInteractor::Instance->RegisterGameHook<GameInteractor::OnPlayerUpdate>([]() {
-//        static uint16_t lastItemOnB = gSaveContext.equips.buttonItems[0];
-//        static uint16_t lastOcarinaContent = INV_CONTENT(ITEM_OCARINA_TIME);
-//        static uint16_t lastHookshotContent = INV_CONTENT(ITEM_HOOKSHOT);
-//        static uint16_t lastSheathType = GET_PLAYER(gPlayState)->sheathType;
-//        static uint16_t lastBgsFlag = gSaveContext.bgsFlag;
-//        if (lastItemOnB != gSaveContext.equips.buttonItems[0] ||
-//            lastOcarinaContent != INV_CONTENT(ITEM_OCARINA_TIME) ||
-//            lastHookshotContent != INV_CONTENT(ITEM_HOOKSHOT) || 
-//            GET_PLAYER(gPlayState)->sheathType != lastSheathType ||
-//            lastBgsFlag != gSaveContext.bgsFlag) {
-//            UpdatePatchCustomEquipmentDlists();
-//            lastItemOnB = gSaveContext.equips.buttonItems[0];
-//            lastOcarinaContent = INV_CONTENT(ITEM_OCARINA_TIME);
-//            lastHookshotContent = INV_CONTENT(ITEM_HOOKSHOT);
-//            lastSheathType = GET_PLAYER(gPlayState)->sheathType;
-//            lastBgsFlag = gSaveContext.bgsFlag;
-//        }
-//    });
-//    GameInteractor::Instance->RegisterGameHook<GameInteractor::OnSceneSpawnActors>([]() { 
-//        UpdatePatchCustomEquipmentDlists(); 
-//    });
-//
-//    GameInteractor::Instance->RegisterGameHook<GameInteractor::OnAssetAltChange>([]() {
-//        UpdatePatchCustomEquipmentDlists();
-//    });
-//
-//	UpdatePatchCustomEquipmentDlists();
-//	
-//}
