@@ -15,6 +15,9 @@ extern SaveContext gSaveContext;
 extern PlayState* gPlayState;
 extern void Overlay_DisplayText(float duration, const char* text);
 
+static void UpdatePatchCustomEquipmentDlists();
+static void UpdatePatchHand();
+
 static void PatchCustomEquipment() {
     if (!GameInteractor::IsSaveLoaded() || gPlayState == NULL) {
         return;
