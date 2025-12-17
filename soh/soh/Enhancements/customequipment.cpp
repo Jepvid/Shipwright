@@ -35,6 +35,8 @@ static void RegisterCustomEquipmentShipInit() {
     COND_HOOK(OnAssetAltChange, true, PatchCustomEquipment);
 }
 
+static RegisterShipInitFunc initFunc(RegisterPatchCustomEquipment);
+
 void UpdatePatchHand() {
     if ((CVarGetInteger(CVAR_ENHANCEMENT("EquipmentAlwaysVisible"), 0)) && LINK_IS_CHILD) {
         ResourceMgr_PatchGfxByName(gLinkAdultLeftHandHoldingHammerNearDL, "childHammer1", 92, gsSPDisplayListOTRFilePath(gLinkChildLeftFistNearDL));
