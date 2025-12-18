@@ -87,7 +87,7 @@ void PatchOrUnpatch(const char* resource,
                     const char* dlist1,
                     const char* dlist2,
                     const char* dlist3,
-                    const char* alternateDL) {
+                    const char* /*unused*/) {
     if (!resource || !gfx || !dlist1 || !dlist2) {
         return;
     }
@@ -97,7 +97,12 @@ void PatchOrUnpatch(const char* resource,
         return;
     }
 
-    // Patch optimistically — resource manager will resolve at load time
+    // Only patch if custom equipment exists
+    if (!ResourceMgr_CustomObjectExists(gfx)) {
+        return;
+    }
+
+    // Patch optimistically — never unload
     ResourceMgr_PatchCustomGfxByName(
         resource,
         dlist1,
@@ -115,7 +120,7 @@ void PatchOrUnpatch(const char* resource,
             resource,
             dlist2,
             1,
-            gsSPDisplayListOTRFilePath(alternateDL));
+            gsSPDisplayListOTRFilePath(gfx));
 
         ResourceMgr_PatchCustomGfxByName(
             resource,

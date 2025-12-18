@@ -193,6 +193,28 @@ extern "C" void ResourceMgr_UnloadOriginalWhenAltExists(const char* resName) {
     }
 }
 
+extern "C" bool ResourceMgr_CustomObjectExists(const char* vanillaPath) {
+    if (!vanillaPath) {
+        return false;
+    }
+
+    std::string path = vanillaPath;
+
+    // Strip __OTR__ prefix if present
+    if (path.rfind("__OTR__", 0) == 0) {
+        path = path.substr(7);
+    }
+
+    // Convert vanilla path → custom object path
+    // Example:
+    // objects/object_link_boy → objects/object_custom_equip
+    // You already know the mapping rules in customequipment.cpp
+    std::string customPath = GetCustomEquipmentPathForVanilla(path);
+    // ^ you already have this logic implicitly in customequipment.cpp
+
+    return ExtensionCache.contains(customPath);
+}
+
 std::shared_ptr<Ship::IResource> ResourceMgr_GetResourceByNameHandlingMQ(const char* path) {
     std::string Path = path;
     if (ResourceMgr_IsGameMasterQuest()) {
