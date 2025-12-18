@@ -25,19 +25,26 @@ static void UpdateCustomEquipment() {
     UpdatePatchCustomEquipmentDlists();
 }
 
-//Need this to avoid hookshot chain and tip from disappearing when alt assets are toggled
-static bool IsRuntimeLoadedEquipmentDL(const char* resource) {
-    return resource == gLinkAdultHookshotChainDL ||
-           resource == gLinkAdultHookshotTipDL;
-}
+static void EnsureHookshotVanillaDLsLoaded() {
+    if (!GameInteractor::IsSaveLoaded() || gPlayState == nullptr) {
+        return;
+    }
 
-static bool IsRuntimeLoadedEquipmentDL(const char* resource);
+    // Only do this when Alt Assets are OFF
+    if (ResourceMgr_IsAltAssetsEnabled()) {
+        return;
+    }
+
+    ResourceMgr_LoadGfxByName(gLinkAdultHookshotChainDL);
+    ResourceMgr_LoadGfxByName(gLinkAdultHookshotTipDL);
+}
 
 static void PatchCustomEquipment() {
     COND_HOOK(OnPlayerChangeItem, true, UpdateCustomEquipment);
     COND_HOOK(OnSceneSpawnActors, true, UpdateCustomEquipment); //To be changed when kaleido hook is made
     //COND_HOOK(OnLinkSkeletonInit, true, UpdateCustomEquipment); //To be added once custom tunic fix is pulled
     COND_HOOK(OnAssetAltChange, true, UpdateCustomEquipment);
+    COND_HOOK(OnAssetAltChange, true, EnsureHookshotVanillaDLsLoaded); //Ensure Hookshot vanilla DLs are loaded when Alt Assets are turned off
 }
 
 static RegisterShipInitFunc initFunc(PatchCustomEquipment);
@@ -109,10 +116,6 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
             }
         }
     } else {
-        if (IsRuntimeLoadedEquipmentDL(resource)) {
-            return;
-        }
-
         ResourceMgr_UnpatchGfxByName(resource, dlist1);
         ResourceMgr_UnpatchGfxByName(resource, dlist2);
         if (dlist3 != NULL) {
