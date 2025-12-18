@@ -88,27 +88,27 @@ void UpdatePatchHand() {
     }
 }
 
-void PatchOrUnpatch(const char* resource, const char* gfx,
-                    const char* dlist1, const char* dlist2,
-                    const char* dlist3, const char* alternateDL) {
+void PatchOrUnpatch(const char* resource,
+                    const char* gfx,
+                    const char* dlist1,
+                    const char* dlist2,
+                    const char* dlist3,
+                    const char* alternateDL) {
     if (!resource || !dlist1 || !dlist2) {
         return;
     }
 
     const bool altEnabled = ResourceMgr_IsAltAssetsEnabled();
 
-    // Custom equipment NEVER touches anything when Alt Assets are OFF
-    if (!altEnabled) {
-        return;
-    }
-
     const bool gfxExists =
-        ResourceMgr_FileExists(gfx) || ResourceGetIsCustomByName(gfx);
+        gfx &&
+        (ResourceMgr_FileExists(gfx) || ResourceGetIsCustomByName(gfx));
 
     const bool altDlOk =
-        (alternateDL == nullptr) ||
-        ResourceMgr_FileExists(alternateDL) ||
-        ResourceGetIsCustomByName(alternateDL);
+        (dlist3 == nullptr) ||
+        (alternateDL &&
+         (ResourceMgr_FileExists(alternateDL) ||
+          ResourceGetIsCustomByName(alternateDL)));
 
     const bool shouldPatch = altEnabled && gfxExists && altDlOk;
 
@@ -125,6 +125,7 @@ void PatchOrUnpatch(const char* resource, const char* gfx,
             ResourceMgr_PatchCustomGfxByName(
                 resource, dlist2, 1,
                 gsSPDisplayListOTRFilePath(alternateDL));
+
             ResourceMgr_PatchCustomGfxByName(
                 resource, dlist3, 2,
                 gsSPEndDisplayList());
@@ -132,6 +133,7 @@ void PatchOrUnpatch(const char* resource, const char* gfx,
     } else {
         ResourceMgr_UnpatchGfxByName(resource, dlist1);
         ResourceMgr_UnpatchGfxByName(resource, dlist2);
+
         if (dlist3) {
             ResourceMgr_UnpatchGfxByName(resource, dlist3);
         }

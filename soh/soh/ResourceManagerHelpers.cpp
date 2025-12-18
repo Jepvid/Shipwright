@@ -404,19 +404,13 @@ extern "C" void ResourceMgr_PatchGfxCopyCommandByName(const char* path, const ch
 //}
 
 void ResourceMgr_UnpatchGfxByName(const char* path, const char* patchName) {
-    if (!path || !patchName) {
-        return;
-    }
+    if (!path || !patchName) return;
 
     auto itPath = originalGfx.find(path);
-    if (itPath == originalGfx.end()) {
-        return;
-    }
+    if (itPath == originalGfx.end()) return;
 
     auto itPatch = itPath->second.find(patchName);
-    if (itPatch == itPath->second.end()) {
-        return;
-    }
+    if (itPatch == itPath->second.end()) return;
 
     auto rm = Ship::Context::GetInstance()->GetResourceManager();
     if (!rm) {
@@ -426,21 +420,11 @@ void ResourceMgr_UnpatchGfxByName(const char* path, const char* patchName) {
     }
 
     auto loaded = rm->LoadResource(path);
-
-    // This can temporarily fail while toggling AltAssets.
     auto res = std::dynamic_pointer_cast<Fast::DisplayList>(loaded);
-    if (!res) {
-        itPath->second.erase(itPatch);
-        if (itPath->second.empty()) originalGfx.erase(itPath);
-        return;
-    }
+    if (!res) return;
 
     const size_t idx = itPatch->second.index;
-    if (idx >= res->Instructions.size()) {
-        itPath->second.erase(itPatch);
-        if (itPath->second.empty()) originalGfx.erase(itPath);
-        return;
-    }
+    if (idx >= res->Instructions.size()) return;
 
     Gfx* gfx = reinterpret_cast<Gfx*>(&res->Instructions[idx]);
     *gfx = itPatch->second.instruction;
