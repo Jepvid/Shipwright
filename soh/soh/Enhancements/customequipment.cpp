@@ -15,6 +15,7 @@ extern void Overlay_DisplayText(float duration, const char* text);
 
 static void UpdatePatchCustomEquipmentDlists();
 static void UpdatePatchHand();
+static void EnsureHookshotVanillaDLsLoaded();
 
 static void UpdateCustomEquipment() {
     if (!GameInteractor::IsSaveLoaded() || gPlayState == NULL) {
