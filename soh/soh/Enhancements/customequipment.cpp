@@ -92,51 +92,49 @@ void PatchOrUnpatch(const char* resource,
         return;
     }
 
-    // Custom equipment only participates when Alt Assets are enabled
     if (!ResourceMgr_IsAltAssetsEnabled()) {
         return;
     }
 
-    // Custom object must exist or we do nothing
-    if (!ResourceMgr_CustomObjectExists(gfx)) {
+    if (!ResourceGetIsCustomByName(gfx)) {
         return;
     }
 
     const bool altExists = ResourceMgr_FileAltExists(resource);
 
-    // Only unload when a REAL alt asset exists
+    // If an alt object exists, let the resource manager clear it
+    // so our custom DL applies cleanly
     if (altExists) {
-        auto* rm = Ship::Context::GetInstance()->GetResourceManager();
-        if (rm) {
-            rm->UnloadResource(resource);
-        }
+        ResourceMgr_UnloadOriginalWhenAltExists(resource);
     }
 
-    // Patch custom equipment (acts like highest-priority alt)
     ResourceMgr_PatchCustomGfxByName(
         resource,
         dlist1,
         0,
-        gsSPDisplayListOTRFilePath(gfx));
+        gsSPDisplayListOTRFilePath(gfx)
+    );
 
     if (dlist3 == nullptr) {
         ResourceMgr_PatchCustomGfxByName(
             resource,
             dlist2,
             1,
-            gsSPEndDisplayList());
+            gsSPEndDisplayList()
+        );
     } else {
         ResourceMgr_PatchCustomGfxByName(
             resource,
             dlist2,
             1,
-            gsSPDisplayListOTRFilePath(alternateDL));
-
+            gsSPDisplayListOTRFilePath(alternateDL)
+        );
         ResourceMgr_PatchCustomGfxByName(
             resource,
             dlist3,
             2,
-            gsSPEndDisplayList());
+            gsSPEndDisplayList()
+        );
     }
 }
 

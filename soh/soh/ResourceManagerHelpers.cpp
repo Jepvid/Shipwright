@@ -193,15 +193,6 @@ extern "C" void ResourceMgr_UnloadOriginalWhenAltExists(const char* resName) {
     }
 }
 
-extern "C" bool ResourceMgr_CustomObjectExists(const char* vanillaPath) {
-    if (!vanillaPath) {
-        return false;
-    }
-
-    // Custom objects live outside alt/
-    return ResourceGetIsCustomByName(vanillaPath);
-}
-
 std::shared_ptr<Ship::IResource> ResourceMgr_GetResourceByNameHandlingMQ(const char* path) {
     std::string Path = path;
     if (ResourceMgr_IsGameMasterQuest()) {
