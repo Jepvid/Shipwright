@@ -116,7 +116,8 @@ void PatchOrUnpatch(const char* resource, const char* gfx,
         ResourceMgr_PatchCustomGfxByName(
             resource, dlist1, 0,
             gsSPDisplayListOTRFilePath(gfx));
-            if (dlist3 == nullptr) {
+
+        if (dlist3 == nullptr) {
             ResourceMgr_PatchCustomGfxByName(
                 resource, dlist2, 1,
                 gsSPEndDisplayList());

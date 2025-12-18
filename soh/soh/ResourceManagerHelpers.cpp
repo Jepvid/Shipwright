@@ -425,7 +425,6 @@ void ResourceMgr_UnpatchGfxByName(const char* path, const char* patchName) {
         return;
     }
 
-
     if (!ResourceMgr_IsAltAssetsEnabled()) {
         rm->UnloadResource(path);
     }
