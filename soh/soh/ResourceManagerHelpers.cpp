@@ -403,6 +403,7 @@ extern "C" void ResourceMgr_UnpatchGfxByName(const char* path, const char* patch
     }
 }
 
+// Primarily for unpatching custom equipment graphics
 extern "C" void ResourceMgr_UnpatchCustomGfxByName(const char* path, const char* patchName) {
     if (!path || !patchName) return;
 
