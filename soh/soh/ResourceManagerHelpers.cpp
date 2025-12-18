@@ -425,10 +425,6 @@ void ResourceMgr_UnpatchGfxByName(const char* path, const char* patchName) {
         return;
     }
 
-    if (!ResourceMgr_IsAltAssetsEnabled()) {
-        rm->UnloadResource(path);
-    }
-    
     auto loaded = rm->LoadResource(path);
 
     // This can temporarily fail while toggling AltAssets.
