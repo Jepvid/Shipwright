@@ -403,36 +403,7 @@ extern "C" void ResourceMgr_UnpatchGfxByName(const char* path, const char* patch
     }
 }
 
-// Primarily for unpatching custom equipment graphics
-extern "C" void ResourceMgr_UnpatchCustomGfxByName(const char* path, const char* patchName) {
-    if (!path || !patchName) return;
 
-    auto itPath = originalGfx.find(path);
-    if (itPath == originalGfx.end()) return;
-
-    auto itPatch = itPath->second.find(patchName);
-    if (itPatch == itPath->second.end()) return;
-
-    auto rm = Ship::Context::GetInstance()->GetResourceManager();
-    if (!rm) {
-        itPath->second.erase(itPatch);
-        if (itPath->second.empty()) originalGfx.erase(itPath);
-        return;
-    }
-
-    auto loaded = rm->LoadResource(path);
-    auto res = std::dynamic_pointer_cast<Fast::DisplayList>(loaded);
-    if (!res) return;
-
-    const size_t idx = itPatch->second.index;
-    if (idx >= res->Instructions.size()) return;
-
-    Gfx* gfx = reinterpret_cast<Gfx*>(&res->Instructions[idx]);
-    *gfx = itPatch->second.instruction;
-
-    itPath->second.erase(itPatch);
-    if (itPath->second.empty()) originalGfx.erase(itPath);
-}
 
 extern "C" char* ResourceMgr_LoadArrayByName(const char* path) {
     auto res = std::static_pointer_cast<SOH::Array>(ResourceMgr_GetResourceByNameHandlingMQ(path));
