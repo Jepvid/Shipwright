@@ -9,8 +9,6 @@
 #include "soh_assets.h"
 #include "kaleido.h"
 
-uint8_t Player_IsCustomLinkModel();
-
 extern SaveContext gSaveContext;
 extern PlayState* gPlayState;
 extern void Overlay_DisplayText(float duration, const char* text);
@@ -18,8 +16,8 @@ extern void Overlay_DisplayText(float duration, const char* text);
 static void UpdatePatchCustomEquipmentDlists();
 static void UpdatePatchHand();
 
+static bool IsRuntimeLoadedEquipmentDL(const char* resource)
 static bool sLastAltAssetsEnabled = false;
-
 
 static void UpdateCustomEquipment() {
     if (!GameInteractor::IsSaveLoaded() || gPlayState == NULL) {
@@ -28,9 +26,13 @@ static void UpdateCustomEquipment() {
 
     UpdatePatchHand();
     UpdatePatchCustomEquipmentDlists();
-    
 }
 
+//Need this to avoid hookshot chain and tip from disappearing when alt assets are toggled
+static bool IsRuntimeLoadedEquipmentDL(const char* resource) {
+    return resource == gLinkAdultHookshotChainDL ||
+           resource == gLinkAdultHookshotTipDL;
+}
 
 static void PatchCustomEquipment() {
     COND_HOOK(OnPlayerChangeItem, true, UpdateCustomEquipment);
@@ -107,6 +109,10 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
             }
         }
     } else {
+        if (IsRuntimeLoadedEquipmentDL(resource)) {
+            return;
+        }
+
         ResourceMgr_UnpatchGfxByName(resource, dlist1);
         ResourceMgr_UnpatchGfxByName(resource, dlist2);
         if (dlist3 != NULL) {
@@ -116,7 +122,6 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
 }
 
 void UpdatePatchCustomEquipmentDlists() {
-	
     if (gSaveContext.equips.buttonItems[0] == ITEM_SWORD_KOKIRI) {
         PatchOrUnpatch(gLinkChildSheathNearDL, gCustomKokiriSwordSheathDL, "customKokiriSheath1", "customKokiriSheath2", NULL, NULL);
         PatchOrUnpatch(gLinkChildSwordAndSheathNearDL, gCustomKokiriSwordInSheathDL, "customKokiriSwordSheath1", "customKokiriSwordSheath2", NULL, NULL);
