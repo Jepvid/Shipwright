@@ -198,21 +198,8 @@ extern "C" bool ResourceMgr_CustomObjectExists(const char* vanillaPath) {
         return false;
     }
 
-    std::string path = vanillaPath;
-
-    // Strip __OTR__ prefix if present
-    if (path.rfind("__OTR__", 0) == 0) {
-        path = path.substr(7);
-    }
-
-    // Convert vanilla path → custom object path
-    // Example:
-    // objects/object_link_boy → objects/object_custom_equip
-    // You already know the mapping rules in customequipment.cpp
-    std::string customPath = GetCustomEquipmentPathForVanilla(path);
-    // ^ you already have this logic implicitly in customequipment.cpp
-
-    return ExtensionCache.contains(customPath);
+    // Custom objects live outside alt/
+    return ResourceGetIsCustomByName(vanillaPath);
 }
 
 std::shared_ptr<Ship::IResource> ResourceMgr_GetResourceByNameHandlingMQ(const char* path) {
