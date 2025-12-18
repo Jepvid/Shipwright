@@ -37,7 +37,7 @@ static bool IsRuntimeLoadedEquipmentDL(const char* resource) {
 static void PatchCustomEquipment() {
     COND_HOOK(OnPlayerChangeItem, true, UpdateCustomEquipment);
     COND_HOOK(OnSceneSpawnActors, true, UpdateCustomEquipment); //To be changed when kaleido hook is made
-    COND_HOOK(OnLinkSkeletonInit, true, UpdateCustomEquipment);
+    //COND_HOOK(OnLinkSkeletonInit, true, UpdateCustomEquipment); //To be added once custom tunic fix is pulled
     COND_HOOK(OnAssetAltChange, true, UpdateCustomEquipment);
 }
 
