@@ -15,7 +15,6 @@ extern void Overlay_DisplayText(float duration, const char* text);
 
 static void UpdatePatchCustomEquipmentDlists();
 static void UpdatePatchHand();
-static void EnsureHookshotVanillaDLsLoaded();
 
 static void UpdateCustomEquipment() {
     if (!GameInteractor::IsSaveLoaded() || gPlayState == NULL) {
@@ -26,26 +25,12 @@ static void UpdateCustomEquipment() {
     UpdatePatchCustomEquipmentDlists();
 }
 
-static void EnsureHookshotVanillaDLsLoaded() {
-    if (!GameInteractor::IsSaveLoaded() || gPlayState == nullptr) {
-        return;
-    }
-
-    // Only do this when Alt Assets are OFF
-    if (ResourceMgr_IsAltAssetsEnabled()) {
-        return;
-    }
-
-    ResourceMgr_LoadGfxByName(gLinkAdultHookshotChainDL);
-    ResourceMgr_LoadGfxByName(gLinkAdultHookshotTipDL);
-}
 
 static void PatchCustomEquipment() {
     COND_HOOK(OnPlayerChangeItem, true, UpdateCustomEquipment);
     COND_HOOK(OnSceneSpawnActors, true, UpdateCustomEquipment); //To be changed when kaleido hook is made
     //COND_HOOK(OnLinkSkeletonInit, true, UpdateCustomEquipment); //To be added once custom tunic fix is pulled
     COND_HOOK(OnAssetAltChange, true, UpdateCustomEquipment);
-    COND_HOOK(OnAssetAltChange, true, EnsureHookshotVanillaDLsLoaded); //Ensure Hookshot vanilla DLs are loaded when Alt Assets are turned off
 }
 
 static RegisterShipInitFunc initFunc(PatchCustomEquipment);
