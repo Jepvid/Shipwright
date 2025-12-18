@@ -16,9 +16,6 @@ extern void Overlay_DisplayText(float duration, const char* text);
 static void UpdatePatchCustomEquipmentDlists();
 static void UpdatePatchHand();
 
-static bool IsRuntimeLoadedEquipmentDL(const char* resource)
-static bool sLastAltAssetsEnabled = false;
-
 static void UpdateCustomEquipment() {
     if (!GameInteractor::IsSaveLoaded() || gPlayState == NULL) {
         return;
@@ -33,6 +30,8 @@ static bool IsRuntimeLoadedEquipmentDL(const char* resource) {
     return resource == gLinkAdultHookshotChainDL ||
            resource == gLinkAdultHookshotTipDL;
 }
+
+static bool IsRuntimeLoadedEquipmentDL(const char* resource);
 
 static void PatchCustomEquipment() {
     COND_HOOK(OnPlayerChangeItem, true, UpdateCustomEquipment);
