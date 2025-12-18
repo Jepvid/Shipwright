@@ -88,40 +88,31 @@ void PatchOrUnpatch(const char* resource,
                     const char* dlist2,
                     const char* dlist3,
                     const char* alternateDL) {
-    if (!resource || !gfx || !dlist1 || !dlist2) {
-        return;
-    }
 
-    // Custom equipment only participates when Alt Assets are enabled
-    if (!ResourceMgr_IsAltAssetsEnabled()) {
-        return;
-    }
-
-    // Custom equipment must exist
-    if (!ResourceMgr_FileExists(gfx)) {
-        return;
-    }
-
-    // Optional alternate DL must exist if used
-    if (alternateDL && !ResourceMgr_FileExists(alternateDL)) {
-        return;
-    }
-
-    // Override alt asset with custom equipment
+    // Apply custom display list patches (additive only)
     ResourceMgr_PatchCustomGfxByName(
-        resource, dlist1, 0,
+        resource,
+        dlist1,
+        0,
         gsSPDisplayListOTRFilePath(gfx));
 
     if (dlist3 == nullptr) {
         ResourceMgr_PatchCustomGfxByName(
-            resource, dlist2, 1,
+            resource,
+            dlist2,
+            1,
             gsSPEndDisplayList());
     } else {
         ResourceMgr_PatchCustomGfxByName(
-            resource, dlist2, 1,
+            resource,
+            dlist2,
+            1,
             gsSPDisplayListOTRFilePath(alternateDL));
+
         ResourceMgr_PatchCustomGfxByName(
-            resource, dlist3, 2,
+            resource,
+            dlist3,
+            2,
             gsSPEndDisplayList());
     }
 }
