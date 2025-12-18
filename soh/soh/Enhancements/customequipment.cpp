@@ -83,32 +83,50 @@ void UpdatePatchHand() {
     }
 }
 
-void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, const char* dlist2, const char* dlist3, const char* alternateDL) {
-    if (resource == NULL || gfx == NULL || dlist1 == NULL || dlist2 == NULL)
+void PatchOrUnpatch(const char* resource,
+                    const char* gfx,
+                    const char* dlist1,
+                    const char* dlist2,
+                    const char* dlist3,
+                    const char* alternateDL) {
+    if (!resource || !gfx || !dlist1 || !dlist2) {
         return;
+    }
 
-    if (CVarGetInteger(CVAR_ENHANCEMENT("AltAssets"), 0)) {
-        if (ResourceGetIsCustomByName(gfx)) {
-            if (alternateDL == NULL || ResourceGetIsCustomByName(alternateDL) || ResourceMgr_FileExists(alternateDL)) {
-                ResourceMgr_PatchCustomGfxByName(resource, dlist1, 0, gsSPDisplayListOTRFilePath(gfx));
-                if (dlist3 == NULL) {
-                    ResourceMgr_PatchCustomGfxByName(resource, dlist2, 1, gsSPEndDisplayList());
-                } else {
-                    ResourceMgr_PatchCustomGfxByName(resource, dlist2, 1, gsSPDisplayListOTRFilePath(alternateDL));
-                }
-                if (dlist3 != NULL) {
-                    ResourceMgr_PatchCustomGfxByName(resource, dlist3, 2, gsSPEndDisplayList());
-                }
-            }
-        }
+    // Custom equipment only participates when Alt Assets are enabled
+    if (!ResourceMgr_IsAltAssetsEnabled()) {
+        return;
+    }
+
+    // Custom equipment must exist
+    if (!ResourceMgr_FileExists(gfx)) {
+        return;
+    }
+
+    // Optional alternate DL must exist if used
+    if (alternateDL && !ResourceMgr_FileExists(alternateDL)) {
+        return;
+    }
+
+    // Override alt asset with custom equipment
+    ResourceMgr_PatchCustomGfxByName(
+        resource, dlist1, 0,
+        gsSPDisplayListOTRFilePath(gfx));
+
+    if (dlist3 == nullptr) {
+        ResourceMgr_PatchCustomGfxByName(
+            resource, dlist2, 1,
+            gsSPEndDisplayList());
     } else {
-        ResourceMgr_UnpatchGfxByName(resource, dlist1);
-        ResourceMgr_UnpatchGfxByName(resource, dlist2);
-        if (dlist3 != NULL) {
-            ResourceMgr_UnpatchGfxByName(resource, dlist3);
-        }
+        ResourceMgr_PatchCustomGfxByName(
+            resource, dlist2, 1,
+            gsSPDisplayListOTRFilePath(alternateDL));
+        ResourceMgr_PatchCustomGfxByName(
+            resource, dlist3, 2,
+            gsSPEndDisplayList());
     }
 }
+
 
 void UpdatePatchCustomEquipmentDlists() {
     if (gSaveContext.equips.buttonItems[0] == ITEM_SWORD_KOKIRI) {
