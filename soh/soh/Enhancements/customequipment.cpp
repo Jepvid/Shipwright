@@ -55,18 +55,18 @@ void UpdatePatchHand() {
         ResourceMgr_PatchGfxByName(gLinkAdultHandHoldingBrokenGiantsKnifeDL, "childBrokenGiantsKnife1", 76, gsSPDisplayListOTRFilePath(gLinkChildLeftFistNearDL));
         ResourceMgr_PatchGfxByName(gLinkAdultHandHoldingBrokenGiantsKnifeDL, "childBrokenGiantsKnife2", 77, gsSPEndDisplayList());
     } else {
-        ResourceMgr_UnpatchGfxByName(gLinkAdultLeftHandHoldingHammerNearDL, "childHammer1");
-        ResourceMgr_UnpatchGfxByName(gLinkAdultLeftHandHoldingHammerNearDL, "childHammer2");
-        ResourceMgr_UnpatchGfxByName(gLinkAdultRightHandHoldingHookshotNearDL, "childHookshot1");
-        ResourceMgr_UnpatchGfxByName(gLinkAdultRightHandHoldingHookshotNearDL, "childHookshot2");
-        ResourceMgr_UnpatchGfxByName(gLinkAdultRightHandHoldingBowNearDL, "childBow1");
-        ResourceMgr_UnpatchGfxByName(gLinkAdultRightHandHoldingBowNearDL, "childBow2");
-        ResourceMgr_UnpatchGfxByName(gLinkAdultLeftHandHoldingMasterSwordNearDL, "childMasterSword1");
-        ResourceMgr_UnpatchGfxByName(gLinkAdultLeftHandHoldingMasterSwordNearDL, "childMasterSword2");
-        ResourceMgr_UnpatchGfxByName(gLinkAdultLeftHandHoldingBgsNearDL, "childBiggoronSword1");
-        ResourceMgr_UnpatchGfxByName(gLinkAdultLeftHandHoldingBgsNearDL, "childBiggoronSword2");
-        ResourceMgr_UnpatchGfxByName(gLinkAdultHandHoldingBrokenGiantsKnifeDL, "childBrokenGiantsKnife1");
-        ResourceMgr_UnpatchGfxByName(gLinkAdultHandHoldingBrokenGiantsKnifeDL, "childBrokenGiantsKnife2");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultLeftHandHoldingHammerNearDL, "childHammer1");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultLeftHandHoldingHammerNearDL, "childHammer2");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultRightHandHoldingHookshotNearDL, "childHookshot1");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultRightHandHoldingHookshotNearDL, "childHookshot2");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultRightHandHoldingBowNearDL, "childBow1");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultRightHandHoldingBowNearDL, "childBow2");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultLeftHandHoldingMasterSwordNearDL, "childMasterSword1");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultLeftHandHoldingMasterSwordNearDL, "childMasterSword2");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultLeftHandHoldingBgsNearDL, "childBiggoronSword1");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultLeftHandHoldingBgsNearDL, "childBiggoronSword2");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultHandHoldingBrokenGiantsKnifeDL, "childBrokenGiantsKnife1");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultHandHoldingBrokenGiantsKnifeDL, "childBrokenGiantsKnife2");
 	}
     if ((CVarGetInteger(CVAR_ENHANCEMENT("EquipmentAlwaysVisible"), 0)) && LINK_IS_ADULT) {
         ResourceMgr_PatchGfxByName(gLinkChildLeftFistAndKokiriSwordNearDL, "adultKokiriSword", 13, gsSPDisplayListOTRFilePath(gLinkAdultLeftHandClosedNearDL));
@@ -74,17 +74,17 @@ void UpdatePatchHand() {
         ResourceMgr_PatchGfxByName(gLinkChildLeftFistAndBoomerangNearDL, "adultBoomerang", 50, gsSPDisplayListOTRFilePath(gLinkAdultLeftHandClosedNearDL));
         ResourceMgr_PatchGfxByName(gLinkChildRightFistAndDekuShieldNearDL, "adultDekuShield", 49, gsSPDisplayListOTRFilePath(gLinkAdultRightHandClosedNearDL));
     } else {
-        ResourceMgr_UnpatchGfxByName(gLinkChildLeftFistAndKokiriSwordNearDL, "adultKokiriSword");
-        ResourceMgr_UnpatchGfxByName(gLinkChildRightHandHoldingSlingshotNearDL, "adultSlingshot");
-        ResourceMgr_UnpatchGfxByName(gLinkChildLeftFistAndBoomerangNearDL, "adultBoomerang");
-        ResourceMgr_UnpatchGfxByName(gLinkChildRightFistAndDekuShieldNearDL, "adultDekuShield");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkChildLeftFistAndKokiriSwordNearDL, "adultKokiriSword");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkChildRightHandHoldingSlingshotNearDL, "adultSlingshot");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkChildLeftFistAndBoomerangNearDL, "adultBoomerang");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkChildRightFistAndDekuShieldNearDL, "adultDekuShield");
     }
     if (CVarGetInteger("gEnhancements.FixHammerHand", 0) && LINK_IS_ADULT) {
         ResourceMgr_PatchGfxByName(gLinkAdultLeftHandHoldingHammerNearDL, "hammerHand1", 92, gsSPDisplayListOTRFilePath(gLinkAdultLeftHandClosedNearDL));
         ResourceMgr_PatchGfxByName(gLinkAdultLeftHandHoldingHammerNearDL, "hammerHand2", 93, gsSPEndDisplayList());
     } else {
-        ResourceMgr_UnpatchGfxByName(gLinkAdultLeftHandHoldingHammerNearDL, "hammerHand1");
-        ResourceMgr_UnpatchGfxByName(gLinkAdultLeftHandHoldingHammerNearDL, "hammerHand2");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultLeftHandHoldingHammerNearDL, "hammerHand1");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultLeftHandHoldingHammerNearDL, "hammerHand2");
     }
 }
 
@@ -131,11 +131,11 @@ void PatchOrUnpatch(const char* resource,
                 gsSPEndDisplayList());
         }
     } else {
-        ResourceMgr_UnpatchGfxByName(resource, dlist1);
-        ResourceMgr_UnpatchGfxByName(resource, dlist2);
+        ResourceMgr_UnpatchCustomGfxByName(resource, dlist1);
+        ResourceMgr_UnpatchCustomGfxByName(resource, dlist2);
 
         if (dlist3) {
-            ResourceMgr_UnpatchGfxByName(resource, dlist3);
+            ResourceMgr_UnpatchCustomGfxByName(resource, dlist3);
         }
     }
 }
@@ -263,8 +263,8 @@ void UpdatePatchCustomEquipmentDlists() {
         PatchOrUnpatch(gLinkAdultHylianShieldAndSheathNearDL, gCustomHylianShieldOnBackDL, "customHylianShieldNoSheath1", "customHylianShieldNoSheath2", NULL, NULL);
         PatchOrUnpatch(gLinkAdultMirrorShieldSwordAndSheathNearDL, gCustomMirrorShieldOnBackDL, "customMirrorShieldNoSword1", "customMirrorShieldNoSword2", NULL, NULL);
         PatchOrUnpatch(gLinkAdultMirrorShieldAndSheathNearDL, gCustomMirrorShieldOnBackDL, "customMirrorShieldNoSheath1", "customMirrorShieldNoSheath2", NULL, NULL);
-        ResourceMgr_UnpatchGfxByName(gLinkAdultMasterSwordAndSheathNearDL, "customMasterSwordSheath1");
-        ResourceMgr_UnpatchGfxByName(gLinkAdultMasterSwordAndSheathNearDL, "customMasterSwordSheath2");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultMasterSwordAndSheathNearDL, "customMasterSwordSheath1");
+        ResourceMgr_UnpatchCustomGfxByName(gLinkAdultMasterSwordAndSheathNearDL, "customMasterSwordSheath2");
     } else {
         if (gSaveContext.equips.buttonItems[0] == ITEM_SWORD_MASTER) {
             PatchOrUnpatch(gLinkAdultMasterSwordAndSheathNearDL, gCustomMasterSwordInSheathDL, "customMasterSwordSheath1", "customMasterSwordSheath2", NULL, NULL);

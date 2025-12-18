@@ -391,19 +391,19 @@ extern "C" void ResourceMgr_PatchGfxCopyCommandByName(const char* path, const ch
     *destinationGfx = sourceGfx;
 }
 
-//extern "C" void ResourceMgr_UnpatchGfxByName(const char* path, const char* patchName) {
-//    if (originalGfx.contains(path) && originalGfx[path].contains(patchName)) {
-//        auto res = std::static_pointer_cast<Fast::DisplayList>(
-//            Ship::Context::GetInstance()->GetResourceManager()->LoadResource(path));
-//
-//        Gfx* gfx = (Gfx*)&res->Instructions[originalGfx[path][patchName].index];
-//        *gfx = originalGfx[path][patchName].instruction;
-//
-//        originalGfx[path].erase(patchName);
-//    }
-//}
+extern "C" void ResourceMgr_UnpatchGfxByName(const char* path, const char* patchName) {
+    if (originalGfx.contains(path) && originalGfx[path].contains(patchName)) {
+        auto res = std::static_pointer_cast<Fast::DisplayList>(
+            Ship::Context::GetInstance()->GetResourceManager()->LoadResource(path));
 
-void ResourceMgr_UnpatchGfxByName(const char* path, const char* patchName) {
+        Gfx* gfx = (Gfx*)&res->Instructions[originalGfx[path][patchName].index];
+        *gfx = originalGfx[path][patchName].instruction;
+
+        originalGfx[path].erase(patchName);
+    }
+}
+
+extern "C" void ResourceMgr_UnpatchCustomGfxByName(const char* path, const char* patchName) {
     if (!path || !patchName) return;
 
     auto itPath = originalGfx.find(path);
