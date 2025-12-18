@@ -88,8 +88,16 @@ void PatchOrUnpatch(const char* resource,
                     const char* dlist2,
                     const char* dlist3,
                     const char* alternateDL) {
+    if (!resource || !gfx || !dlist1 || !dlist2) {
+        return;
+    }
 
-    // Apply custom display list patches (additive only)
+    // Custom equipment only participates when Alt Assets are enabled
+    if (!ResourceMgr_IsAltAssetsEnabled()) {
+        return;
+    }
+
+    // Patch optimistically — resource manager will resolve at load time
     ResourceMgr_PatchCustomGfxByName(
         resource,
         dlist1,
