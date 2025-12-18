@@ -88,55 +88,52 @@ void PatchOrUnpatch(const char* resource,
                     const char* dlist2,
                     const char* dlist3,
                     const char* alternateDL) {
-    if (!resource || !gfx || !dlist1 || !dlist2) {
+    if (resource == NULL || gfx == NULL || dlist1 == NULL || dlist2 == NULL) {
         return;
     }
 
-    if (!ResourceMgr_IsAltAssetsEnabled()) {
+    // Alt Assets OFF → restore original behavior
+    if (!CVarGetInteger(CVAR_ENHANCEMENT("AltAssets"), 0)) {
+        ResourceMgr_UnpatchGfxByName(resource, dlist1);
+        ResourceMgr_UnpatchGfxByName(resource, dlist2);
+        if (dlist3 != NULL) {
+            ResourceMgr_UnpatchGfxByName(resource, dlist3);
+        }
         return;
     }
 
+    // Alt Assets ON, but custom equipment does not exist → do nothing
+    // Let vanilla / alt resolution handle it naturally
     if (!ResourceGetIsCustomByName(gfx)) {
         return;
     }
 
-    const bool altExists = ResourceMgr_FileAltExists(resource);
-
-    // If an alt object exists, let the resource manager clear it
-    // so our custom DL applies cleanly
-    if (altExists) {
-        ResourceMgr_UnloadOriginalWhenAltExists(resource);
+    // Optional alternate DL validation (unchanged logic)
+    if (alternateDL != NULL &&
+        !ResourceGetIsCustomByName(alternateDL) &&
+        !ResourceMgr_FileExists(alternateDL)) {
+        return;
     }
 
+    // Patch custom equipment over alt asset
     ResourceMgr_PatchCustomGfxByName(
-        resource,
-        dlist1,
-        0,
-        gsSPDisplayListOTRFilePath(gfx)
-    );
+        resource, dlist1, 0,
+        gsSPDisplayListOTRFilePath(gfx));
 
-    if (dlist3 == nullptr) {
+    if (dlist3 == NULL) {
         ResourceMgr_PatchCustomGfxByName(
-            resource,
-            dlist2,
-            1,
-            gsSPEndDisplayList()
-        );
+            resource, dlist2, 1,
+            gsSPEndDisplayList());
     } else {
         ResourceMgr_PatchCustomGfxByName(
-            resource,
-            dlist2,
-            1,
-            gsSPDisplayListOTRFilePath(alternateDL)
-        );
+            resource, dlist2, 1,
+            gsSPDisplayListOTRFilePath(alternateDL));
         ResourceMgr_PatchCustomGfxByName(
-            resource,
-            dlist3,
-            2,
-            gsSPEndDisplayList()
-        );
+            resource, dlist3, 2,
+            gsSPEndDisplayList());
     }
 }
+
 
 
 void UpdatePatchCustomEquipmentDlists() {
