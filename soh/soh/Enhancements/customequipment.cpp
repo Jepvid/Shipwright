@@ -25,7 +25,6 @@ static void UpdateCustomEquipment() {
     UpdatePatchCustomEquipmentDlists();
 }
 
-
 static void PatchCustomEquipment() {
     COND_HOOK(OnPlayerChangeItem, true, UpdateCustomEquipment);
     COND_HOOK(OnSceneSpawnActors, true, UpdateCustomEquipment); //To be changed when kaleido hook is made
