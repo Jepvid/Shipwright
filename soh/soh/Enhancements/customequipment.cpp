@@ -92,37 +92,61 @@ void PatchOrUnpatch(const char* resource,
         return;
     }
 
-    if (CVarGetInteger(CVAR_ENHANCEMENT("AltAssets"), 0)) {
-        if (ResourceMgr_FileExists(gfx)) {
-            ResourceMgr_PatchCustomGfxByName(
-                resource, dlist1, 0,
-                gsSPDisplayListOTRFilePath(gfx));
+    const bool altEnabled = ResourceMgr_IsAltAssetsEnabled();
 
-            if (dlist3 == nullptr) {
-                ResourceMgr_PatchCustomGfxByName(
-                    resource, dlist2, 1,
-                    gsSPEndDisplayList());
-            } else {
-                ResourceMgr_PatchCustomGfxByName(
-                    resource, dlist2, 1,
-                    gsSPDisplayListOTRFilePath(alternateDL));
-                ResourceMgr_PatchCustomGfxByName(
-                    resource, dlist3, 2,
-                    gsSPEndDisplayList());
-            }
-        }
-    } else {
-        if (!ResourceMgr_FileAltExists(resource)) {
-            // Never unpatch non alt assets
+    // ----- PATCH PATH -----
+    if (altEnabled) {
+        // Only patch if the custom object exists
+        if (!ResourceMgr_FileExists(gfx)) {
             return;
         }
-        ResourceMgr_UnpatchGfxByName(resource, dlist1);
-        ResourceMgr_UnpatchGfxByName(resource, dlist2);
-        if (dlist3) {
-            ResourceMgr_UnpatchGfxByName(resource, dlist3);
+
+        // Optional alternate DL must exist if provided
+        if (alternateDL && !ResourceMgr_FileExists(alternateDL)) {
+            return;
         }
+
+        ResourceMgr_PatchCustomGfxByName(
+            resource,
+            dlist1,
+            0,
+            gsSPDisplayListOTRFilePath(gfx));
+
+        if (dlist3 == nullptr) {
+            ResourceMgr_PatchCustomGfxByName(
+                resource,
+                dlist2,
+                1,
+                gsSPEndDisplayList());
+        } else {
+            ResourceMgr_PatchCustomGfxByName(
+                resource,
+                dlist2,
+                1,
+                gsSPDisplayListOTRFilePath(alternateDL));
+
+            ResourceMgr_PatchCustomGfxByName(
+                resource,
+                dlist3,
+                2,
+                gsSPEndDisplayList());
+        }
+
+        return;
+    }
+    // Only unpatch if an alt asset actually exists for this resource
+    if (!ResourceMgr_FileAltExists(resource)) {
+        return; // vanilla or runtime-loaded → never touch
+    }
+
+    ResourceMgr_UnpatchGfxByName(resource, dlist1);
+    ResourceMgr_UnpatchGfxByName(resource, dlist2);
+
+    if (dlist3) {
+        ResourceMgr_UnpatchGfxByName(resource, dlist3);
     }
 }
+
 
 void UpdatePatchCustomEquipmentDlists() {
     if (gSaveContext.equips.buttonItems[0] == ITEM_SWORD_KOKIRI) {
