@@ -357,13 +357,18 @@ extern "C" void ResourceMgr_PatchGfxByName(const char* path, const char* patchNa
     *gfx = instruction;
 }
 
+// Create or get existing alt DisplayList for custom equipment
+static std::shared_ptr<Fast::DisplayList>
+ResourceMgr_GetOrCreateAltDisplayList(const char* path);
+
 // Runtime-generated alt DisplayLists for custom equipment
 static std::unordered_map<std::string, std::shared_ptr<Fast::DisplayList>> runtimeAltDisplayLists;
 
 // Create substitute DisplayList for alt assets to be used for custom equips & patches.
 // This prevents modifying the original DisplayList, which could lead to issues when
 // switching between alt & original assets.
-std::shared_ptr<Fast::DisplayList> ResourceMgr_GetOrCreateAltDisplayList(const char* path) {
+static std::shared_ptr<Fast::DisplayList>
+ResourceMgr_GetOrCreateAltDisplayList(const char* path) {
     std::string basePath = path;
     if (basePath.starts_with("__OTR__")) {
         basePath = basePath.substr(7);
@@ -394,10 +399,8 @@ std::shared_ptr<Fast::DisplayList> ResourceMgr_GetOrCreateAltDisplayList(const c
     auto cloned = std::make_shared<Fast::DisplayList>(*vanilla);
     cloned->GetInitData()->IsCustom = true;
 
-    // Register runtime alt
+    // Register runtime alt (best-effort; runtimeAltDisplayLists is authoritative)
     runtimeAltDisplayLists[altPath] = cloned;
-
-    // Optional but recommended: make ResourceManager aware of it
     rm->AddResource(altPath.c_str(), cloned);
 
     return cloned;
