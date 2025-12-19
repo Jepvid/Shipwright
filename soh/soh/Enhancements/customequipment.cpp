@@ -15,6 +15,7 @@ extern void Overlay_DisplayText(float duration, const char* text);
 
 static void UpdatePatchCustomEquipmentDlists();
 static void UpdatePatchHand();
+static void ClearAllSwordAndSheathVisuals();
 
 static void UpdateCustomEquipment() {
     if (!GameInteractor::IsSaveLoaded() || gPlayState == NULL) {
@@ -122,6 +123,36 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
             ResourceMgr_UnpatchGfxByName(resource, dlist3);
         }
     }
+}
+
+static void ClearAllSwordAndSheathVisuals() {
+    // ===== CHILD =====
+    ResourceMgr_UnpatchGfxByName(gLinkChildSwordAndSheathNearDL, "customKokiriSwordSheath1");
+    ResourceMgr_UnpatchGfxByName(gLinkChildSwordAndSheathNearDL, "customKokiriSwordSheath2");
+
+    ResourceMgr_UnpatchGfxByName(gLinkChildSheathNearDL, "customKokiriSheath1");
+    ResourceMgr_UnpatchGfxByName(gLinkChildSheathNearDL, "customKokiriSheath2");
+
+    // Child shield combos (ALL sword variants)
+    ResourceMgr_UnpatchGfxByName(gLinkChildDekuShieldSwordAndSheathNearDL, "customDekuShieldSword1");
+    ResourceMgr_UnpatchGfxByName(gLinkChildDekuShieldSwordAndSheathNearDL, "customDekuShieldSword2");
+    ResourceMgr_UnpatchGfxByName(gLinkChildDekuShieldSwordAndSheathNearDL, "customDekuShieldSword3");
+
+    ResourceMgr_UnpatchGfxByName(gLinkChildHylianShieldSwordAndSheathNearDL, "customChildHylianShieldSword1");
+    ResourceMgr_UnpatchGfxByName(gLinkChildHylianShieldSwordAndSheathNearDL, "customChildHylianShieldSword2");
+    ResourceMgr_UnpatchGfxByName(gLinkChildHylianShieldSwordAndSheathNearDL, "customChildHylianShieldSword3");
+
+    // ===== ADULT =====
+    ResourceMgr_UnpatchGfxByName(gLinkAdultMasterSwordAndSheathNearDL, "customMasterSwordSheath1");
+    ResourceMgr_UnpatchGfxByName(gLinkAdultMasterSwordAndSheathNearDL, "customMasterSwordSheath2");
+
+    ResourceMgr_UnpatchGfxByName(gLinkAdultHylianShieldSwordAndSheathNearDL, "customHylianShieldSword1");
+    ResourceMgr_UnpatchGfxByName(gLinkAdultHylianShieldSwordAndSheathNearDL, "customHylianShieldSword2");
+    ResourceMgr_UnpatchGfxByName(gLinkAdultHylianShieldSwordAndSheathNearDL, "customHylianShieldSword3");
+
+    ResourceMgr_UnpatchGfxByName(gLinkAdultMirrorShieldSwordAndSheathNearDL, "customMirrorShieldSword1");
+    ResourceMgr_UnpatchGfxByName(gLinkAdultMirrorShieldSwordAndSheathNearDL, "customMirrorShieldSword2");
+    ResourceMgr_UnpatchGfxByName(gLinkAdultMirrorShieldSwordAndSheathNearDL, "customMirrorShieldSword3");
 }
 
 void UpdatePatchCustomEquipmentDlists() {
@@ -355,67 +386,27 @@ void UpdatePatchCustomEquipmentDlists() {
         PatchOrUnpatch(gLinkChildLeftFistNearDL, gLinkAdultLeftHandClosedNearDL, "customAdultLeftHand1",
                        "customAdultLeftHand2", NULL, NULL);
     }
-    // Handles when Link is without a sword (child or adult)
+    // Handles when Link is without a sword (all ages, all modes)
     if (gSaveContext.equips.buttonItems[0] == ITEM_NONE) {
 
-        // ===== CHILD LINK =====
+        // 1) HARD RESET – remove ALL sword/sheath visuals
+        ClearAllSwordAndSheathVisuals();
+
+        // 2) Apply shield-only visuals
         if (LINK_IS_CHILD) {
-            // Shield on back (no sword)
             PatchOrUnpatch(gLinkChildDekuShieldSwordAndSheathNearDL, gCustomDekuShieldOnBackDL, "customChildNoSword1",
                            "customChildNoSword2", NULL, NULL);
 
-            PatchOrUnpatch(gLinkChildDekuShieldAndSheathNearDL, gCustomDekuShieldOnBackDL, "customChildNoSheath1",
-                           "customChildNoSheath2", NULL, NULL);
-
             PatchOrUnpatch(gLinkChildHylianShieldSwordAndSheathNearDL, gCustomHylianShieldOnChildBackDL,
                            "customChildHylianNoSword1", "customChildHylianNoSword2", NULL, NULL);
-
-            PatchOrUnpatch(gLinkChildHylianShieldAndSheathNearDL, gCustomHylianShieldOnChildBackDL,
-                           "customChildHylianNoSheath1", "customChildHylianNoSheath2", NULL, NULL);
-
-            // Ensure no sword/sheath remnants remain
-            ResourceMgr_UnpatchGfxByName(gLinkChildSwordAndSheathNearDL, "customKokiriSwordSheath1");
-            ResourceMgr_UnpatchGfxByName(gLinkChildSwordAndSheathNearDL, "customKokiriSwordSheath2");
-
-            ResourceMgr_UnpatchGfxByName(gLinkChildSheathNearDL, "customKokiriSheath1");
-            ResourceMgr_UnpatchGfxByName(gLinkChildSheathNearDL, "customKokiriSheath2");
         }
 
-        // ===== ADULT LINK =====
         if (LINK_IS_ADULT) {
             PatchOrUnpatch(gLinkAdultHylianShieldSwordAndSheathNearDL, gCustomHylianShieldOnBackDL,
                            "customHylianShieldNoSword1", "customHylianShieldNoSword2", NULL, NULL);
 
-            PatchOrUnpatch(gLinkAdultHylianShieldAndSheathNearDL, gCustomHylianShieldOnBackDL,
-                           "customHylianShieldNoSheath1", "customHylianShieldNoSheath2", NULL, NULL);
-
             PatchOrUnpatch(gLinkAdultMirrorShieldSwordAndSheathNearDL, gCustomMirrorShieldOnBackDL,
                            "customMirrorShieldNoSword1", "customMirrorShieldNoSword2", NULL, NULL);
-
-            PatchOrUnpatch(gLinkAdultMirrorShieldAndSheathNearDL, gCustomMirrorShieldOnBackDL,
-                           "customMirrorShieldNoSheath1", "customMirrorShieldNoSheath2", NULL, NULL);
-
-            // Ensure Master Sword sheath is fully cleared
-            ResourceMgr_UnpatchGfxByName(gLinkAdultMasterSwordAndSheathNearDL, "customMasterSwordSheath1");
-            ResourceMgr_UnpatchGfxByName(gLinkAdultMasterSwordAndSheathNearDL, "customMasterSwordSheath2");
-        }
-
-    } else {
-        if (gSaveContext.equips.buttonItems[0] == ITEM_SWORD_MASTER) {
-            PatchOrUnpatch(gLinkAdultMasterSwordAndSheathNearDL, gCustomMasterSwordInSheathDL,
-                           "customMasterSwordSheath1", "customMasterSwordSheath2", NULL, NULL);
-        }
-        if (gSaveContext.equips.buttonItems[0] == ITEM_SWORD_BGS && gSaveContext.bgsFlag == true) {
-            PatchOrUnpatch(gLinkAdultMasterSwordAndSheathNearDL, gCustomLongswordInSheathDL, "customMasterSwordSheath1",
-                           "customMasterSwordSheath2", NULL, NULL);
-        }
-        if (gSaveContext.equips.buttonItems[0] == ITEM_SWORD_BGS && gSaveContext.bgsFlag == false) {
-            PatchOrUnpatch(gLinkAdultMasterSwordAndSheathNearDL, gCustomBreakableLongswordInSheathDL,
-                           "customMasterSwordSheath1", "customMasterSwordSheath2", NULL, NULL);
-        }
-        if (gSaveContext.equips.buttonItems[0] == ITEM_SWORD_KNIFE) {
-            PatchOrUnpatch(gLinkAdultMasterSwordAndSheathNearDL, gCustomBrokenLongswordInSheathDL,
-                           "customMasterSwordSheath1", "customMasterSwordSheath2", NULL, NULL);
         }
     }
 }
