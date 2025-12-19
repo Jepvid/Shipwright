@@ -401,11 +401,10 @@ ResourceMgr_GetOrCreateAltDisplayList(const char* path) {
 
     // Register runtime alt (best-effort; runtimeAltDisplayLists is authoritative)
     runtimeAltDisplayLists[altPath] = cloned;
-    rm->AddResource(altPath.c_str(), cloned);
-
     return cloned;
 }
 
+// Module to patch DisplayList instructions for custom equipment
 extern "C" void ResourceMgr_PatchCustomGfxByName(
     const char* path,
     const char* patchName,
