@@ -112,11 +112,10 @@ void PatchOrUnpatch(const char* resource,
             }
         }
     } else {
-        if (IsRuntimeLoadedEquipmentDL(resource)) {
-            // Never unpatch runtime-loaded assets
+        if (!ResourceMgr_FileAltExists(resource)) {
+            // Never unpatch non alt assets
             return;
         }
-
         ResourceMgr_UnpatchGfxByName(resource, dlist1);
         ResourceMgr_UnpatchGfxByName(resource, dlist2);
         if (dlist3) {
