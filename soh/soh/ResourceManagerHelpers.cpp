@@ -375,7 +375,7 @@ ResourceMgr_GetOrCreateAltDisplayList(const char* path) {
     }
 
     std::string altPath = "alt/" + basePath;
-    auto* rm = Ship::Context::GetInstance()->GetResourceManager();
+    auto rm = Ship::Context::GetInstance()->GetResourceManager();
 
     // 1) Prefer runtime-generated alt DL if it already exists
     if (runtimeAltDisplayLists.contains(altPath)) {
