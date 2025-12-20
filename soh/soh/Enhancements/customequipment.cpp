@@ -3,7 +3,6 @@
 #include "objects/object_link_child/object_link_child.h"
 #include "objects/object_custom_equip/object_custom_equip.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
-#include "soh/Enhancements/customequipment.h"
 #include "soh/ShipInit.hpp"
 #include "soh/ResourceManagerHelpers.h"
 #include "soh_assets.h"
