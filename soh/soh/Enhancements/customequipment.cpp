@@ -15,7 +15,7 @@ extern void Overlay_DisplayText(float duration, const char* text);
 static void UpdatePatchCustomEquipmentDlists();
 static void UpdatePatchHand();
 
-static void UpdateCustomEquipment() {
+static void UpdateCustomEquipment(u8 ModelGroup) {
     if (!GameInteractor::IsSaveLoaded() || gPlayState == NULL) {
         return;
     }
