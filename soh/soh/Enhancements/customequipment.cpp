@@ -125,7 +125,6 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
 }
 
 void UpdatePatchCustomEquipmentDlists() {
-
     if (gSaveContext.equips.buttonItems[0] == ITEM_NONE) {
 
         if (LINK_IS_CHILD) {
@@ -135,15 +134,21 @@ void UpdatePatchCustomEquipmentDlists() {
 
             ResourceMgr_UnpatchGfxByName(gLinkChildSwordAndSheathNearDL, "customKokiriSwordSheath1");
             ResourceMgr_UnpatchGfxByName(gLinkChildSwordAndSheathNearDL, "customKokiriSwordSheath2");
+
             ResourceMgr_UnpatchGfxByName(gLinkChildSheathNearDL, "customKokiriSheath1");
             ResourceMgr_UnpatchGfxByName(gLinkChildSheathNearDL, "customKokiriSheath2");
 
             ResourceMgr_UnpatchGfxByName(gLinkChildDekuShieldSwordAndSheathNearDL, "customDekuShieldSword1");
             ResourceMgr_UnpatchGfxByName(gLinkChildDekuShieldSwordAndSheathNearDL, "customDekuShieldSword2");
             ResourceMgr_UnpatchGfxByName(gLinkChildDekuShieldSwordAndSheathNearDL, "customDekuShieldSword3");
+
+            ResourceMgr_UnpatchGfxByName(gLinkChildHylianShieldSwordAndSheathNearDL, "customChildHylianShieldSword1");
+            ResourceMgr_UnpatchGfxByName(gLinkChildHylianShieldSwordAndSheathNearDL, "customChildHylianShieldSword2");
+            ResourceMgr_UnpatchGfxByName(gLinkChildHylianShieldSwordAndSheathNearDL, "customChildHylianShieldSword3");
         }
 
         if (LINK_IS_ADULT) {
+
             PatchOrUnpatch(gLinkAdultHylianShieldSwordAndSheathNearDL, gCustomHylianShieldOnBackDL,
                            "customAdultShieldOnly1", "customAdultShieldOnly2", NULL, NULL);
 
