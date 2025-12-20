@@ -125,48 +125,34 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
 }
 
 void UpdatePatchCustomEquipmentDlists() {
+
     if (gSaveContext.equips.buttonItems[0] == ITEM_NONE) {
 
-        PatchOrUnpatch(gLinkChildDekuShieldSwordAndSheathNearDL,
-                       gCustomDekuShieldOnBackDL,
-                       "customChildNoSword1", "customChildNoSword2", NULL, NULL);
+        if (LINK_IS_CHILD) {
 
-        PatchOrUnpatch(gLinkChildDekuShieldAndSheathNearDL,
-                       gCustomDekuShieldOnBackDL,
-                       "customChildNoSheath1", "customChildNoSheath2", NULL, NULL);
+            PatchOrUnpatch(gLinkChildDekuShieldWithMatrixDL, gCustomDekuShieldOnBackDL, "customChildShieldOnly1",
+                           "customChildShieldOnly2", NULL, NULL);
 
-        PatchOrUnpatch(gLinkChildHylianShieldSwordAndSheathNearDL,
-                       gCustomHylianShieldOnChildBackDL,
-                       "customChildHylianNoSword1", "customChildHylianNoSword2", NULL, NULL);
+            ResourceMgr_UnpatchGfxByName(gLinkChildSwordAndSheathNearDL, "customKokiriSwordSheath1");
+            ResourceMgr_UnpatchGfxByName(gLinkChildSwordAndSheathNearDL, "customKokiriSwordSheath2");
+            ResourceMgr_UnpatchGfxByName(gLinkChildSheathNearDL, "customKokiriSheath1");
+            ResourceMgr_UnpatchGfxByName(gLinkChildSheathNearDL, "customKokiriSheath2");
 
-        PatchOrUnpatch(gLinkChildHylianShieldAndSheathNearDL,
-                       gCustomHylianShieldOnChildBackDL,
-                       "customChildHylianNoSheath1", "customChildHylianNoSheath2", NULL, NULL);
+            ResourceMgr_UnpatchGfxByName(gLinkChildDekuShieldSwordAndSheathNearDL, "customDekuShieldSword1");
+            ResourceMgr_UnpatchGfxByName(gLinkChildDekuShieldSwordAndSheathNearDL, "customDekuShieldSword2");
+            ResourceMgr_UnpatchGfxByName(gLinkChildDekuShieldSwordAndSheathNearDL, "customDekuShieldSword3");
+        }
 
+        if (LINK_IS_ADULT) {
+            PatchOrUnpatch(gLinkAdultHylianShieldSwordAndSheathNearDL, gCustomHylianShieldOnBackDL,
+                           "customAdultShieldOnly1", "customAdultShieldOnly2", NULL, NULL);
 
-        ResourceMgr_UnpatchGfxByName(gLinkChildSwordAndSheathNearDL, "customKokiriSwordSheath1");
-        ResourceMgr_UnpatchGfxByName(gLinkChildSwordAndSheathNearDL, "customKokiriSwordSheath2");
-        ResourceMgr_UnpatchGfxByName(gLinkChildSheathNearDL, "customKokiriSheath1");
-        ResourceMgr_UnpatchGfxByName(gLinkChildSheathNearDL, "customKokiriSheath2");
+            PatchOrUnpatch(gLinkAdultMirrorShieldSwordAndSheathNearDL, gCustomMirrorShieldOnBackDL,
+                           "customAdultMirrorOnly1", "customAdultMirrorOnly2", NULL, NULL);
 
-        PatchOrUnpatch(gLinkAdultHylianShieldSwordAndSheathNearDL,
-                       gCustomHylianShieldOnBackDL,
-                       "customHylianShieldNoSword1", "customHylianShieldNoSword2", NULL, NULL);
-
-        PatchOrUnpatch(gLinkAdultHylianShieldAndSheathNearDL,
-                       gCustomHylianShieldOnBackDL,
-                       "customHylianShieldNoSheath1", "customHylianShieldNoSheath2", NULL, NULL);
-
-        PatchOrUnpatch(gLinkAdultMirrorShieldSwordAndSheathNearDL,
-                       gCustomMirrorShieldOnBackDL,
-                       "customMirrorShieldNoSword1", "customMirrorShieldNoSword2", NULL, NULL);
-
-        PatchOrUnpatch(gLinkAdultMirrorShieldAndSheathNearDL,
-                       gCustomMirrorShieldOnBackDL,
-                       "customMirrorShieldNoSheath1", "customMirrorShieldNoSheath2", NULL, NULL);
-
-        ResourceMgr_UnpatchGfxByName(gLinkAdultMasterSwordAndSheathNearDL, "customMasterSwordSheath1");
-        ResourceMgr_UnpatchGfxByName(gLinkAdultMasterSwordAndSheathNearDL, "customMasterSwordSheath2");
+            ResourceMgr_UnpatchGfxByName(gLinkAdultMasterSwordAndSheathNearDL, "customMasterSwordSheath1");
+            ResourceMgr_UnpatchGfxByName(gLinkAdultMasterSwordAndSheathNearDL, "customMasterSwordSheath2");
+        }
     }
     if (gSaveContext.equips.buttonItems[0] == ITEM_SWORD_KOKIRI) {
         PatchOrUnpatch(gLinkChildSheathNearDL, gCustomKokiriSwordSheathDL, "customKokiriSheath1", "customKokiriSheath2",
