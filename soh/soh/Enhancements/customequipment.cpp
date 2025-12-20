@@ -188,6 +188,11 @@ void UpdatePatchCustomEquipmentDlists() {
                        gCustomMirrorShieldOnBackDL);
     }
     if (gSaveContext.equips.buttonItems[0] == ITEM_SWORD_MASTER) {
+        PatchOrUnpatch(gLinkChildDekuShieldWithMatrixDL, gCustomMasterSwordInSheathDL, "customDekuShieldBack1",
+                       "customDekuShieldBack2", "customDekuShieldBack3", gCustomDekuShieldOnBackDL);
+        PatchOrUnpatch(gLinkChildHylianShieldAndSheathNearDL, gCustomMasterSwordSheathDL,
+                       "customChildHylianShieldSheath1", "customChildHylianShieldSheath2",
+                       "customChildHylianShieldSheath3", gCustomHylianShieldOnChildBackDL);
         PatchOrUnpatch(gLinkChildSheathNearDL, gCustomMasterSwordSheathDL, "customKokiriSheath1", "customKokiriSheath2",
                        NULL, NULL);
         PatchOrUnpatch(gLinkChildSwordAndSheathNearDL, gCustomMasterSwordInSheathDL, "customKokiriSwordSheath1",
@@ -216,6 +221,11 @@ void UpdatePatchCustomEquipmentDlists() {
                        gCustomMirrorShieldOnBackDL);
     }
     if (gSaveContext.equips.buttonItems[0] == ITEM_SWORD_BGS && gSaveContext.bgsFlag == true) {
+        PatchOrUnpatch(gLinkChildDekuShieldWithMatrixDL, gCustomLongswordSheathDL, "customDekuShieldBack1",
+                       "customDekuShieldBack2", "customDekuShieldBack3", gCustomDekuShieldOnBackDL);
+        PatchOrUnpatch(gLinkChildHylianShieldAndSheathNearDL, gCustomLongswordSheathDL,
+                       "customChildHylianShieldSheath1", "customChildHylianShieldSheath2",
+                       "customChildHylianShieldSheath3", gCustomHylianShieldOnChildBackDL);
         PatchOrUnpatch(gLinkChildDekuShieldAndSheathNearDL, gCustomLongswordSheathDL, "customDekuShieldSheath1",
                        "customDekuShieldSheath2", "customDekuShieldSheath3", gCustomDekuShieldOnBackDL);
         PatchOrUnpatch(gLinkChildHylianShieldAndSheathNearDL, gCustomLongswordSheathDL,
@@ -259,6 +269,11 @@ void UpdatePatchCustomEquipmentDlists() {
                        "customMirrorShieldSheath2", "customMirrorShieldSheath3", gCustomMirrorShieldOnBackDL);
     }
     if (gSaveContext.equips.buttonItems[0] == ITEM_SWORD_BGS && (gSaveContext.bgsFlag == false)) {
+        PatchOrUnpatch(gLinkChildDekuShieldWithMatrixDL, gCustomBreakableLongswordSheathDL, "customDekuShieldBack1",
+                       "customDekuShieldBack2", "customDekuShieldBack3", gCustomDekuShieldOnBackDL);
+        PatchOrUnpatch(gLinkChildHylianShieldAndSheathNearDL, gCustomBreakableLongswordSheathDL,
+                       "customChildHylianShieldSheath1", "customChildHylianShieldSheath2",
+                       "customChildHylianShieldSheath3", gCustomHylianShieldOnChildBackDL);
         PatchOrUnpatch(gLinkChildDekuShieldAndSheathNearDL, gCustomBreakableLongswordSheathDL,
                        "customDekuShieldSheath1", "customDekuShieldSheath2", "customDekuShieldSheath3",
                        gCustomDekuShieldOnBackDL);
@@ -309,6 +324,11 @@ void UpdatePatchCustomEquipmentDlists() {
                        gCustomMirrorShieldOnBackDL);
     }
     if (gSaveContext.equips.buttonItems[0] == ITEM_SWORD_KNIFE) {
+        PatchOrUnpatch(gLinkChildDekuShieldWithMatrixDL, gCustomBrokenLongswordSheathDL, "customDekuShieldBack1",
+                       "customDekuShieldBack2", "customDekuShieldBack3", gCustomDekuShieldOnBackDL);
+        PatchOrUnpatch(gLinkChildHylianShieldAndSheathNearDL, gCustomBrokenLongswordSheathDL,
+                       "customChildHylianShieldSheath1", "customChildHylianShieldSheath2",
+                       "customChildHylianShieldSheath3", gCustomHylianShieldOnChildBackDL);
         PatchOrUnpatch(gLinkChildDekuShieldAndSheathNearDL, gCustomBrokenLongswordSheathDL, "customDekuShieldSheath1",
                        "customDekuShieldSheath2", "customDekuShieldSheath3", gCustomDekuShieldOnBackDL);
         PatchOrUnpatch(gLinkChildHylianShieldAndSheathNearDL, gCustomBrokenLongswordSheathDL,
