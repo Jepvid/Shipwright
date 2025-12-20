@@ -3,6 +3,5 @@
 
 void RegisterPatchCustomEquipmentDlistsHandler();
 void RegisterPatchHandHandler();
-void ClearAllSwordAndSheathVisuals();
 
 #endif // CUSTOM_EQUIP_H
