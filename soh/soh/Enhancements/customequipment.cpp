@@ -173,10 +173,13 @@ void UpdatePatchCustomEquipmentDlists() {
     const u8 equippedSword = gSaveContext.equips.buttonItems[0];
     const bool useAltAssets = CVarGetInteger(CVAR_ENHANCEMENT("AltAssets"), 0) != 0;
     const bool equipmentAlwaysVisible = CVarGetInteger(CVAR_ENHANCEMENT("EquipmentAlwaysVisible"), 0) != 0;
+    const bool timelessEquipment = CVarGetInteger(CVAR_CHEAT("TimelessEquipment"), 0) != 0;
+    const bool childOrTimeless = LINK_IS_CHILD || timelessEquipment;
+    const bool adultOrTimeless = LINK_IS_ADULT || timelessEquipment;
 
     switch (equippedSword) {
         case ITEM_NONE:
-            if (LINK_IS_CHILD) {
+            if (childOrTimeless) {
                 ApplyPatchRequests(
                     {
                         {gLinkChildDekuShieldWithMatrixDL, gCustomDekuShieldOnBackDL, "customChildShieldOnly1",
@@ -198,7 +201,7 @@ void UpdatePatchCustomEquipmentDlists() {
                 });
             }
 
-            if (LINK_IS_ADULT) {
+            if (adultOrTimeless) {
                 ApplyPatchRequests(
                     {
                         {gLinkAdultHylianShieldSwordAndSheathNearDL, gCustomHylianShieldOnBackDL,
@@ -293,6 +296,8 @@ void UpdatePatchCustomEquipmentDlists() {
                          "customDekuShieldSheath2", "customDekuShieldSheath3", gCustomDekuShieldOnBackDL},
                         {gLinkAdultLeftHandHoldingBgsNearDL, gCustomLongswordDL, "customBGS1", "customBGS2",
                          "customBGS3", gLinkAdultLeftHandClosedNearDL},
+                        {gLinkChildLeftHandHoldingMasterSwordDL, gCustomLongswordDL, "customBGS1", "customBGS2",
+                         "customBGS3", gLinkChildLeftFistNearDL},
                         {gLinkChildSheathNearDL, gCustomLongswordSheathDL, "customKokiriSheath1", "customKokiriSheath2",
                          NULL, NULL},
                         {gLinkChildSwordAndSheathNearDL, gCustomLongswordInSheathDL, "customKokiriSwordSheath1",
@@ -332,6 +337,8 @@ void UpdatePatchCustomEquipmentDlists() {
                          gCustomDekuShieldOnBackDL},
                         {gLinkAdultLeftHandHoldingBgsNearDL, gCustomBreakableLongswordDL, "customGK1", "customGK2",
                          "customGK3", gLinkAdultLeftHandClosedNearDL},
+                        {gLinkChildLeftHandHoldingMasterSwordDL, gCustomBreakableLongswordDL, "customGK1", "customGK2",
+                         "customGK3", gLinkChildLeftFistNearDL},
                         {gLinkChildSheathNearDL, gCustomBreakableLongswordSheathDL, "customKokiriSheath1",
                          "customKokiriSheath2", NULL, NULL},
                         {gLinkChildSwordAndSheathNearDL, gCustomBreakableLongswordInSheathDL, "customKokiriSwordSheath1",
@@ -399,6 +406,8 @@ void UpdatePatchCustomEquipmentDlists() {
                      gCustomMirrorShieldOnBackDL},
                     {gLinkAdultMirrorShieldAndSheathNearDL, gCustomBrokenLongswordSheathDL, "customMirrorShieldSheath1",
                      "customMirrorShieldSheath2", "customMirrorShieldSheath3", gCustomMirrorShieldOnBackDL},
+                    {gLinkChildLeftHandHoldingMasterSwordDL, gCustomBrokenLongswordDL, "customBrokenBGS1",
+                     "customBrokenBGS2", "customBrokenBGS3", gLinkChildLeftFistNearDL},
                 },
                 useAltAssets);
             break;
@@ -441,6 +450,15 @@ void UpdatePatchCustomEquipmentDlists() {
              "customSlingshotFPS3", gCustomChildFPSHandDL},
         },
         useAltAssets);
+
+    if ((LINK_IS_ADULT || timelessEquipment) && equippedSword == ITEM_SWORD_KOKIRI) {
+        ApplyPatchRequests(
+            {
+                {gLinkAdultLeftHandHoldingMasterSwordNearDL, gCustomKokiriSwordDL, "customKokiriSword1",
+                 "customKokiriSword2", "customKokiriSword3", gLinkAdultLeftHandClosedNearDL},
+            },
+            useAltAssets);
+    }
 
     if (INV_CONTENT(ITEM_HOOKSHOT) == ITEM_HOOKSHOT) {
         ApplyPatchRequests(
