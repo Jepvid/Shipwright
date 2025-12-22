@@ -360,40 +360,53 @@ extern "C" void ResourceMgr_PatchGfxByName(const char* path, const char* patchNa
 // Runtime-generated alt DisplayLists for custom equipment
 static std::unordered_map<std::string, std::shared_ptr<Fast::DisplayList>> runtimeAltDisplayLists;
 
+static std::string NormalizeResourcePath(const char* path) {
+    std::string normalized = path;
+    if (normalized.starts_with("__OTR__")) {
+        normalized = normalized.substr(7);
+    }
+    return normalized;
+}
+
+static std::string MakeAltPath(const char* path) {
+    std::string basePath = NormalizeResourcePath(path);
+    if (basePath.starts_with("alt/")) {
+        return basePath;
+    }
+
+    return "alt/" + basePath;
+}
+
 // Create substitute DisplayList for alt assets to be used for custom equips & patches.
 // This prevents modifying the original DisplayList, which could lead to issues when
 // switching between alt & original assets.
-static std::shared_ptr<Fast::DisplayList>
-ResourceMgr_GetOrCreateAltDisplayList(const char* path) {
-    std::string basePath = path;
-    if (basePath.starts_with("__OTR__")) {
-        basePath = basePath.substr(7);
-    }
-
-    std::string altPath = "alt/" + basePath;
+static std::shared_ptr<Fast::DisplayList> ResourceMgr_GetOrCreateAltDisplayList(const char* path) {
+    std::string basePath = NormalizeResourcePath(path);
+    std::string altPath = MakeAltPath(path);
     auto rm = Ship::Context::GetInstance()->GetResourceManager();
 
-    // Prefer filesystem alt asset
-    if (ExtensionCache.contains(altPath)) {
-        return std::static_pointer_cast<Fast::DisplayList>(
-            rm->LoadResource(altPath.c_str())
-        );
+    // 1) Prefer runtime-generated alt DL if it already exists
+    if (runtimeAltDisplayLists.contains(altPath)) {
+        return runtimeAltDisplayLists[altPath];
     }
 
-    // Fallback: clone vanilla DL and register it
-    auto vanilla = std::static_pointer_cast<Fast::DisplayList>(
-        rm->LoadResource(basePath.c_str())
-    );
+    // 2) Prefer filesystem-backed alt asset if it exists
+    if (ExtensionCache.contains(altPath)) {
+        return std::static_pointer_cast<Fast::DisplayList>(rm->LoadResource(altPath.c_str()));
+    }
+
+    // 3) Clone vanilla DL into a runtime alt
+    auto vanilla = std::static_pointer_cast<Fast::DisplayList>(rm->LoadResource(basePath.c_str()));
+
     if (!vanilla) {
         return nullptr;
     }
 
     auto cloned = std::make_shared<Fast::DisplayList>(*vanilla);
     cloned->GetInitData()->IsCustom = true;
-    cloned->GetInitData()->Path = altPath;
 
-    rm->AddResource(altPath.c_str(), cloned);
-
+    // Register runtime alt (best-effort; runtimeAltDisplayLists is authoritative)
+    runtimeAltDisplayLists[altPath] = cloned;
     return cloned;
 }
 
@@ -404,11 +417,7 @@ extern "C" void ResourceMgr_PatchCustomGfxByName(const char* path, const char* p
         return;
     }
 
-    std::string basePath = path;
-    if (basePath.starts_with("__OTR__")) {
-        basePath = basePath.substr(7);
-    }
-    std::string altPath = "alt/" + basePath;
+    std::string altPath = MakeAltPath(path);
 
     Gfx* gfx = (Gfx*)&res->Instructions[index];
 
@@ -417,6 +426,31 @@ extern "C" void ResourceMgr_PatchCustomGfxByName(const char* path, const char* p
     }
 
     *gfx = instruction;
+}
+
+extern "C" void ResourceMgr_UnpatchCustomGfxByName(const char* path, const char* patchName) {
+    std::string altPath = MakeAltPath(path);
+
+    if (!originalGfx.contains(altPath) || !originalGfx[altPath].contains(patchName)) {
+        return;
+    }
+
+    auto res = ResourceMgr_GetOrCreateAltDisplayList(path);
+    if (!res) {
+        originalGfx[altPath].erase(patchName);
+        return;
+    }
+
+    auto& patch = originalGfx[altPath][patchName];
+    if (patch.index >= res->Instructions.size()) {
+        originalGfx[altPath].erase(patchName);
+        return;
+    }
+
+    Gfx* gfx = (Gfx*)&res->Instructions[patch.index];
+    *gfx = patch.instruction;
+
+    originalGfx[altPath].erase(patchName);
 }
 
 extern "C" void ResourceMgr_PatchGfxCopyCommandByName(const char* path, const char* patchName, int destinationIndex,
