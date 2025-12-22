@@ -398,31 +398,22 @@ static std::shared_ptr<Fast::DisplayList> ResourceMgr_GetOrCreateAltDisplayList(
 }
 
 // Module to patch DisplayList instructions for custom equipment
-extern "C" void ResourceMgr_PatchCustomGfxByName(
-    const char* path,
-    const char* patchName,
-    int index,
-    Gfx instruction
-) {
+extern "C" void ResourceMgr_PatchCustomGfxByName(const char* path, const char* patchName, int index, Gfx instruction) {
     auto res = ResourceMgr_GetOrCreateAltDisplayList(path);
     if (!res) {
         return;
     }
 
-    // Use the canonical resource key as loaded by the ResourceManager
-    const std::string& canonicalKey = res->GetInitData()->Path;
-
-    // Sanity: must have enough instructions
-    if (index < 0 || index >= static_cast<int>(res->Instructions.size())) {
-        return;
+    std::string basePath = path;
+    if (basePath.starts_with("__OTR__")) {
+        basePath = basePath.substr(7);
     }
+    std::string altPath = "alt/" + basePath;
 
-    Gfx* gfx = reinterpret_cast<Gfx*>(&res->Instructions[index]);
+    Gfx* gfx = (Gfx*)&res->Instructions[index];
 
-    // Save original only once, keyed by canonical path
-    if (!originalGfx.contains(canonicalKey) ||
-        !originalGfx[canonicalKey].contains(patchName)) {
-        originalGfx[canonicalKey][patchName] = { index, *gfx };
+    if (!originalGfx.contains(altPath) || !originalGfx[altPath].contains(patchName)) {
+        originalGfx[altPath][patchName] = { index, *gfx };
     }
 
     *gfx = instruction;
