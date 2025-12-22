@@ -130,10 +130,10 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
             }
         }
     } else {
-        ResourceMgr_UnpatchGfxByName(resource, dlist1);
-        ResourceMgr_UnpatchGfxByName(resource, dlist2);
+        ResourceMgr_UnpatchCustomGfxByName(resource, dlist1);
+        ResourceMgr_UnpatchCustomGfxByName(resource, dlist2);
         if (dlist3 != NULL) {
-            ResourceMgr_UnpatchGfxByName(resource, dlist3);
+            ResourceMgr_UnpatchCustomGfxByName(resource, dlist3);
         }
     }
 }
@@ -155,7 +155,7 @@ static void ApplyPatchEntries(std::initializer_list<PatchEntry> entries) {
 
 static void UnpatchGroup(const char* resource, std::initializer_list<const char*> dlistNames) {
     for (const char* name : dlistNames) {
-        ResourceMgr_UnpatchGfxByName(resource, name);
+        ResourceMgr_UnpatchCustomGfxByName(resource, name);
     }
 }
 
