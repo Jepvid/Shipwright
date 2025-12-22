@@ -363,7 +363,8 @@ static std::unordered_map<std::string, std::shared_ptr<Fast::DisplayList>> runti
 // Create substitute DisplayList for alt assets to be used for custom equips & patches.
 // This prevents modifying the original DisplayList, which could lead to issues when
 // switching between alt & original assets.
-static std::shared_ptr<Fast::DisplayList> ResourceMgr_GetOrCreateAltDisplayList(const char* path) {
+static std::shared_ptr<Fast::DisplayList>
+ResourceMgr_GetOrCreateAltDisplayList(const char* path) {
     std::string basePath = path;
     if (basePath.starts_with("__OTR__")) {
         basePath = basePath.substr(7);
@@ -372,28 +373,27 @@ static std::shared_ptr<Fast::DisplayList> ResourceMgr_GetOrCreateAltDisplayList(
     std::string altPath = "alt/" + basePath;
     auto rm = Ship::Context::GetInstance()->GetResourceManager();
 
-    // 1) Prefer runtime-generated alt DL if it already exists
-    if (runtimeAltDisplayLists.contains(altPath)) {
-        return runtimeAltDisplayLists[altPath];
-    }
-
-    // 2) Prefer filesystem-backed alt asset if it exists
+    // Prefer filesystem alt asset
     if (ExtensionCache.contains(altPath)) {
-        return std::static_pointer_cast<Fast::DisplayList>(rm->LoadResource(altPath.c_str()));
+        return std::static_pointer_cast<Fast::DisplayList>(
+            rm->LoadResource(altPath.c_str())
+        );
     }
 
-    // 3) Clone vanilla DL into a runtime alt
-    auto vanilla = std::static_pointer_cast<Fast::DisplayList>(rm->LoadResource(basePath.c_str()));
-
+    // Fallback: clone vanilla DL and register it
+    auto vanilla = std::static_pointer_cast<Fast::DisplayList>(
+        rm->LoadResource(basePath.c_str())
+    );
     if (!vanilla) {
         return nullptr;
     }
 
     auto cloned = std::make_shared<Fast::DisplayList>(*vanilla);
     cloned->GetInitData()->IsCustom = true;
+    cloned->GetInitData()->Path = altPath;
 
-    // Register runtime alt (best-effort; runtimeAltDisplayLists is authoritative)
-    runtimeAltDisplayLists[altPath] = cloned;
+    rm->AddResource(altPath.c_str(), cloned);
+
     return cloned;
 }
 
