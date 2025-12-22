@@ -318,6 +318,9 @@ typedef struct {
 
 std::unordered_map<std::string, std::unordered_map<std::string, GfxPatch>> originalGfx;
 
+// Runtime-generated alt DisplayLists for custom equipment
+static std::unordered_map<std::string, std::shared_ptr<Fast::DisplayList>> runtimeAltDisplayLists;
+
 // Attention! This is primarily for cosmetics & bug fixes. For things like mods and model replacement you should be
 // using OTRs instead (When that is available). Index can be found using the commented out section below.
 extern "C" void ResourceMgr_PatchGfxByName(const char* path, const char* patchName, int index, Gfx instruction) {
@@ -376,12 +379,38 @@ static std::string MakeAltPath(const char* path) {
 
 // Module to patch DisplayList instructions for custom equipment
 extern "C" void ResourceMgr_PatchCustomGfxByName(const char* path, const char* patchName, int index, Gfx instruction) {
-    auto res = ResourceMgr_GetOrCreateAltDisplayList(path);
+    std::string basePath = NormalizeResourcePath(path);
+    std::string altPath = MakeAltPath(path);
+    auto rm = Ship::Context::GetInstance()->GetResourceManager();
+
+    auto res = [&]() -> std::shared_ptr<Fast::DisplayList> {
+        // Prefer a real alt asset if it exists
+        if (ExtensionCache.contains(altPath)) {
+            runtimeAltDisplayLists.erase(altPath);
+            return std::static_pointer_cast<Fast::DisplayList>(rm->LoadResource(altPath.c_str()));
+        }
+
+        // Reuse runtime-generated alt DL if present
+        auto runtimeIt = runtimeAltDisplayLists.find(altPath);
+        if (runtimeIt != runtimeAltDisplayLists.end()) {
+            return runtimeIt->second;
+        }
+
+        // Clone vanilla DL into a runtime alt
+        auto vanilla = std::static_pointer_cast<Fast::DisplayList>(rm->LoadResource(basePath.c_str()));
+        if (!vanilla) {
+            return nullptr;
+        }
+
+        auto cloned = std::make_shared<Fast::DisplayList>(*vanilla);
+        cloned->GetInitData()->IsCustom = true;
+        runtimeAltDisplayLists[altPath] = cloned;
+        return cloned;
+    }();
+
     if (!res) {
         return;
     }
-
-    std::string altPath = MakeAltPath(path);
 
     Gfx* gfx = (Gfx*)&res->Instructions[index];
 
@@ -394,12 +423,35 @@ extern "C" void ResourceMgr_PatchCustomGfxByName(const char* path, const char* p
 
 extern "C" void ResourceMgr_UnpatchCustomGfxByName(const char* path, const char* patchName) {
     std::string altPath = MakeAltPath(path);
+    std::string basePath = NormalizeResourcePath(path);
+    auto rm = Ship::Context::GetInstance()->GetResourceManager();
 
     if (!originalGfx.contains(altPath) || !originalGfx[altPath].contains(patchName)) {
         return;
     }
 
-    auto res = ResourceMgr_GetOrCreateAltDisplayList(path);
+    auto res = [&]() -> std::shared_ptr<Fast::DisplayList> {
+        if (ExtensionCache.contains(altPath)) {
+            runtimeAltDisplayLists.erase(altPath);
+            return std::static_pointer_cast<Fast::DisplayList>(rm->LoadResource(altPath.c_str()));
+        }
+
+        auto runtimeIt = runtimeAltDisplayLists.find(altPath);
+        if (runtimeIt != runtimeAltDisplayLists.end()) {
+            return runtimeIt->second;
+        }
+
+        auto vanilla = std::static_pointer_cast<Fast::DisplayList>(rm->LoadResource(basePath.c_str()));
+        if (!vanilla) {
+            return nullptr;
+        }
+
+        auto cloned = std::make_shared<Fast::DisplayList>(*vanilla);
+        cloned->GetInitData()->IsCustom = true;
+        runtimeAltDisplayLists[altPath] = cloned;
+        return cloned;
+    }();
+
     if (!res) {
         originalGfx[altPath].erase(patchName);
         return;
@@ -441,6 +493,11 @@ extern "C" void ResourceMgr_UnpatchGfxByName(const char* path, const char* patch
     if (originalGfx.contains(path) && originalGfx[path].contains(patchName)) {
         auto res = std::static_pointer_cast<Fast::DisplayList>(
             Ship::Context::GetInstance()->GetResourceManager()->LoadResource(path));
+
+        if (originalGfx[path][patchName].index >= res->Instructions.size()) {
+            originalGfx[path].erase(patchName);
+            return;
+        }
 
         Gfx* gfx = (Gfx*)&res->Instructions[originalGfx[path][patchName].index];
         *gfx = originalGfx[path][patchName].instruction;

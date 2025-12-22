@@ -14,6 +14,7 @@
 
 std::shared_ptr<Ship::IResource> ResourceMgr_GetResourceByNameHandlingMQ(const char* path);
 
+
 extern "C" {
 #endif // __cplusplus
 #include "z64animation.h"
