@@ -115,11 +115,7 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
         return;
     }
 
-    const bool altAssetsRuntime = ResourceMgr_IsAltAssetsEnabled();
-    const bool altAssetsSetting = CVarGetInteger(CVAR_SETTING("AltAssets"), 1) != 0;
-    const bool altAssetsEnabled = altAssetsRuntime;
-
-    if (altAssetsEnabled) {
+    if (CVarGetInteger(CVAR_SETTING("AltAssets"), 0)) {
         if (ResourceGetIsCustomByName(gfx)) {
             if (alternateDL == NULL || ResourceGetIsCustomByName(alternateDL) || ResourceMgr_FileExists(alternateDL)) {
                 ResourceMgr_PatchCustomGfxByName(resource, dlist1, 0, gsSPDisplayListOTRFilePath(gfx));
