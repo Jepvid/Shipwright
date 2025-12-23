@@ -14,6 +14,7 @@
 #include <fast/Fast3dWindow.h>
 #include <fast/resource/ResourceType.h>
 #include <fast/resource/type/DisplayList.h>
+#include "spdlog/spdlog.h"
 
 extern "C" PlayState* gPlayState;
 
@@ -48,6 +49,7 @@ extern "C" uint32_t ResourceMgr_GetGamePlatform(int index) {
         case OOT_PAL_GC_MQ_DBG:
             return GAME_PLATFORM_GC;
     }
+    return GAME_PLATFORM_N64;
 }
 
 extern "C" uint32_t ResourceMgr_GetGameRegion(int index) {
@@ -73,6 +75,7 @@ extern "C" uint32_t ResourceMgr_GetGameRegion(int index) {
         case OOT_PAL_GC_MQ_DBG:
             return GAME_REGION_PAL;
     }
+    return GAME_REGION_NTSC;
 }
 
 extern "C" char* _message_0xFFFC_nes;
@@ -324,6 +327,12 @@ extern "C" void ResourceMgr_PatchGfxByName(const char* path, const char* patchNa
     auto res = std::static_pointer_cast<Fast::DisplayList>(
         Ship::Context::GetInstance()->GetResourceManager()->LoadResource(path));
 
+    if (res == nullptr || index < 0 || static_cast<size_t>(index) >= res->Instructions.size()) {
+        SPDLOG_DEBUG("ResourceMgr_PatchGfxByName skipped for {} (patchName={}, index={}, res={})", path, patchName,
+                     index, (void*)res.get());
+        return;
+    }
+
     // Leaving this here for people attempting to find the correct Dlist index to patch
     /*if (strcmp("__OTR__objects/object_gi_longsword/gGiBiggoronSwordDL", path) == 0) {
         for (int i = 0; i < res->instructions.size(); i++) {
@@ -361,6 +370,12 @@ extern "C" void ResourceMgr_PatchCustomGfxByName(const char* path, const char* p
     auto res = std::static_pointer_cast<Fast::DisplayList>(
         Ship::Context::GetInstance()->GetResourceManager()->LoadResource(path));
 
+    if (res == nullptr || index < 0 || static_cast<size_t>(index) >= res->Instructions.size()) {
+        SPDLOG_DEBUG("ResourceMgr_PatchCustomGfxByName skipped for {} (patchName={}, index={}, res={})", path,
+                     patchName, index, (void*)res.get());
+        return;
+    }
+
     Gfx* gfx = (Gfx*)&res->Instructions[index];
 
     if (!originalGfx.contains(path) || !originalGfx[path].contains(patchName)) {
@@ -374,6 +389,15 @@ extern "C" void ResourceMgr_PatchGfxCopyCommandByName(const char* path, const ch
                                                       int sourceIndex) {
     auto res = std::static_pointer_cast<Fast::DisplayList>(
         Ship::Context::GetInstance()->GetResourceManager()->LoadResource(path));
+
+    if (res == nullptr || destinationIndex < 0 || sourceIndex < 0 ||
+        static_cast<size_t>(destinationIndex) >= res->Instructions.size() ||
+        static_cast<size_t>(sourceIndex) >= res->Instructions.size()) {
+        SPDLOG_DEBUG(
+            "ResourceMgr_PatchGfxCopyCommandByName skipped for {} (patchName={}, destIndex={}, srcIndex={}, res={})",
+            path, patchName, destinationIndex, sourceIndex, (void*)res.get());
+        return;
+    }
 
     // Do not patch custom assets as they most likely do not have the same instructions as authentic assets
     if (res->GetInitData()->IsCustom) {
@@ -395,9 +419,18 @@ extern "C" void ResourceMgr_UnpatchGfxByName(const char* path, const char* patch
         auto res = std::static_pointer_cast<Fast::DisplayList>(
             Ship::Context::GetInstance()->GetResourceManager()->LoadResource(path));
 
+        if (res == nullptr) {
+            SPDLOG_DEBUG("ResourceMgr_UnpatchGfxByName skipped (resource failed to load) path={} patchName={}", path,
+                         patchName);
+            originalGfx[path].erase(patchName);
+            return;
+        }
+
         // Skip and clean up if the loaded resource is smaller than the recorded patch index (can happen when alt assets
         // swap in shorter display lists).
-        if (originalGfx[path][patchName].index >= res->Instructions.size()) {
+        if (static_cast<size_t>(originalGfx[path][patchName].index) >= res->Instructions.size()) {
+            SPDLOG_DEBUG("ResourceMgr_UnpatchGfxByName skipped (index out of bounds) path={} patchName={} index={}",
+                         path, patchName, originalGfx[path][patchName].index);
             originalGfx[path].erase(patchName);
             return;
         }
