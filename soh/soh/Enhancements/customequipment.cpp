@@ -24,8 +24,7 @@ static bool CustomEquipmentDebugEnabled() {
     return CVarGetInteger(CVAR_ENHANCEMENT("CustomEquipmentDebug"), 0) != 0;
 }
 
-template <typename... Args>
-static void CustomEquipLog(const char* fmtStr, Args&&... args) {
+template <typename... Args> static void CustomEquipLog(const char* fmtStr, Args&&... args) {
     if (!CustomEquipmentDebugEnabled()) {
         return;
     }
