@@ -14,7 +14,6 @@
 #include <fast/Fast3dWindow.h>
 #include <fast/resource/ResourceType.h>
 #include <fast/resource/type/DisplayList.h>
-#include "spdlog/spdlog.h"
 
 extern "C" PlayState* gPlayState;
 
@@ -328,8 +327,6 @@ extern "C" void ResourceMgr_PatchGfxByName(const char* path, const char* patchNa
         Ship::Context::GetInstance()->GetResourceManager()->LoadResource(path));
 
     if (res == nullptr || index < 0 || static_cast<size_t>(index) >= res->Instructions.size()) {
-        SPDLOG_DEBUG("ResourceMgr_PatchGfxByName skipped for {} (patchName={}, index={}, res={})", path, patchName,
-                     index, (void*)res.get());
         return;
     }
 
@@ -371,8 +368,6 @@ extern "C" void ResourceMgr_PatchCustomGfxByName(const char* path, const char* p
         Ship::Context::GetInstance()->GetResourceManager()->LoadResource(path));
 
     if (res == nullptr || index < 0 || static_cast<size_t>(index) >= res->Instructions.size()) {
-        SPDLOG_DEBUG("ResourceMgr_PatchCustomGfxByName skipped for {} (patchName={}, index={}, res={})", path,
-                     patchName, index, (void*)res.get());
         return;
     }
 
@@ -393,9 +388,6 @@ extern "C" void ResourceMgr_PatchGfxCopyCommandByName(const char* path, const ch
     if (res == nullptr || destinationIndex < 0 || sourceIndex < 0 ||
         static_cast<size_t>(destinationIndex) >= res->Instructions.size() ||
         static_cast<size_t>(sourceIndex) >= res->Instructions.size()) {
-        SPDLOG_DEBUG(
-            "ResourceMgr_PatchGfxCopyCommandByName skipped for {} (patchName={}, destIndex={}, srcIndex={}, res={})",
-            path, patchName, destinationIndex, sourceIndex, (void*)res.get());
         return;
     }
 
@@ -420,8 +412,6 @@ extern "C" void ResourceMgr_UnpatchGfxByName(const char* path, const char* patch
             Ship::Context::GetInstance()->GetResourceManager()->LoadResource(path));
 
         if (res == nullptr) {
-            SPDLOG_DEBUG("ResourceMgr_UnpatchGfxByName skipped (resource failed to load) path={} patchName={}", path,
-                         patchName);
             originalGfx[path].erase(patchName);
             return;
         }
@@ -429,8 +419,6 @@ extern "C" void ResourceMgr_UnpatchGfxByName(const char* path, const char* patch
         // Skip and clean up if the loaded resource is smaller than the recorded patch index (can happen when alt assets
         // swap in shorter display lists).
         if (static_cast<size_t>(originalGfx[path][patchName].index) >= res->Instructions.size()) {
-            SPDLOG_DEBUG("ResourceMgr_UnpatchGfxByName skipped (index out of bounds) path={} patchName={} index={}",
-                         path, patchName, originalGfx[path][patchName].index);
             originalGfx[path].erase(patchName);
             return;
         }

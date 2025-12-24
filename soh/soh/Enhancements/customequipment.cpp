@@ -1,5 +1,4 @@
 #include <initializer_list>
-#include <string>
 #include "src/overlays/actors/ovl_En_Elf/z_en_elf.h"
 #include "objects/object_link_boy/object_link_boy.h"
 #include "objects/object_link_child/object_link_child.h"
@@ -10,7 +9,6 @@
 #include "soh_assets.h"
 #include "kaleido.h"
 #include "soh/cvar_prefixes.h"
-#include "spdlog/spdlog.h"
 
 extern SaveContext gSaveContext;
 extern PlayState* gPlayState;
@@ -19,40 +17,39 @@ extern void Overlay_DisplayText(float duration, const char* text);
 static void UpdatePatchCustomEquipmentDlists();
 static void RefreshCustomEquipment();
 
-static bool CustomEquipmentDebugEnabled() {
-    return CVarGetInteger(CVAR_ENHANCEMENT("CustomEquipmentDebug"), 0) != 0;
-}
-
-template <typename... Args> static void CustomEquipLog(const char* fmtStr, Args&&... args) {
-    if (!CustomEquipmentDebugEnabled()) {
-        return;
+static const char* ResolveCustomChain(std::initializer_list<const char*> paths) {
+    const char* fallback = nullptr;
+    for (auto path : paths) {
+        if (path != nullptr) {
+            fallback = path;
+            if (ResourceMgr_FileExists(path)) {
+                return path;
+            }
+        }
     }
-
-    SPDLOG_INFO("[CustomEquipment] {}", fmt::format(fmt::runtime(fmtStr), std::forward<Args>(args)...));
-}
-
-static const char* ResolveCustomOrFallback(const char* primary, const char* fallback) {
-    return ResourceMgr_FileExists(primary) ? primary : fallback;
+    return fallback;
 }
 
 static const char* GetBreakableLongswordDL() {
-    return ResolveCustomOrFallback(gCustomBreakableLongswordDL, gCustomLongswordDL);
+    return ResolveCustomChain({ gCustomBreakableLongswordDL, gCustomLongswordDL });
 }
 
 static const char* GetBreakableLongswordSheathDL() {
-    return ResolveCustomOrFallback(gCustomBreakableLongswordSheathDL, gCustomLongswordSheathDL);
+    return ResolveCustomChain({ gCustomBreakableLongswordSheathDL, gCustomLongswordSheathDL });
 }
 
 static const char* GetBreakableLongswordInSheathDL() {
-    return ResolveCustomOrFallback(gCustomBreakableLongswordInSheathDL, gCustomLongswordInSheathDL);
+    return ResolveCustomChain({ gCustomBreakableLongswordInSheathDL, gCustomLongswordInSheathDL });
 }
 
 static const char* GetBrokenLongswordSheathDL() {
-    return ResolveCustomOrFallback(gCustomBrokenLongswordSheathDL, gCustomLongswordSheathDL);
+    return ResolveCustomChain(
+        { gCustomBrokenLongswordSheathDL, gCustomBreakableLongswordSheathDL, gCustomLongswordSheathDL });
 }
 
 static const char* GetBrokenLongswordInSheathDL() {
-    return ResolveCustomOrFallback(gCustomBrokenLongswordInSheathDL, gCustomLongswordInSheathDL);
+    return ResolveCustomChain(
+        { gCustomBrokenLongswordInSheathDL, gCustomBreakableLongswordInSheathDL, gCustomLongswordInSheathDL });
 }
 
 static void UpdateCustomEquipmentSetModel(u8 ModelGroup) {
@@ -75,20 +72,15 @@ static RegisterShipInitFunc initFunc(PatchCustomEquipment);
 
 static void RefreshCustomEquipment() {
     if (!GameInteractor::IsSaveLoaded() || gPlayState == NULL) {
-        CustomEquipLog("Skipping refresh: save not loaded or play state missing");
         return;
     }
 
-    CustomEquipLog("Refreshing custom equipment (sword={}, age={})", gSaveContext.equips.buttonItems[0],
-                   LINK_IS_CHILD ? "child" : "adult");
     UpdatePatchCustomEquipmentDlists();
 }
 
 void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, const char* dlist2, const char* dlist3,
                     const char* alternateDL) {
     if (resource == NULL || gfx == NULL || dlist1 == NULL || dlist2 == NULL) {
-        CustomEquipLog("Skipping patch: missing required args (resource={}, gfx={}, dlist1={}, dlist2={})", resource,
-                       gfx, dlist1, dlist2);
         return;
     }
 
@@ -96,13 +88,11 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
     const bool altAssetsSetting = CVarGetInteger(CVAR_SETTING("AltAssets"), 0) != 0;
 
     if (!altAssetsRuntime) {
-        CustomEquipLog("Alt assets disabled at runtime; unloading {}", resource);
         ResourceMgr_UnloadResource(resource);
         return;
     }
 
     if (!ResourceGetIsCustomByName(gfx)) {
-        CustomEquipLog("Skipping patch: gfx {} is not custom", gfx);
         return;
     }
 
@@ -116,11 +106,6 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
         if (dlist3 != NULL) {
             ResourceMgr_PatchCustomGfxByName(resource, dlist3, 2, gsSPEndDisplayList());
         }
-        CustomEquipLog("Patched {} with gfx {} (dlist1={}, dlist2={}, dlist3={}, alt={})", resource, gfx, dlist1,
-                       dlist2, dlist3 ? dlist3 : "null", alternateDL ? alternateDL : "null");
-    } else {
-        CustomEquipLog("Skipping patch: alternate DL {} missing/invalid for {}", alternateDL ? alternateDL : "null",
-                       resource);
     }
 }
 
