@@ -20,6 +20,7 @@
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "soh/Enhancements/randomizer/randomizer_grotto.h"
+#include "soh/Enhancements/randomizer/BankCards.h"
 #include "soh/OTRGlobals.h"
 #include "soh/ResourceManagerHelpers.h"
 #include "soh/Enhancements/gameplaystats.h"
@@ -2071,13 +2072,13 @@ u8 Item_Give(PlayState* play, u8 item) {
         return Return_Item(item, MOD_NONE, ITEM_NONE);
     } else if (item == ITEM_WALLET_ADULT) {
         Inventory_ChangeUpgrade(UPG_WALLET, 1);
-        if (IS_RANDO && Randomizer_GetSettingValue(RSK_FULL_WALLETS)) {
+        if (Randomizer_BankCards_ShouldApplyFullWallets()) {
             Rupees_ChangeBy(200);
         }
         return Return_Item(item, MOD_NONE, ITEM_NONE);
     } else if (item == ITEM_WALLET_GIANT) {
         Inventory_ChangeUpgrade(UPG_WALLET, 2);
-        if (IS_RANDO && Randomizer_GetSettingValue(RSK_FULL_WALLETS)) {
+        if (Randomizer_BankCards_ShouldApplyFullWallets()) {
             Rupees_ChangeBy(500);
         }
         return Return_Item(item, MOD_NONE, ITEM_NONE);
@@ -5353,7 +5354,9 @@ void Interface_Draw(PlayState* play) {
                 // Rupee Counter
                 gDPPipeSync(OVERLAY_DISP++);
 
-                if (gSaveContext.rupees == CUR_CAPACITY(UPG_WALLET)) {
+                s16 rupeeLimit = Randomizer_BankCards_GetMaxRupees();
+
+                if (gSaveContext.rupees == rupeeLimit) {
                     gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 120, 255, 0, interfaceCtx->magicAlpha);
                 } else if (gSaveContext.rupees != 0) {
                     gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 255, 255, 255, interfaceCtx->magicAlpha);
@@ -5364,27 +5367,40 @@ void Interface_Draw(PlayState* play) {
                 gDPSetCombineLERP(OVERLAY_DISP++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0, 0, 0, 0, PRIMITIVE,
                                   TEXEL0, 0, PRIMITIVE, 0);
 
-                interfaceCtx->counterDigits[0] = interfaceCtx->counterDigits[1] = 0;
-                interfaceCtx->counterDigits[2] = gSaveContext.rupees;
+                s16 digitStart = rupeeDigitsFirst[CUR_UPG_VALUE(UPG_WALLET)];
+                s16 digitCount = rupeeDigitsCount[CUR_UPG_VALUE(UPG_WALLET)];
 
-                if ((interfaceCtx->counterDigits[2] > 9999) || (interfaceCtx->counterDigits[2] < 0)) {
-                    interfaceCtx->counterDigits[2] &= 0xDDD;
+                if (!Randomizer_BankCards_FormatRupeeDigits(gSaveContext.rupees, interfaceCtx->counterDigits,
+                                                            &digitStart, &digitCount)) {
+                    interfaceCtx->counterDigits[0] = interfaceCtx->counterDigits[1] = 0;
+                    interfaceCtx->counterDigits[2] = gSaveContext.rupees;
+
+                    if ((interfaceCtx->counterDigits[2] > rupeeLimit) || (interfaceCtx->counterDigits[2] < 0)) {
+                        interfaceCtx->counterDigits[2] = rupeeLimit;
+                    }
+
+                    while (interfaceCtx->counterDigits[2] >= 100) {
+                        interfaceCtx->counterDigits[0]++;
+                        interfaceCtx->counterDigits[2] -= 100;
+                    }
+
+                    while (interfaceCtx->counterDigits[2] >= 10) {
+                        interfaceCtx->counterDigits[1]++;
+                        interfaceCtx->counterDigits[2] -= 10;
+                    }
                 }
 
-                while (interfaceCtx->counterDigits[2] >= 100) {
-                    interfaceCtx->counterDigits[0]++;
-                    interfaceCtx->counterDigits[2] -= 100;
+                if (Randomizer_BankCardsEnabled()) {
+                    // Always show 4 slots when bank cards are on so 9999 is readable and lower values stay aligned.
+                    digitStart = 0;
+                    digitCount = 4;
                 }
 
-                while (interfaceCtx->counterDigits[2] >= 10) {
-                    interfaceCtx->counterDigits[1]++;
-                    interfaceCtx->counterDigits[2] -= 10;
-                }
+                svar2 = digitStart;
+                svar5 = digitCount;
+                s16 digitOffset = Randomizer_BankCardsEnabled() ? 8 : 16;
 
-                svar2 = rupeeDigitsFirst[CUR_UPG_VALUE(UPG_WALLET)];
-                svar5 = rupeeDigitsCount[CUR_UPG_VALUE(UPG_WALLET)];
-
-                for (svar1 = 0, svar3 = 16; svar1 < svar5; svar1++, svar2++, svar3 += 8) {
+                for (svar1 = 0, svar3 = digitOffset; svar1 < svar5; svar1++, svar2++, svar3 += 8) {
                     OVERLAY_DISP = Gfx_TextureI8(OVERLAY_DISP, ((u8*)digitTextures[interfaceCtx->counterDigits[svar2]]),
                                                  8, 16, PosX_RC + svar3, PosY_RC, 8, 16, 1 << 10, 1 << 10);
                 }
@@ -6672,16 +6688,17 @@ void Interface_Update(PlayState* play) {
         !Play_InCsMode(play)) {}
 
     if (gSaveContext.rupeeAccumulator != 0) {
+        s16 maxRupees = Randomizer_BankCards_GetMaxRupees();
         if (gSaveContext.rupeeAccumulator > 0) {
-            if (gSaveContext.rupees < CUR_CAPACITY(UPG_WALLET)) {
+            if (gSaveContext.rupees < maxRupees) {
                 gSaveContext.rupeeAccumulator--;
                 gSaveContext.rupees++;
                 Audio_PlaySoundGeneral(NA_SE_SY_RUPY_COUNT, &gSfxDefaultPos, 4, &gSfxDefaultFreqAndVolScale,
                                        &gSfxDefaultFreqAndVolScale, &gSfxDefaultReverb);
             } else {
                 // "Rupee Amount MAX = %d"
-                osSyncPrintf("ルピー数ＭＡＸ = %d\n", CUR_CAPACITY(UPG_WALLET));
-                gSaveContext.rupees = CUR_CAPACITY(UPG_WALLET);
+                osSyncPrintf("ルピー数ＭＡＸ = %d\n", maxRupees);
+                gSaveContext.rupees = maxRupees;
                 gSaveContext.rupeeAccumulator = 0;
             }
         } else if (gSaveContext.rupees != 0) {

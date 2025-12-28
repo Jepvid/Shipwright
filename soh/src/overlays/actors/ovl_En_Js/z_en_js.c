@@ -9,6 +9,7 @@
 #include "soh/OTRGlobals.h"
 #include "soh/ResourceManagerHelpers.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
+#include "soh/Enhancements/randomizer/BankCards.h"
 
 #define FLAGS (ACTOR_FLAG_ATTENTION_ENABLED | ACTOR_FLAG_FRIENDLY)
 
@@ -145,7 +146,8 @@ void func_80A891C4(EnJs* this, PlayState* play) {
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE && Message_ShouldAdvance(play)) {
         switch (play->msgCtx.choiceIndex) {
             case 0: // yes
-                if (GameInteractor_Should(VB_CHECK_RANDO_PRICE_OF_CARPET_SALESMAN, gSaveContext.rupees < 200, this)) {
+                if (GameInteractor_Should(VB_CHECK_RANDO_PRICE_OF_CARPET_SALESMAN,
+                                          !Randomizer_BankCards_CanSpend(200), this)) {
                     Message_ContinueTextbox(play, 0x6075);
                     func_80A89008(this);
                 } else {

@@ -10,6 +10,7 @@
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "soh/OTRGlobals.h"
 #include "soh/ResourceManagerHelpers.h"
+#include "soh/Enhancements/randomizer/BankCards.h"
 
 #define FLAGS (ACTOR_FLAG_ATTENTION_ENABLED | ACTOR_FLAG_FRIENDLY)
 
@@ -179,7 +180,7 @@ u32 EnDns_CanBuyDekuNuts(EnDns* this) {
     if ((CUR_CAPACITY(UPG_NUTS) != 0) && (AMMO(ITEM_NUT) >= CUR_CAPACITY(UPG_NUTS))) {
         return DNS_CANBUY_RESULT_CAPACITY_FULL;
     }
-    if (gSaveContext.rupees < this->dnsItemEntry->itemPrice) {
+    if (!Randomizer_BankCards_CanSpend(this->dnsItemEntry->itemPrice)) {
         return DNS_CANBUY_RESULT_NEED_RUPEES;
     }
     if (Item_CheckObtainability(ITEM_NUT) == ITEM_NONE) {
@@ -192,7 +193,7 @@ u32 EnDns_CanBuyDekuSticks(EnDns* this) {
     if ((CUR_CAPACITY(UPG_STICKS) != 0) && (AMMO(ITEM_STICK) >= CUR_CAPACITY(UPG_STICKS))) {
         return DNS_CANBUY_RESULT_CAPACITY_FULL;
     }
-    if (gSaveContext.rupees < this->dnsItemEntry->itemPrice) {
+    if (!Randomizer_BankCards_CanSpend(this->dnsItemEntry->itemPrice)) {
         return DNS_CANBUY_RESULT_NEED_RUPEES;
     }
     if (Item_CheckObtainability(ITEM_STICK) == ITEM_NONE) {
@@ -202,7 +203,7 @@ u32 EnDns_CanBuyDekuSticks(EnDns* this) {
 }
 
 u32 EnDns_CanBuyPrice(EnDns* this) {
-    if (gSaveContext.rupees < this->dnsItemEntry->itemPrice) {
+    if (!Randomizer_BankCards_CanSpend(this->dnsItemEntry->itemPrice)) {
         return DNS_CANBUY_RESULT_NEED_RUPEES;
     }
     return DNS_CANBUY_RESULT_SUCCESS;
@@ -215,7 +216,7 @@ u32 EnDns_CanBuyDekuSeeds(EnDns* this) {
     if (AMMO(ITEM_SLINGSHOT) >= CUR_CAPACITY(UPG_BULLET_BAG)) {
         return DNS_CANBUY_RESULT_CAPACITY_FULL;
     }
-    if (gSaveContext.rupees < this->dnsItemEntry->itemPrice) {
+    if (!Randomizer_BankCards_CanSpend(this->dnsItemEntry->itemPrice)) {
         return DNS_CANBUY_RESULT_NEED_RUPEES;
     }
     if (Item_CheckObtainability(ITEM_SEEDS) == ITEM_NONE) {
@@ -228,7 +229,7 @@ u32 EnDns_CanBuyDekuShield(EnDns* this) {
     if (CHECK_OWNED_EQUIP_ALT(EQUIP_TYPE_SHIELD, EQUIP_INV_SHIELD_DEKU)) {
         return DNS_CANBUY_RESULT_CAPACITY_FULL;
     }
-    if (gSaveContext.rupees < this->dnsItemEntry->itemPrice) {
+    if (!Randomizer_BankCards_CanSpend(this->dnsItemEntry->itemPrice)) {
         return DNS_CANBUY_RESULT_NEED_RUPEES;
     }
     return DNS_CANBUY_RESULT_SUCCESS;
@@ -241,7 +242,7 @@ u32 EnDns_CanBuyBombs(EnDns* this) {
     if (AMMO(ITEM_BOMB) >= CUR_CAPACITY(UPG_BOMB_BAG)) {
         return DNS_CANBUY_RESULT_CAPACITY_FULL;
     }
-    if (gSaveContext.rupees < this->dnsItemEntry->itemPrice) {
+    if (!Randomizer_BankCards_CanSpend(this->dnsItemEntry->itemPrice)) {
         return DNS_CANBUY_RESULT_NEED_RUPEES;
     }
     return DNS_CANBUY_RESULT_SUCCESS;
@@ -254,7 +255,7 @@ u32 EnDns_CanBuyArrows(EnDns* this) {
     if (AMMO(ITEM_BOW) >= CUR_CAPACITY(UPG_QUIVER)) {
         return DNS_CANBUY_RESULT_CAPACITY_FULL;
     }
-    if (gSaveContext.rupees < this->dnsItemEntry->itemPrice) {
+    if (!Randomizer_BankCards_CanSpend(this->dnsItemEntry->itemPrice)) {
         return DNS_CANBUY_RESULT_NEED_RUPEES;
     }
     return DNS_CANBUY_RESULT_SUCCESS;
@@ -264,7 +265,7 @@ u32 EnDns_CanBuyBottle(EnDns* this) {
     if (!Inventory_HasEmptyBottle()) {
         return DNS_CANBUY_RESULT_CAPACITY_FULL;
     }
-    if (gSaveContext.rupees < this->dnsItemEntry->itemPrice) {
+    if (!Randomizer_BankCards_CanSpend(this->dnsItemEntry->itemPrice)) {
         return DNS_CANBUY_RESULT_NEED_RUPEES;
     }
     return DNS_CANBUY_RESULT_SUCCESS;

@@ -737,6 +737,9 @@ void Settings::CreateOptionDescriptions() {
     mOptionDescriptions[RSK_MASK_SHOP_HINT] =
         "Reading the mask shop sign will tell you rewards from showing masks at the Deku Theatre.";
     mOptionDescriptions[RSK_FULL_WALLETS] = "Start with a full wallet. All wallet upgrades come filled with rupees.";
+    mOptionDescriptions[RSK_BANK_CARDS] =
+        "Raises the rupee balance cap to 9999 while wallet upgrades set the maximum you can spend per purchase. "
+        "Full Wallets is ignored when this is on.";
     mOptionDescriptions[RSK_BOMBCHU_BAG] =
         "None - Bombchus have vanilla behavior, any Bombchu requirement is filled by Bomb Bag + a renewable source of "
         "Bombchus.\n\n"

@@ -22,6 +22,7 @@
 #include <stdexcept>
 #include "randomizer_check_objects.h"
 #include "randomizer_check_tracker.h"
+#include "BankCards.h"
 #include <sstream>
 #include <tuple>
 #include <functional>
@@ -6266,13 +6267,13 @@ extern "C" u16 Randomizer_Item_Give(PlayState* play, GetItemEntry giEntry) {
             break;
         case RG_TYCOON_WALLET:
             Inventory_ChangeUpgrade(UPG_WALLET, 3);
-            if (OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_FULL_WALLETS)) {
+            if (Randomizer_BankCards_ShouldApplyFullWallets()) {
                 Rupees_ChangeBy(999);
             }
             break;
         case RG_CHILD_WALLET:
             Flags_SetRandomizerInf(RAND_INF_HAS_WALLET);
-            if (OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_FULL_WALLETS)) {
+            if (Randomizer_BankCards_ShouldApplyFullWallets()) {
                 Rupees_ChangeBy(99);
             }
             break;

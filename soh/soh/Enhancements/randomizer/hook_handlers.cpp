@@ -7,6 +7,7 @@
 #include "soh/Enhancements/randomizer/randomizerTypes.h"
 #include "soh/Enhancements/randomizer/dungeon.h"
 #include "soh/Enhancements/randomizer/static_data.h"
+#include "soh/Enhancements/randomizer/BankCards.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "soh/SohGui/ImGuiUtils.h"
@@ -1160,9 +1161,9 @@ void RandomizerOnVanillaBehaviorHandler(GIVanillaBehavior id, bool* should, va_l
         }
         case VB_CHECK_RANDO_PRICE_OF_CARPET_SALESMAN: {
             if (EnJs_RandoCanGetCarpetMerchantItem()) {
-                *should =
-                    gSaveContext.rupees <
+                const s32 price =
                     OTRGlobals::Instance->gRandoContext->GetItemLocation(RC_WASTELAND_BOMBCHU_SALESMAN)->GetPrice();
+                *should = !Randomizer_BankCards_CanSpend(price);
             }
             break;
         }
@@ -1188,8 +1189,8 @@ void RandomizerOnVanillaBehaviorHandler(GIVanillaBehavior id, bool* should, va_l
         }
         case VB_CHECK_RANDO_PRICE_OF_MEDIGORON: {
             if (EnGm_RandoCanGetMedigoronItem()) {
-                *should = gSaveContext.rupees <
-                          OTRGlobals::Instance->gRandoContext->GetItemLocation(RC_GC_MEDIGORON)->GetPrice();
+                const s32 price = OTRGlobals::Instance->gRandoContext->GetItemLocation(RC_GC_MEDIGORON)->GetPrice();
+                *should = !Randomizer_BankCards_CanSpend(price);
             }
             break;
         }
@@ -1401,8 +1402,8 @@ void RandomizerOnVanillaBehaviorHandler(GIVanillaBehavior id, bool* should, va_l
         }
         case VB_GRANNY_SAY_INSUFFICIENT_RUPEES: {
             if (EnDs_RandoCanGetGrannyItem()) {
-                *should = gSaveContext.rupees <
-                          OTRGlobals::Instance->gRandoContext->GetItemLocation(RC_KAK_GRANNYS_SHOP)->GetPrice();
+                const s32 price = OTRGlobals::Instance->gRandoContext->GetItemLocation(RC_KAK_GRANNYS_SHOP)->GetPrice();
+                *should = !Randomizer_BankCards_CanSpend(price);
             }
             break;
         }
@@ -1617,7 +1618,8 @@ void RandomizerOnVanillaBehaviorHandler(GIVanillaBehavior id, bool* should, va_l
             break;
         }
         case VB_RENDER_RUPEE_COUNTER: {
-            if (!Flags_GetRandomizerInf(RAND_INF_HAS_WALLET) || Flags_GetRandomizerInf(RAND_INF_HAS_INFINITE_MONEY)) {
+            if ((!Flags_GetRandomizerInf(RAND_INF_HAS_WALLET) && !Randomizer_BankCardsEnabled()) ||
+                Flags_GetRandomizerInf(RAND_INF_HAS_INFINITE_MONEY)) {
                 *should = false;
             }
             break;
@@ -1916,7 +1918,7 @@ u32 EnDns_RandomizerPurchaseableCheck(EnDns* enDns) {
     if (Flags_GetRandomizerInf(enDns->sohScrubIdentity.randomizerInf)) {
         return 3; // Can't get this now
     }
-    if (gSaveContext.rupees < enDns->dnsItemEntry->itemPrice) {
+    if (!Randomizer_BankCards_CanSpend(enDns->dnsItemEntry->itemPrice)) {
         return 0; // Not enough rupees
     }
     return 4;
@@ -2226,10 +2228,10 @@ void RandomizerOnGameFrameUpdateHandler() {
     }
 
     if (Flags_GetRandomizerInf(RAND_INF_HAS_INFINITE_MONEY)) {
-        gSaveContext.rupees = static_cast<s16>(CUR_CAPACITY(UPG_WALLET));
+        gSaveContext.rupees = Randomizer_BankCards_GetMaxRupees();
     }
 
-    if (!Flags_GetRandomizerInf(RAND_INF_HAS_WALLET)) {
+    if (!Flags_GetRandomizerInf(RAND_INF_HAS_WALLET) && !Randomizer_BankCardsEnabled()) {
         gSaveContext.rupees = 0;
     }
 }

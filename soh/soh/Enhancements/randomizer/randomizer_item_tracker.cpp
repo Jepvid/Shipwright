@@ -9,6 +9,7 @@
 #include "randomizer_check_tracker.h"
 #include "randomizer_item_tracker.h"
 #include "randomizerTypes.h"
+#include "BankCards.h"
 #include "soh/cvar_prefixes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/OTRGlobals.h"
@@ -471,10 +472,15 @@ ItemTrackerNumbers GetItemCurrentAndMax(ItemTrackerItem item) {
         case ITEM_WALLET_ADULT:
         case ITEM_WALLET_GIANT:
             result.currentCapacity =
-                IS_RANDO && !Flags_GetRandomizerInf(RAND_INF_HAS_WALLET) ? 0 : CUR_CAPACITY(UPG_WALLET);
-            result.maxCapacity =
-                IS_RANDO && OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_INCLUDE_TYCOON_WALLET) ? 999
-                                                                                                               : 500;
+                (IS_RANDO && !Flags_GetRandomizerInf(RAND_INF_HAS_WALLET) && !Randomizer_BankCardsEnabled())
+                    ? 0
+                    : Randomizer_BankCards_GetMaxRupees();
+            result.maxCapacity = IS_RANDO && Randomizer_BankCardsEnabled()
+                                     ? Randomizer_BankCards_GetMaxRupees()
+                                     : (IS_RANDO &&
+                                        OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_INCLUDE_TYCOON_WALLET)
+                                            ? 999
+                                            : 500);
             result.currentAmmo = gSaveContext.rupees;
             break;
         case ITEM_BOMBCHU:

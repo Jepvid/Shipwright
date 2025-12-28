@@ -1,6 +1,7 @@
 #include <libultraship/bridge.h>
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "soh/ShipInit.hpp"
+#include "soh/Enhancements/randomizer/BankCards.h"
 #include "z64save.h"
 #include "variables.h"
 
@@ -19,7 +20,7 @@ void OnGameFrameUpdateInfiniteMoney() {
         return;
     }
 
-    gSaveContext.rupees = CUR_CAPACITY(UPG_WALLET);
+    gSaveContext.rupees = Randomizer_BankCards_GetMaxRupees();
 }
 
 void RegisterInfiniteMoney() {

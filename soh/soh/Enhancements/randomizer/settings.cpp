@@ -322,6 +322,7 @@ void Settings::CreateOptions() {
     OPT_BOOL(RSK_STARTING_STICKS, "Start with Stick Ammo", {"No", "Yes"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("StartingSticks"), "", WidgetType::Checkbox, RO_GENERIC_OFF);
     OPT_BOOL(RSK_STARTING_NUTS, "Start with Nut Ammo", {"No", "Yes"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("StartingNuts"), "", WidgetType::Checkbox, RO_GENERIC_OFF);
     OPT_BOOL(RSK_FULL_WALLETS, "Full Wallets", {"No", "Yes"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("FullWallets"), mOptionDescriptions[RSK_FULL_WALLETS], WidgetType::Checkbox, RO_GENERIC_OFF);
+    OPT_BOOL(RSK_BANK_CARDS, "Bank Cards", CVAR_RANDOMIZER_SETTING("BankCards"), mOptionDescriptions[RSK_BANK_CARDS]);
     OPT_BOOL(RSK_STARTING_ZELDAS_LULLABY, "Start with Zelda's Lullaby", CVAR_RANDOMIZER_SETTING("StartingZeldasLullaby"), "", IMFLAG_NONE);
     OPT_BOOL(RSK_STARTING_EPONAS_SONG, "Start with Epona's Song", CVAR_RANDOMIZER_SETTING("StartingEponasSong"), "", IMFLAG_NONE);
     OPT_BOOL(RSK_STARTING_SARIAS_SONG, "Start with Saria's Song", CVAR_RANDOMIZER_SETTING("StartingSariasSong"), "", IMFLAG_NONE);
@@ -1430,6 +1431,7 @@ void Settings::CreateOptions() {
     mOptionGroups[RSG_ADDITIONAL_FEATURES_IMGUI] = OptionGroup::SubGroup("Additional Features",
                                                                          {
                                                                              &mOptions[RSK_FULL_WALLETS],
+                                                                             &mOptions[RSK_BANK_CARDS],
                                                                              &mOptions[RSK_BOMBCHU_BAG],
                                                                              &mOptions[RSK_ENABLE_BOMBCHU_DROPS],
                                                                              &mOptions[RSK_BLUE_FIRE_ARROWS],

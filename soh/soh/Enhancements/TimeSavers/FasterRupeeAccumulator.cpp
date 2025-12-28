@@ -1,5 +1,6 @@
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/ShipInit.hpp"
+#include "soh/Enhancements/randomizer/BankCards.h"
 
 extern "C" {
 #include "z64save.h"
@@ -18,12 +19,13 @@ void RegisterFasterRupeeAccumulator() {
 
         // Gaining rupees
         if (gSaveContext.rupeeAccumulator > 0) {
+            s16 maxRupees = Randomizer_BankCards_GetMaxRupees();
             // Wallet is full
-            if (gSaveContext.rupees >= CUR_CAPACITY(UPG_WALLET)) {
+            if (gSaveContext.rupees >= maxRupees) {
                 return;
             }
 
-            if (gSaveContext.rupeeAccumulator >= 10 && gSaveContext.rupees + 10 < CUR_CAPACITY(UPG_WALLET)) {
+            if (gSaveContext.rupeeAccumulator >= 10 && gSaveContext.rupees + 10 < maxRupees) {
                 gSaveContext.rupeeAccumulator -= 10;
                 gSaveContext.rupees += 10;
             }

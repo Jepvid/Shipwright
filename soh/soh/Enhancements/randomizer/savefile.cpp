@@ -3,6 +3,7 @@
 #include "soh/ResourceManagerHelpers.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/Enhancements/randomizer/logic.h"
+#include "soh/Enhancements/randomizer/BankCards.h"
 
 extern "C" {
 #include <z64.h>
@@ -18,14 +19,7 @@ GetItemEntry Randomizer_GetItemFromKnownCheck(RandomizerCheck randomizerCheck, G
 // Item_Give in z_parameter, we'll need to update Item_Give to ensure
 // nothing breaks when calling it without a valid play first.
 void GiveLinkRupees(int numOfRupees) {
-    int maxRupeeCount = 0;
-    if (CUR_UPG_VALUE(UPG_WALLET) == 0) {
-        maxRupeeCount = 99;
-    } else if (CUR_UPG_VALUE(UPG_WALLET) == 1) {
-        maxRupeeCount = 200;
-    } else if (CUR_UPG_VALUE(UPG_WALLET) == 2) {
-        maxRupeeCount = 500;
-    }
+    int maxRupeeCount = Randomizer_BankCards_GetMaxRupees();
 
     int newRupeeCount = gSaveContext.rupees;
     newRupeeCount += numOfRupees;
@@ -179,7 +173,7 @@ void SetStartingItems() {
         }
     }
 
-    if (Randomizer_GetSettingValue(RSK_FULL_WALLETS)) {
+    if (Randomizer_BankCards_ShouldApplyFullWallets()) {
         GiveLinkRupees(9001);
     }
 
