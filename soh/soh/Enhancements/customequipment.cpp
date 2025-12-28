@@ -52,8 +52,13 @@ static const char* GetBrokenLongswordInSheathDL() {
         { gCustomBrokenLongswordInSheathDL, gCustomBreakableLongswordInSheathDL, gCustomLongswordInSheathDL });
 }
 
-static void UpdateCustomEquipmentSetModel(u8 ModelGroup) {
+static void UpdateCustomEquipmentSetModel(Player* player, u8 ModelGroup) {
     (void)ModelGroup;
+
+    if (player == nullptr || gPlayState == nullptr || player != GET_PLAYER(gPlayState)) {
+        return;
+    }
+
     RefreshCustomEquipment();
 }
 
@@ -71,7 +76,7 @@ static void PatchCustomEquipment() {
 static RegisterShipInitFunc initFunc(PatchCustomEquipment);
 
 static void RefreshCustomEquipment() {
-    if (!GameInteractor::IsSaveLoaded() || gPlayState == NULL) {
+    if (!GameInteractor::IsSaveLoaded() || gPlayState == NULL || GET_PLAYER(gPlayState) == nullptr) {
         return;
     }
 
@@ -85,10 +90,9 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
     }
 
     const bool altAssetsRuntime = ResourceMgr_IsAltAssetsEnabled();
-    const bool altAssetsSetting = CVarGetInteger(CVAR_SETTING("AltAssets"), 0) != 0;
+    [[maybe_unused]] const bool altAssetsSetting = CVarGetInteger(CVAR_SETTING("AltAssets"), 0) != 0;
 
     if (!altAssetsRuntime) {
-        ResourceMgr_UnloadResource(resource);
         return;
     }
 
