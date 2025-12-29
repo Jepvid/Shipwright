@@ -327,9 +327,17 @@ void EnElf_Init(Actor* thisx, PlayState* play) {
     ActorShape_Init(&thisx->shape, 0.0f, NULL, 15.0f);
     thisx->shape.shadowAlpha = 0xFF;
 
+    bool disableGlowPlane =
+        CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyBillboarding"), 0) &&
+        CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyGlow"), 0);
+
     Lights_PointGlowSetInfo(&this->lightInfoGlow, thisx->world.pos.x, thisx->world.pos.y, thisx->world.pos.z, 255, 255,
                             255, 0);
-    this->lightNodeGlow = LightContext_InsertLight(play, &play->lightCtx, &this->lightInfoGlow);
+    if (!disableGlowPlane) {
+        this->lightNodeGlow = LightContext_InsertLight(play, &play->lightCtx, &this->lightInfoGlow);
+    } else {
+        this->lightNodeGlow = NULL;
+    }
 
     Lights_PointNoGlowSetInfo(&this->lightInfoNoGlow, thisx->world.pos.x, thisx->world.pos.y, thisx->world.pos.z, 255,
                               255, 255, 0);
@@ -440,7 +448,9 @@ void EnElf_Destroy(Actor* thisx, PlayState* play) {
     s32 pad;
     EnElf* this = (EnElf*)thisx;
 
-    LightContext_RemoveLight(play, &play->lightCtx, this->lightNodeGlow);
+    if (this->lightNodeGlow != NULL) {
+        LightContext_RemoveLight(play, &play->lightCtx, this->lightNodeGlow);
+    }
     LightContext_RemoveLight(play, &play->lightCtx, this->lightNodeNoGlow);
 
     ResourceMgr_UnregisterSkeleton(&this->skelAnime);
@@ -1455,6 +1465,9 @@ void func_80A053F0(Actor* thisx, PlayState* play) {
 void EnElf_Update(Actor* thisx, PlayState* play) {
     s32 pad;
     EnElf* this = (EnElf*)thisx;
+    bool disableGlowPlane =
+        CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyBillboarding"), 0) &&
+        CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyGlow"), 0);
 
     this->actionFunc(this, play);
     this->actor.shape.rot.y = this->unk_2BC;
@@ -1462,6 +1475,16 @@ void EnElf_Update(Actor* thisx, PlayState* play) {
 
     if (this->fairyFlags & FAIRY_FLAG_BIG) {
         func_80A04D90(this, play);
+    }
+
+    // Keep glow in sync with toggle: remove when disabled, re-add when enabled.
+    if (disableGlowPlane) {
+        if (this->lightNodeGlow != NULL) {
+            LightContext_RemoveLight(play, &play->lightCtx, this->lightNodeGlow);
+            this->lightNodeGlow = NULL;
+        }
+    } else if (this->lightNodeGlow == NULL) {
+        this->lightNodeGlow = LightContext_InsertLight(play, &play->lightCtx, &this->lightInfoGlow);
     }
 }
 
@@ -1472,6 +1495,7 @@ s32 EnElf_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* p
     f32 scale;
     Vec3f mtxMult;
     EnElf* this = (EnElf*)thisx;
+    bool disableBillboarding = CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyBillboarding"), 0);
 
     if (limbIndex == 8) {
         scale = ((Math_SinS(this->timer * 4096) * 0.1f) + 1.0f) * 0.012f;
@@ -1496,7 +1520,7 @@ s32 EnElf_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* p
 
     // If billboarding is disabled, explicitly rotate the body limb (8) using the actor's yaw so 3D models
     // that don't rely on the billboard segment still face the intended direction.
-    if (limbIndex == 8 && CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyBillboarding"), 0)) {
+    if (limbIndex == 8 && disableBillboarding) {
         rot->y = rot->y + this->actor.shape.rot.y;
     }
 

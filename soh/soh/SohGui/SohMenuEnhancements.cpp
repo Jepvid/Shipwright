@@ -547,6 +547,17 @@ void SohMenu::AddMenuEnhancements() {
         .RaceDisable(false)
         .Options(CheckboxOptions().Tooltip(
             "Disables fairies always rotating to face the camera. Use when replacing fairies with 3D models."));
+    AddWidget(path, "Hide Fairy Glow Plane", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_ENHANCEMENT("DisableFairyGlow"))
+        .RaceDisable(false)
+        .PreFunc([](WidgetInfo& info) {
+            const bool billboardOff = CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyBillboarding"), 0);
+            info.options->disabled = !billboardOff;
+            info.options->disabledTooltip = "Enable \"Disable Fairy Billboarding\" to toggle this.";
+        })
+        .Options(CheckboxOptions().Tooltip(
+            "Hides the billboarded glow plane on fairies.\n"
+            "Requires a scene reload after changing."));
     AddWidget(path, "Disable Grotto Fixed Rotation", WIDGET_CVAR_CHECKBOX)
         .CVar(CVAR_ENHANCEMENT("DisableGrottoRotation"))
         .RaceDisable(false)
