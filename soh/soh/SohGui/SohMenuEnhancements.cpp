@@ -542,6 +542,11 @@ void SohMenu::AddMenuEnhancements() {
         .Options(CheckboxOptions().Tooltip(
             "Disables bombs always rotating to face the camera. To be used in conjunction with mods that want to "
             "replace bombs with 3D objects."));
+    AddWidget(path, "Disable Fairy Billboarding", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_ENHANCEMENT("DisableFairyBillboarding"))
+        .RaceDisable(false)
+        .Options(CheckboxOptions().Tooltip(
+            "Disables fairies always rotating to face the camera. Use when replacing fairies with 3D models."));
     AddWidget(path, "Disable Grotto Fixed Rotation", WIDGET_CVAR_CHECKBOX)
         .CVar(CVAR_ENHANCEMENT("DisableGrottoRotation"))
         .RaceDisable(false)

@@ -1494,6 +1494,12 @@ s32 EnElf_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* p
         }
     }
 
+    // If billboarding is disabled, explicitly rotate the body limb (8) using the actor's yaw so 3D models
+    // that don't rely on the billboard segment still face the intended direction.
+    if (limbIndex == 8 && CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyBillboarding"), 0)) {
+        rot->y = rot->y + this->actor.shape.rot.y;
+    }
+
     return false;
 }
 
@@ -1505,6 +1511,10 @@ void EnElf_Draw(Actor* thisx, PlayState* play) {
     s32 pad1;
     Gfx* dListHead;
     Player* player = GET_PLAYER(play);
+    bool disableBillboarding = CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyBillboarding"), 0);
+    Mtx* customBillboardMtx = NULL;
+    Mtx* prevBillboardSegment = play->billboardMtx;
+    MtxF customRotMtxF;
 
     if ((this->unk_2A8 != 8) && !(this->fairyFlags & 8)) {
         if (!(player->stateFlags1 & PLAYER_STATE1_FIRST_PERSON) || (kREG(90) < this->actor.projectedPos.z)) {
@@ -1513,6 +1523,28 @@ void EnElf_Draw(Actor* thisx, PlayState* play) {
             OPEN_DISPS(play->state.gfxCtx);
 
             Gfx_SetupDL_27Xlu(play->state.gfxCtx);
+
+            if (!disableBillboarding) {
+                // Keep fairies facing the camera unless explicitly disabled
+                Matrix_ReplaceRotation(&play->billboardMtxF);
+            } else {
+                // Provide a billboard segment aligned to the actor/root rotation so the body can face its heading
+                customBillboardMtx = Graph_Alloc(play->state.gfxCtx, sizeof(Mtx));
+                if (customBillboardMtx != NULL) {
+                    Matrix_Push();
+                    Matrix_Put(&gMtxFClear);
+                    Matrix_RotateZYX(BINANG_TO_RAD(this->actor.shape.rot.x), BINANG_TO_RAD(this->actor.shape.rot.y),
+                                     BINANG_TO_RAD(this->actor.shape.rot.z), MTXMODE_APPLY);
+                    Matrix_RotateZYX(BINANG_TO_RAD(this->skelAnime.jointTable[0].x),
+                                     BINANG_TO_RAD(this->skelAnime.jointTable[0].y),
+                                     BINANG_TO_RAD(this->skelAnime.jointTable[0].z), MTXMODE_APPLY);
+                    Matrix_Get(&customRotMtxF);
+                    Matrix_Pop();
+                    Matrix_MtxFToMtx(MATRIX_CHECKFLOATS(&customRotMtxF), customBillboardMtx);
+                    gSPSegment(POLY_XLU_DISP++, 0x01, customBillboardMtx);
+                }
+            }
+            func_8002EBCC(thisx, play, 0);
 
             envAlpha = (this->timer * 50) & 0x1FF;
             envAlpha = (envAlpha > 255) ? 511 - envAlpha : envAlpha;
@@ -1535,6 +1567,10 @@ void EnElf_Draw(Actor* thisx, PlayState* play) {
                            (u8)(envAlpha * alphaScale));
             POLY_XLU_DISP =
                 SkelAnime_DrawSkeleton2(play, &this->skelAnime, EnElf_OverrideLimbDraw, NULL, this, POLY_XLU_DISP);
+
+            if (disableBillboarding && customBillboardMtx != NULL) {
+                gSPSegment(POLY_XLU_DISP++, 0x01, prevBillboardSegment);
+            }
 
             CLOSE_DISPS(play->state.gfxCtx);
         }
