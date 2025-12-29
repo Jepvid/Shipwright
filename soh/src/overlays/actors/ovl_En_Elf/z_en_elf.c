@@ -327,9 +327,8 @@ void EnElf_Init(Actor* thisx, PlayState* play) {
     ActorShape_Init(&thisx->shape, 0.0f, NULL, 15.0f);
     thisx->shape.shadowAlpha = 0xFF;
 
-    bool disableGlowPlane =
-        CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyBillboarding"), 0) &&
-        CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyGlow"), 0);
+    bool disableGlowPlane = CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyBillboarding"), 0) &&
+                            CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyGlow"), 0);
 
     Lights_PointGlowSetInfo(&this->lightInfoGlow, thisx->world.pos.x, thisx->world.pos.y, thisx->world.pos.z, 255, 255,
                             255, 0);
@@ -1465,9 +1464,8 @@ void func_80A053F0(Actor* thisx, PlayState* play) {
 void EnElf_Update(Actor* thisx, PlayState* play) {
     s32 pad;
     EnElf* this = (EnElf*)thisx;
-    bool disableGlowPlane =
-        CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyBillboarding"), 0) &&
-        CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyGlow"), 0);
+    bool disableGlowPlane = CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyBillboarding"), 0) &&
+                            CVarGetInteger(CVAR_ENHANCEMENT("DisableFairyGlow"), 0);
 
     this->actionFunc(this, play);
     this->actor.shape.rot.y = this->unk_2BC;

@@ -555,9 +555,8 @@ void SohMenu::AddMenuEnhancements() {
             info.options->disabled = !billboardOff;
             info.options->disabledTooltip = "Enable \"Disable Fairy Billboarding\" to toggle this.";
         })
-        .Options(CheckboxOptions().Tooltip(
-            "Hides the billboarded glow plane on fairies.\n"
-            "Requires a scene reload after changing."));
+        .Options(CheckboxOptions().Tooltip("Hides the billboarded glow plane on fairies.\n"
+                                           "Requires a scene reload after changing."));
     AddWidget(path, "Disable Grotto Fixed Rotation", WIDGET_CVAR_CHECKBOX)
         .CVar(CVAR_ENHANCEMENT("DisableGrottoRotation"))
         .RaceDisable(false)
