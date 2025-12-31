@@ -68,8 +68,8 @@ static void UpdateCustomEquipment() {
 
 static void PatchCustomEquipment() {
     COND_HOOK(OnPlayerSetModels, true, UpdateCustomEquipmentSetModel);
-    COND_HOOK(OnSceneSpawnActors, true, UpdateCustomEquipment); // To be changed when kaleido hook is made
-    // COND_HOOK(OnLinkSkeletonInit, true, UpdateCustomEquipment); //To be added once custom tunic fix is pulled
+    COND_HOOK(OnLinkEquipmentChange, true, UpdateCustomEquipment);
+    COND_HOOK(OnLinkSkeletonInit, true, UpdateCustomEquipment);
     COND_HOOK(OnAssetAltChange, true, UpdateCustomEquipment);
 }
 
@@ -90,7 +90,6 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
     }
 
     const bool altAssetsRuntime = ResourceMgr_IsAltAssetsEnabled();
-    [[maybe_unused]] const bool altAssetsSetting = CVarGetInteger(CVAR_SETTING("AltAssets"), 0) != 0;
 
     if (!altAssetsRuntime) {
         return;
