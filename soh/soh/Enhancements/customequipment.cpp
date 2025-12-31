@@ -13,9 +13,11 @@
 extern SaveContext gSaveContext;
 extern PlayState* gPlayState;
 extern void Overlay_DisplayText(float duration, const char* text);
+void DummyPlayer_Update(Actor* actor, PlayState* play);
 
 static void UpdatePatchCustomEquipmentDlists();
 static void RefreshCustomEquipment();
+static bool HasDummyPlayers();
 
 static const char* ResolveCustomChain(std::initializer_list<const char*> paths) {
     const char* fallback = nullptr;
@@ -63,6 +65,20 @@ static void UpdateCustomEquipmentSetModel(Player* player, u8 ModelGroup) {
 }
 
 static void UpdateCustomEquipment() {
+    if (!GameInteractor::IsSaveLoaded() || gPlayState == nullptr) {
+        return;
+    }
+
+    Player* player = GET_PLAYER(gPlayState);
+    if (player == nullptr || player->actor.update == DummyPlayer_Update) {
+        return;
+    }
+
+    // If multiplayer dummy actors are present, skip patching shared resources to avoid corrupting them.
+    if (HasDummyPlayers()) {
+        return;
+    }
+
     RefreshCustomEquipment();
 }
 
@@ -77,6 +93,10 @@ static RegisterShipInitFunc initFunc(PatchCustomEquipment);
 
 static void RefreshCustomEquipment() {
     if (!GameInteractor::IsSaveLoaded() || gPlayState == NULL || GET_PLAYER(gPlayState) == nullptr) {
+        return;
+    }
+
+    if (HasDummyPlayers()) {
         return;
     }
 
@@ -482,4 +502,20 @@ void UpdatePatchCustomEquipmentDlists() {
     }
 
     ApplyCommonEquipmentPatches();
+}
+
+static bool HasDummyPlayers() {
+    if (gPlayState == nullptr) {
+        return false;
+    }
+
+    Actor* actor = gPlayState->actorCtx.actorLists[ACTORCAT_NPC].head;
+    while (actor != nullptr) {
+        if (actor->id == ACTOR_EN_OE2 && actor->update == DummyPlayer_Update) {
+            return true;
+        }
+        actor = actor->next;
+    }
+
+    return false;
 }
