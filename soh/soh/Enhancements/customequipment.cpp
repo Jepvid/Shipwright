@@ -114,7 +114,7 @@ static void RefreshCustomEquipment() {
 void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, const char* dlist2, const char* dlist3,
                     const char* alternateDL) {
     if (resource == NULL || gfx == NULL || dlist1 == NULL || dlist2 == NULL) {
-        SPDLOG_DEBUG("CustomEquip: skip patch (null arg) res=%p gfx=%p d1=%p d2=%p", resource, gfx, dlist1, dlist2);
+        SPDLOG_DEBUG("CustomEquip: skip patch (null arg) res={} gfx={} d1={} d2={}", resource, gfx, dlist1, dlist2);
         return;
     }
 
@@ -122,7 +122,7 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
 
     if (!altAssetsRuntime) {
         // Alt assets are off; ensure any prior patches using these names are reverted.
-        SPDLOG_DEBUG("CustomEquip: unpatch (alt assets off) res=%s", resource);
+        SPDLOG_DEBUG("CustomEquip: unpatch (alt assets off) res={}", resource);
         ResourceMgr_UnpatchGfxByName(resource, dlist1);
         ResourceMgr_UnpatchGfxByName(resource, dlist2);
         if (dlist3 != NULL) {
@@ -134,12 +134,12 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
     }
 
     if (!ResourceGetIsCustomByName(gfx)) {
-        SPDLOG_DEBUG("CustomEquip: skip patch (gfx not custom) gfx=%s", gfx);
+        SPDLOG_DEBUG("CustomEquip: skip patch (gfx not custom) gfx={}", gfx);
         return;
     }
 
     if (alternateDL == NULL || ResourceGetIsCustomByName(alternateDL) || ResourceMgr_FileExists(alternateDL)) {
-        SPDLOG_DEBUG("CustomEquip: patch res=%s gfx=%s d1=%s d2=%s d3=%s alt=%s", resource, gfx, dlist1, dlist2,
+        SPDLOG_DEBUG("CustomEquip: patch res={} gfx={} d1={} d2={} d3={} alt={}", resource, gfx, dlist1, dlist2,
                      dlist3 != NULL ? dlist3 : "null", alternateDL != NULL ? alternateDL : "null");
         ResourceMgr_PatchCustomGfxByName(resource, dlist1, 0, gsSPDisplayListOTRFilePath(gfx));
         if (dlist3 == NULL) {
@@ -151,7 +151,7 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
             ResourceMgr_PatchCustomGfxByName(resource, dlist3, 2, gsSPEndDisplayList());
         }
     } else {
-        SPDLOG_DEBUG("CustomEquip: skip patch (alternate missing) alt=%s", alternateDL);
+        SPDLOG_DEBUG("CustomEquip: skip patch (alternate missing) alt={}", alternateDL);
     }
 }
 
