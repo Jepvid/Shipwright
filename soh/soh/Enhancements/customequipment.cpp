@@ -9,6 +9,7 @@
 #include "soh_assets.h"
 #include "kaleido.h"
 #include "soh/cvar_prefixes.h"
+#include <spdlog/spdlog.h>
 
 extern SaveContext gSaveContext;
 extern PlayState* gPlayState;
@@ -117,8 +118,11 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
     }
 
     const bool altAssetsRuntime = ResourceMgr_IsAltAssetsEnabled();
+    const bool gfxIsCustom = ResourceGetIsCustomByName(gfx);
+    const bool gfxExists = ResourceMgr_FileExists(gfx);
 
     if (!altAssetsRuntime) {
+        SPDLOG_INFO("[CustomEquip] Skip patch; alt assets disabled. resource: {}, gfx: {}", resource, gfx);
         // Alt assets are off; ensure any prior patches using these names are reverted.
         ResourceMgr_UnpatchGfxByName(resource, dlist1);
         ResourceMgr_UnpatchGfxByName(resource, dlist2);
@@ -130,11 +134,15 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
         return;
     }
 
-    if (!ResourceGetIsCustomByName(gfx)) {
+    if (!gfxIsCustom && !gfxExists) {
+        SPDLOG_INFO("[CustomEquip] Skip patch; gfx not custom or present. resource: {}, gfx: {}", resource, gfx);
         return;
     }
 
-    if (alternateDL == NULL || ResourceGetIsCustomByName(alternateDL) || ResourceMgr_FileExists(alternateDL)) {
+    const bool altIsCustom = alternateDL != NULL && ResourceGetIsCustomByName(alternateDL);
+    const bool altExists = alternateDL != NULL && ResourceMgr_FileExists(alternateDL);
+
+    if (alternateDL == NULL || altIsCustom || altExists) {
         ResourceMgr_PatchCustomGfxByName(resource, dlist1, 0, gsSPDisplayListOTRFilePath(gfx));
         if (dlist3 == NULL) {
             ResourceMgr_PatchCustomGfxByName(resource, dlist2, 1, gsSPEndDisplayList());
@@ -144,6 +152,9 @@ void PatchOrUnpatch(const char* resource, const char* gfx, const char* dlist1, c
         if (dlist3 != NULL) {
             ResourceMgr_PatchCustomGfxByName(resource, dlist3, 2, gsSPEndDisplayList());
         }
+    } else {
+        SPDLOG_INFO("[CustomEquip] Skip patch; alternate DL missing. resource: {}, gfx: {}, alt: {}", resource, gfx,
+                    alternateDL);
     }
 }
 
