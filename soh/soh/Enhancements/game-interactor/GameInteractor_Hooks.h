@@ -29,6 +29,8 @@ void GameInteractor_ExecuteOnSceneSpawnActors();
 void GameInteractor_ExecuteOnLinkSkeletonInit();
 void GameInteractor_ExecuteOnLinkEquipmentChange();
 void GameInteractor_ExecuteOnPlayerUpdate();
+void GameInteractor_ExecuteOnPlayerFaceUpdate(s16 eyeIndex, s16 mouthIndex, s16 faceIndex, s16 linkAge);
+void GameInteractor_ExecuteOnPlayerPostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx);
 void GameInteractor_ExecuteOnSetDoAction(uint16_t action);
 void GameInteractor_ExecuteOnPlayerSfx(u16 sfxId);
 void GameInteractor_ExecuteOnOcarinaSongAction();

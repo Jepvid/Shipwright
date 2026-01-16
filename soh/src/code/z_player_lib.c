@@ -1063,6 +1063,8 @@ void Player_DrawImpl(PlayState* play, void** skeleton, Vec3s* jointTable, s32 dL
     if (mouthIndex > 3)
         mouthIndex = 3;
 
+    GameInteractor_ExecuteOnPlayerFaceUpdate(eyeIndex, mouthIndex, face, gSaveContext.linkAge);
+
 #if defined(MODDING) || defined(_MSC_VER) || defined(__GNUC__)
     gSPSegment(POLY_OPA_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(sMouthTextures[gSaveContext.linkAge][mouthIndex]));
 #else
@@ -1839,8 +1841,8 @@ void Player_PostLimbDrawGameplay(PlayState* play, s32 limbIndex, Gfx** dList, Ve
 
             func_80090A28(this, spE4);
             func_800906D4(play, this, spE4);
-        } else if ((*dList != NULL) && (this->leftHandType == PLAYER_MODELTYPE_LH_BOTTLE)) {
-            Color_RGB8* bottleColor = &sBottleColors[Player_ActionToBottle(this, this->itemAction)];
+    } else if ((*dList != NULL) && (this->leftHandType == PLAYER_MODELTYPE_LH_BOTTLE)) {
+        Color_RGB8* bottleColor = &sBottleColors[Player_ActionToBottle(this, this->itemAction)];
 
             OPEN_DISPS(play->state.gfxCtx);
 
@@ -2025,6 +2027,8 @@ void Player_PostLimbDrawGameplay(PlayState* play, s32 limbIndex, Gfx** dList, Ve
             Actor_SetFeetPos(&this->actor, limbIndex, PLAYER_LIMB_L_FOOT, vec, PLAYER_LIMB_R_FOOT, vec);
         }
     }
+
+    GameInteractor_ExecuteOnPlayerPostLimbDraw(play, limbIndex, dList, rot, thisx);
 }
 
 u32 func_80091738(PlayState* play, u8* segment, SkelAnime* skelAnime) {

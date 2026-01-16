@@ -26,6 +26,8 @@ DEFINE_HOOK(OnSceneSpawnActors, ());
 DEFINE_HOOK(OnLinkSkeletonInit, ());
 DEFINE_HOOK(OnLinkEquipmentChange, ());
 DEFINE_HOOK(OnPlayerUpdate, ());
+DEFINE_HOOK(OnPlayerFaceUpdate, (s16 eyeIndex, s16 mouthIndex, s16 faceIndex, s16 linkAge));
+DEFINE_HOOK(OnPlayerPostLimbDraw, (PlayState * play, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx));
 DEFINE_HOOK(OnSetDoAction, (uint16_t action));
 DEFINE_HOOK(OnPlayerSfx, (u16 sfxId));
 DEFINE_HOOK(OnOcarinaSongAction, ());
