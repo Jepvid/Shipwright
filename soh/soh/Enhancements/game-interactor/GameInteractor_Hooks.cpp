@@ -108,7 +108,8 @@ void GameInteractor_ExecuteOnPlayerFaceUpdate(s16 eyeIndex, s16 mouthIndex, s16 
     static s16 lastFaceIndex = -1;
     static s16 lastLinkAge = -1;
 
-    if (lastEyeIndex == eyeIndex && lastMouthIndex == mouthIndex && lastFaceIndex == faceIndex && lastLinkAge == linkAge) {
+    if (lastEyeIndex == eyeIndex && lastMouthIndex == mouthIndex && lastFaceIndex == faceIndex &&
+        lastLinkAge == linkAge) {
         return;
     }
 
@@ -116,7 +117,8 @@ void GameInteractor_ExecuteOnPlayerFaceUpdate(s16 eyeIndex, s16 mouthIndex, s16 
     lastMouthIndex = mouthIndex;
     lastFaceIndex = faceIndex;
     lastLinkAge = linkAge;
-    GameInteractor::Instance->ExecuteHooks<GameInteractor::OnPlayerFaceUpdate>(eyeIndex, mouthIndex, faceIndex, linkAge);
+    GameInteractor::Instance->ExecuteHooks<GameInteractor::OnPlayerFaceUpdate>(eyeIndex, mouthIndex, faceIndex,
+                                                                               linkAge);
 }
 
 void GameInteractor_ExecuteOnPlayerPostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx) {

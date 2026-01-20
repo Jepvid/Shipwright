@@ -2,7 +2,6 @@
 #include "soh/ResourceManagerHelpers.h"
 #include "soh/ShipInit.hpp"
 
-
 extern "C" {
 #include "macros.h"
 #include "objects/object_link_boy/object_link_boy_flipbook_DL.h"
@@ -20,7 +19,6 @@ extern "C" uint8_t Player_IsCustomLinkModel();
 // Set this limb index to the head limb in your custom player skeleton.
 // Use -1 to disable. Limb index must be < player->skelAnime.limbCount.
 static const s16 kHeadLimbIndex = 11;
-
 
 // Use the texture name conventions and append "DL" for display lists.
 static const char* kEyeDlPaths[2][8] = {
@@ -132,8 +130,7 @@ extern "C" void DrawFaceFlipbookDlists(PlayState* play, s32 limbIndex, Gfx** dLi
 
     OPEN_DISPS(play->state.gfxCtx);
 
-    const bool hasEyeDl =
-        eyeDl != nullptr && ResourceMgr_IsAltAssetsEnabled() && ResourceMgr_FileAltExists(eyeDl);
+    const bool hasEyeDl = eyeDl != nullptr && ResourceMgr_IsAltAssetsEnabled() && ResourceMgr_FileAltExists(eyeDl);
     const bool hasMouthDl =
         mouthDl != nullptr && ResourceMgr_IsAltAssetsEnabled() && ResourceMgr_FileAltExists(mouthDl);
 
@@ -149,8 +146,8 @@ extern "C" void DrawFaceFlipbookDlists(PlayState* play, s32 limbIndex, Gfx** dLi
 }
 
 static void RegisterFaceFlipbookDlists() {
-    COND_HOOK(OnPlayerFaceUpdate, true, UpdateFaceFlipbookDlists); // Tracks face flipbook indices as they change; used by the post-limb hook to choose eye/mouth DLs.
-    COND_HOOK(OnPlayerPostLimbDraw, true, DrawFaceFlipbookDlists); // Draws eye/mouth DLs right after the head limb so they inherit the head transform.
+    COND_HOOK(OnPlayerFaceUpdate, true, UpdateFaceFlipbookDlists);
+    COND_HOOK(OnPlayerPostLimbDraw, true, DrawFaceFlipbookDlists);
 }
 
 static RegisterShipInitFunc initFunc(RegisterFaceFlipbookDlists);
