@@ -2,11 +2,125 @@
 #include <libultraship/bridge.h>
 #include <libultraship/libultraship.h>
 #include <nlohmann/json.hpp>
+#include "global.h"
 #include "soh/OTRGlobals.h"
+#include "soh/Enhancements/randomizer/SeedContext.h"
+#include "soh/Enhancements/randomizer/entrance.h"
+#include "soh/Enhancements/randomizer/randomizer_entrance_tracker.h"
+#include "soh/Enhancements/randomizer/randomizerTypes.h"
 #include "soh/util.h"
 
 template <class DstType, class SrcType> bool IsType(const SrcType* src) {
     return dynamic_cast<const DstType*>(src) != nullptr;
+}
+
+static void Sail_GetEntranceSceneRoomSpawn(const EntranceData* data, int32_t* scene, int32_t* room, int32_t* spawn) {
+    if (scene) {
+        *scene = -1;
+    }
+    if (room) {
+        *room = -1;
+    }
+    if (spawn) {
+        *spawn = -1;
+    }
+
+    if (data == nullptr || data->scenes.empty()) {
+        return;
+    }
+
+    const auto& info = data->scenes.front();
+    if (scene) {
+        *scene = info.scene;
+    }
+    if (spawn) {
+        *spawn = info.spawn;
+    }
+    if (room) {
+        *room = (info.scene == SCENE_THIEVES_HIDEOUT && info.spawn >= 0) ? info.spawn : -1;
+    }
+}
+
+static bool Sail_ShouldSkipEntrance(const EntranceData* original, const EntranceData* overrideData, s16 index,
+                                    bool hideReverse, bool discoveredOnly) {
+    if (original == nullptr || overrideData == nullptr) {
+        return true;
+    }
+
+    if (original->metaTag.ends_with("bw") || overrideData->metaTag.ends_with("bw")) {
+        return true;
+    }
+
+    const bool decoupled =
+        OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_DECOUPLED_ENTRANCES) == RO_GENERIC_ON;
+
+    if ((original->type == ENTRANCE_TYPE_DUNGEON || original->type == ENTRANCE_TYPE_GROTTO ||
+         original->type == ENTRANCE_TYPE_INTERIOR) &&
+        (original->oneExit != 1 && !decoupled && hideReverse)) {
+        return true;
+    }
+
+    if (discoveredOnly && !EntranceTracker_IsEntranceDiscovered(index)) {
+        return true;
+    }
+
+    return false;
+}
+
+static void Sail_SendEntranceMap(Sail* sail) {
+    if (sail == nullptr || !sail->isConnected || !GameInteractor::IsSaveLoaded()) {
+        return;
+    }
+
+    if (!IS_RANDO ||
+        OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_SHUFFLE_ENTRANCES) != RO_GENERIC_ON) {
+        return;
+    }
+
+    auto entranceCtx = OTRGlobals::Instance->gRandoContext->GetEntranceShuffler();
+    if (entranceCtx == nullptr) {
+        return;
+    }
+
+    const bool hideReverse = CVarGetInteger(CVAR_TRACKER_ENTRANCE("HideReverseEntrances"), 1);
+
+    nlohmann::json payload;
+    payload["type"] = "entrance_map";
+    payload["connections"] = nlohmann::json::array();
+
+    for (size_t i = 0; i < ENTRANCE_OVERRIDES_MAX_COUNT; i++) {
+        EntranceOverride entrance = entranceCtx->entranceOverrides[i];
+        if (Entrance_EntranceIsNull(&entrance)) {
+            break;
+        }
+
+        const EntranceData* original = GetEntranceData(entrance.index);
+        const EntranceData* overrideData = GetEntranceData(entrance.override);
+
+        if (Sail_ShouldSkipEntrance(original, overrideData, entrance.index, hideReverse, true)) {
+            continue;
+        }
+
+        int32_t fromScene = -1;
+        int32_t fromRoom = -1;
+        int32_t toScene = -1;
+        int32_t toSpawn = -1;
+
+        Sail_GetEntranceSceneRoomSpawn(original, &fromScene, &fromRoom, nullptr);
+        Sail_GetEntranceSceneRoomSpawn(overrideData, &toScene, nullptr, &toSpawn);
+
+        nlohmann::json entry;
+        entry["fromEntrance"] = static_cast<int32_t>(entrance.index);
+        entry["toEntrance"] = static_cast<int32_t>(entrance.override);
+        entry["fromScene"] = fromScene;
+        entry["fromRoom"] = fromRoom;
+        entry["toScene"] = toScene;
+        entry["spawn"] = toSpawn;
+
+        payload["connections"].push_back(entry);
+    }
+
+    sail->SendJsonToRemote(payload);
 }
 
 void Sail::Enable() {
@@ -16,6 +130,7 @@ void Sail::Enable() {
 
 void Sail::OnConnected() {
     RegisterHooks();
+    Sail_SendEntranceMap(this);
 }
 
 void Sail::OnDisconnected() {
@@ -347,9 +462,78 @@ void Sail::RegisterHooks() {
         SendJsonToRemote(payload);
     });
 
+    COND_HOOK(OnSceneInit, isConnected, [&](int32_t sceneNum) {
+        if (!isConnected || !GameInteractor::IsSaveLoaded())
+            return;
+
+        static_cast<void>(sceneNum);
+
+        if (!IS_RANDO ||
+            OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_SHUFFLE_ENTRANCES) != RO_GENERIC_ON) {
+            return;
+        }
+
+        const s16 lastEntranceIndex = GetLastEntranceOverride();
+        if (lastEntranceIndex < 0) {
+            return;
+        }
+
+        const bool hideReverse = CVarGetInteger(CVAR_TRACKER_ENTRANCE("HideReverseEntrances"), 1);
+
+        const s16 nextEntranceIndex = Entrance_PeekNextIndexOverride(lastEntranceIndex);
+        const EntranceData* original = GetEntranceData(lastEntranceIndex);
+        const EntranceData* overrideData = GetEntranceData(nextEntranceIndex);
+
+        if (Sail_ShouldSkipEntrance(original, overrideData, lastEntranceIndex, hideReverse, true)) {
+            return;
+        }
+
+        int32_t fromScene = -1;
+        int32_t fromRoom = -1;
+        int32_t toScene = -1;
+        int32_t toSpawn = -1;
+
+        Sail_GetEntranceSceneRoomSpawn(original, &fromScene, &fromRoom, nullptr);
+        Sail_GetEntranceSceneRoomSpawn(overrideData, &toScene, nullptr, &toSpawn);
+
+        if (toScene < 0 || toSpawn < 0) {
+            const int32_t entranceIndex = static_cast<int32_t>(gSaveContext.entranceIndex);
+            const int32_t entranceTableIndex = entranceIndex + static_cast<int32_t>(gSaveContext.sceneSetupIndex);
+            const EntranceInfo entranceInfo = gEntranceTable[entranceTableIndex];
+            toScene = entranceInfo.scene;
+            toSpawn = entranceInfo.spawn;
+        }
+
+        nlohmann::json payload;
+        payload["type"] = "transition";
+        payload["fromScene"] = fromScene;
+        payload["fromRoom"] = fromRoom;
+        payload["exit"] = static_cast<int32_t>(lastEntranceIndex);
+        payload["toScene"] = toScene;
+        payload["spawn"] = toSpawn;
+
+        SendJsonToRemote(payload);
+    });
+
     COND_HOOK(OnLoadGame, isConnected, [&](int32_t fileNum) {
         if (!isConnected || !GameInteractor::IsSaveLoaded())
             return;
+
+        bool entranceRando = false;
+        bool decoupledEntrances = false;
+        if (IS_RANDO) {
+            entranceRando =
+                OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_SHUFFLE_ENTRANCES) == RO_GENERIC_ON;
+            decoupledEntrances =
+                OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_DECOUPLED_ENTRANCES) == RO_GENERIC_ON;
+        }
+
+        nlohmann::json seedPayload;
+        seedPayload["type"] = "seed_info";
+        seedPayload["entranceRando"] = entranceRando;
+        seedPayload["decoupledEntrances"] = decoupledEntrances;
+        SendJsonToRemote(seedPayload);
+        Sail_SendEntranceMap(this);
 
         nlohmann::json payload;
         payload["id"] = std::rand();

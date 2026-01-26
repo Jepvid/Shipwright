@@ -452,7 +452,7 @@ int16_t LinkIsInArea(const EntranceData* entrance) {
     return -1;
 }
 
-bool IsEntranceDiscovered(s16 index) {
+bool EntranceTracker_IsEntranceDiscovered(s16 index) {
     bool isDiscovered = Entrance_GetIsEntranceDiscovered(index);
     if (!isDiscovered) {
         // If the pair included one of the hyrule field <-> zora's river entrances,
@@ -907,7 +907,7 @@ void EntranceTrackerWindow::DrawElement() {
                 continue;
             }
 
-            bool isDiscovered = IsEntranceDiscovered(entrance.index);
+            bool isDiscovered = EntranceTracker_IsEntranceDiscovered(entrance.index);
 
             bool showOverride = (!destToggle ? showTo : showFrom) || isDiscovered;
             bool showOriginal = (!destToggle ? showFrom : showTo) || isDiscovered;
@@ -956,7 +956,7 @@ void EntranceTrackerWindow::DrawElement() {
                     const EntranceData* original = GetEntranceData(entrance.index);
                     const EntranceData* override = GetEntranceData(entrance.override);
 
-                    bool isDiscovered = IsEntranceDiscovered(entrance.index);
+                    bool isDiscovered = EntranceTracker_IsEntranceDiscovered(entrance.index);
 
                     bool showOverride = (!destToggle ? showTo : showFrom) || isDiscovered;
                     bool showOriginal = (!destToggle ? showFrom : showTo) || isDiscovered;
