@@ -14,6 +14,8 @@ template <class DstType, class SrcType> bool IsType(const SrcType* src) {
     return dynamic_cast<const DstType*>(src) != nullptr;
 }
 
+static bool sPendingInitialSync = false;
+
 static void Sail_GetEntranceSceneRoomSpawn(const EntranceData* data, int32_t* scene, int32_t* room, int32_t* spawn) {
     if (scene) {
         *scene = -1;
@@ -65,6 +67,27 @@ static bool Sail_ShouldSkipEntrance(const EntranceData* original, const Entrance
     }
 
     return false;
+}
+
+static void Sail_SendSeedInfo(Sail* sail) {
+    if (sail == nullptr || !sail->isConnected || !GameInteractor::IsSaveLoaded()) {
+        return;
+    }
+
+    bool entranceRando = false;
+    bool decoupledEntrances = false;
+    if (IS_RANDO) {
+        entranceRando =
+            OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_SHUFFLE_ENTRANCES) == RO_GENERIC_ON;
+        decoupledEntrances =
+            OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_DECOUPLED_ENTRANCES) == RO_GENERIC_ON;
+    }
+
+    nlohmann::json seedPayload;
+    seedPayload["type"] = "seed_info";
+    seedPayload["entranceRando"] = entranceRando;
+    seedPayload["decoupledEntrances"] = decoupledEntrances;
+    sail->SendJsonToRemote(seedPayload);
 }
 
 static void Sail_SendEntranceMap(Sail* sail) {
@@ -130,6 +153,7 @@ void Sail::Enable() {
 
 void Sail::OnConnected() {
     RegisterHooks();
+    sPendingInitialSync = true;
     Sail_SendEntranceMap(this);
 }
 
@@ -468,6 +492,12 @@ void Sail::RegisterHooks() {
 
         static_cast<void>(sceneNum);
 
+        if (sPendingInitialSync) {
+            Sail_SendSeedInfo(this);
+            Sail_SendEntranceMap(this);
+            sPendingInitialSync = false;
+        }
+
         if (!IS_RANDO ||
             OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_SHUFFLE_ENTRANCES) != RO_GENERIC_ON) {
             return;
@@ -519,21 +549,9 @@ void Sail::RegisterHooks() {
         if (!isConnected || !GameInteractor::IsSaveLoaded())
             return;
 
-        bool entranceRando = false;
-        bool decoupledEntrances = false;
-        if (IS_RANDO) {
-            entranceRando =
-                OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_SHUFFLE_ENTRANCES) == RO_GENERIC_ON;
-            decoupledEntrances =
-                OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_DECOUPLED_ENTRANCES) == RO_GENERIC_ON;
-        }
-
-        nlohmann::json seedPayload;
-        seedPayload["type"] = "seed_info";
-        seedPayload["entranceRando"] = entranceRando;
-        seedPayload["decoupledEntrances"] = decoupledEntrances;
-        SendJsonToRemote(seedPayload);
+        Sail_SendSeedInfo(this);
         Sail_SendEntranceMap(this);
+        sPendingInitialSync = false;
 
         nlohmann::json payload;
         payload["id"] = std::rand();
