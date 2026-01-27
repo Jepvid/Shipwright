@@ -90,6 +90,38 @@ static void Sail_SendSeedInfo(Sail* sail) {
     sail->SendJsonToRemote(seedPayload);
 }
 
+static void Sail_SendCurrentScene(Sail* sail) {
+    if (sail == nullptr || !sail->isConnected || !GameInteractor::IsSaveLoaded()) {
+        return;
+    }
+
+    const int32_t entranceIndex = static_cast<int32_t>(gSaveContext.entranceIndex);
+    const int32_t entranceTableIndex = entranceIndex + static_cast<int32_t>(gSaveContext.sceneSetupIndex);
+    const EntranceInfo entranceInfo = gEntranceTable[entranceTableIndex];
+    const int32_t roomNum = gPlayState ? static_cast<int32_t>(gPlayState->roomCtx.curRoom.num) : -1;
+
+    std::string sceneName;
+    const s16 lastEntranceIndex = GetLastEntranceOverride();
+    if (lastEntranceIndex >= 0) {
+        const s16 nextEntranceIndex = Entrance_PeekNextIndexOverride(lastEntranceIndex);
+        const EntranceData* overrideData = GetEntranceData(nextEntranceIndex);
+        if (overrideData != nullptr) {
+            sceneName = overrideData->destination;
+        }
+    }
+
+    nlohmann::json currentScenePayload;
+    currentScenePayload["type"] = "current_scene";
+    currentScenePayload["sceneNum"] = static_cast<int32_t>(entranceInfo.scene);
+    currentScenePayload["spawn"] = static_cast<int32_t>(entranceInfo.spawn);
+    currentScenePayload["room"] = roomNum;
+    if (!sceneName.empty()) {
+        currentScenePayload["sceneName"] = sceneName;
+    }
+
+    sail->SendJsonToRemote(currentScenePayload);
+}
+
 static void Sail_SendEntranceMap(Sail* sail) {
     if (sail == nullptr || !sail->isConnected || !GameInteractor::IsSaveLoaded()) {
         return;
@@ -139,6 +171,8 @@ static void Sail_SendEntranceMap(Sail* sail) {
         entry["fromRoom"] = fromRoom;
         entry["toScene"] = toScene;
         entry["spawn"] = toSpawn;
+        entry["fromName"] = original->source;
+        entry["toName"] = overrideData->destination;
 
         payload["connections"].push_back(entry);
     }
@@ -153,8 +187,14 @@ void Sail::Enable() {
 
 void Sail::OnConnected() {
     RegisterHooks();
-    sPendingInitialSync = true;
-    Sail_SendEntranceMap(this);
+    if (GameInteractor::IsSaveLoaded()) {
+        Sail_SendSeedInfo(this);
+        Sail_SendCurrentScene(this);
+        Sail_SendEntranceMap(this);
+        sPendingInitialSync = false;
+    } else {
+        sPendingInitialSync = true;
+    }
 }
 
 void Sail::OnDisconnected() {
@@ -494,23 +534,14 @@ void Sail::RegisterHooks() {
 
         if (sPendingInitialSync) {
             Sail_SendSeedInfo(this);
+            Sail_SendCurrentScene(this);
             Sail_SendEntranceMap(this);
             sPendingInitialSync = false;
         }
 
         // Always publish the player's current scene/spawn on scene init so downstream tools
         // can establish a reliable "current location" anchor.
-        const int32_t entranceIndex = static_cast<int32_t>(gSaveContext.entranceIndex);
-        const int32_t entranceTableIndex = entranceIndex + static_cast<int32_t>(gSaveContext.sceneSetupIndex);
-        const EntranceInfo entranceInfo = gEntranceTable[entranceTableIndex];
-        const int32_t roomNum = gPlayState ? static_cast<int32_t>(gPlayState->roomCtx.curRoom.num) : -1;
-
-        nlohmann::json currentScenePayload;
-        currentScenePayload["type"] = "current_scene";
-        currentScenePayload["sceneNum"] = static_cast<int32_t>(entranceInfo.scene);
-        currentScenePayload["spawn"] = static_cast<int32_t>(entranceInfo.spawn);
-        currentScenePayload["room"] = roomNum;
-        SendJsonToRemote(currentScenePayload);
+        Sail_SendCurrentScene(this);
 
         if (!IS_RANDO ||
             OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_SHUFFLE_ENTRANCES) != RO_GENERIC_ON) {
@@ -555,6 +586,8 @@ void Sail::RegisterHooks() {
         payload["exit"] = static_cast<int32_t>(lastEntranceIndex);
         payload["toScene"] = toScene;
         payload["spawn"] = toSpawn;
+        payload["fromName"] = original->source;
+        payload["toName"] = overrideData->destination;
 
         SendJsonToRemote(payload);
     });
@@ -564,6 +597,7 @@ void Sail::RegisterHooks() {
             return;
 
         Sail_SendSeedInfo(this);
+        Sail_SendCurrentScene(this);
         Sail_SendEntranceMap(this);
         sPendingInitialSync = false;
 
