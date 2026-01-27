@@ -1020,3 +1020,21 @@ void EntranceTrackerWindow::InitElement() {
     GameInteractor::Instance->RegisterGameHook<GameInteractor::OnExitGame>(
         [](int32_t fileNum) { ClearEntranceTrackingData(); });
 }
+
+const char* EntranceTracker_GetGroupName(SpoilerEntranceGroup group) {
+    const size_t idx = static_cast<size_t>(group);
+    const size_t count = sizeof(spoilerEntranceGroupNames) / sizeof(spoilerEntranceGroupNames[0]);
+    if (idx >= count) {
+        return "Unknown";
+    }
+    return spoilerEntranceGroupNames[idx].c_str();
+}
+
+const char* EntranceTracker_GetTypeName(TrackerEntranceType type) {
+    const size_t idx = static_cast<size_t>(type);
+    const size_t count = sizeof(groupTypeNames) / sizeof(groupTypeNames[0]);
+    if (idx >= count) {
+        return "Unknown";
+    }
+    return groupTypeNames[idx].c_str();
+}

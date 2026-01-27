@@ -173,6 +173,14 @@ static void Sail_SendEntranceMap(Sail* sail) {
         entry["spawn"] = toSpawn;
         entry["fromName"] = original->source;
         entry["toName"] = overrideData->destination;
+        entry["fromGroupId"] = static_cast<int32_t>(original->srcGroup);
+        entry["fromGroupName"] = EntranceTracker_GetGroupName(original->srcGroup);
+        entry["toGroupId"] = static_cast<int32_t>(overrideData->dstGroup);
+        entry["toGroupName"] = EntranceTracker_GetGroupName(overrideData->dstGroup);
+        entry["fromTypeId"] = static_cast<int32_t>(original->type);
+        entry["fromTypeName"] = EntranceTracker_GetTypeName(original->type);
+        entry["toTypeId"] = static_cast<int32_t>(overrideData->type);
+        entry["toTypeName"] = EntranceTracker_GetTypeName(overrideData->type);
 
         payload["connections"].push_back(entry);
     }

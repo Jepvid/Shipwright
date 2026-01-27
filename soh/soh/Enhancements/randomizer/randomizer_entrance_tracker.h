@@ -92,6 +92,8 @@ s16 GetLastEntranceOverride();
 s16 GetCurrentGrottoId();
 const EntranceData* GetEntranceData(s16);
 bool EntranceTracker_IsEntranceDiscovered(s16 index);
+const char* EntranceTracker_GetGroupName(SpoilerEntranceGroup group);
+const char* EntranceTracker_GetTypeName(TrackerEntranceType type);
 void EntranceTracker_LoadFromPreset(nlohmann::json info);
 
 class EntranceTrackerSettingsWindow final : public Ship::GuiWindow {
