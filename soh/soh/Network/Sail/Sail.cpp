@@ -498,6 +498,20 @@ void Sail::RegisterHooks() {
             sPendingInitialSync = false;
         }
 
+        // Always publish the player's current scene/spawn on scene init so downstream tools
+        // can establish a reliable "current location" anchor.
+        const int32_t entranceIndex = static_cast<int32_t>(gSaveContext.entranceIndex);
+        const int32_t entranceTableIndex = entranceIndex + static_cast<int32_t>(gSaveContext.sceneSetupIndex);
+        const EntranceInfo entranceInfo = gEntranceTable[entranceTableIndex];
+        const int32_t roomNum = gPlayState ? static_cast<int32_t>(gPlayState->roomCtx.curRoom.num) : -1;
+
+        nlohmann::json currentScenePayload;
+        currentScenePayload["type"] = "current_scene";
+        currentScenePayload["sceneNum"] = static_cast<int32_t>(entranceInfo.scene);
+        currentScenePayload["spawn"] = static_cast<int32_t>(entranceInfo.spawn);
+        currentScenePayload["room"] = roomNum;
+        SendJsonToRemote(currentScenePayload);
+
         if (!IS_RANDO ||
             OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_SHUFFLE_ENTRANCES) != RO_GENERIC_ON) {
             return;
