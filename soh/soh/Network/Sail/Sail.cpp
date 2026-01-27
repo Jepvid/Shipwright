@@ -517,79 +517,13 @@ void Sail::RegisterHooks() {
         if (!isConnected || !GameInteractor::IsSaveLoaded())
             return;
 
-        nlohmann::json payload;
-        payload["id"] = std::rand();
-        payload["type"] = "hook";
-        payload["hook"]["type"] = "OnTransitionEnd";
-        payload["hook"]["sceneNum"] = sceneNum;
-
-        SendJsonToRemote(payload);
-    });
-
-    COND_HOOK(OnSceneInit, isConnected, [&](int32_t sceneNum) {
-        if (!isConnected || !GameInteractor::IsSaveLoaded())
-            return;
-
         static_cast<void>(sceneNum);
 
-        if (sPendingInitialSync) {
-            Sail_SendSeedInfo(this);
-            Sail_SendCurrentScene(this);
-            Sail_SendEntranceMap(this);
-            sPendingInitialSync = false;
-        }
-
-        // Always publish the player's current scene/spawn on scene init so downstream tools
-        // can establish a reliable "current location" anchor.
+        // Treat transition end as the sync point: send the tracker state the website needs.
+        Sail_SendSeedInfo(this);
         Sail_SendCurrentScene(this);
-
-        if (!IS_RANDO ||
-            OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_SHUFFLE_ENTRANCES) != RO_GENERIC_ON) {
-            return;
-        }
-
-        const s16 lastEntranceIndex = GetLastEntranceOverride();
-        if (lastEntranceIndex < 0) {
-            return;
-        }
-
-        const bool hideReverse = CVarGetInteger(CVAR_TRACKER_ENTRANCE("HideReverseEntrances"), 1);
-
-        const s16 nextEntranceIndex = Entrance_PeekNextIndexOverride(lastEntranceIndex);
-        const EntranceData* original = GetEntranceData(lastEntranceIndex);
-        const EntranceData* overrideData = GetEntranceData(nextEntranceIndex);
-
-        if (Sail_ShouldSkipEntrance(original, overrideData, lastEntranceIndex, hideReverse, true)) {
-            return;
-        }
-
-        int32_t fromScene = -1;
-        int32_t fromRoom = -1;
-        int32_t toScene = -1;
-        int32_t toSpawn = -1;
-
-        Sail_GetEntranceSceneRoomSpawn(original, &fromScene, &fromRoom, nullptr);
-        Sail_GetEntranceSceneRoomSpawn(overrideData, &toScene, nullptr, &toSpawn);
-
-        if (toScene < 0 || toSpawn < 0) {
-            const int32_t entranceIndex = static_cast<int32_t>(gSaveContext.entranceIndex);
-            const int32_t entranceTableIndex = entranceIndex + static_cast<int32_t>(gSaveContext.sceneSetupIndex);
-            const EntranceInfo entranceInfo = gEntranceTable[entranceTableIndex];
-            toScene = entranceInfo.scene;
-            toSpawn = entranceInfo.spawn;
-        }
-
-        nlohmann::json payload;
-        payload["type"] = "transition";
-        payload["fromScene"] = fromScene;
-        payload["fromRoom"] = fromRoom;
-        payload["exit"] = static_cast<int32_t>(lastEntranceIndex);
-        payload["toScene"] = toScene;
-        payload["spawn"] = toSpawn;
-        payload["fromName"] = original->source;
-        payload["toName"] = overrideData->destination;
-
-        SendJsonToRemote(payload);
+        Sail_SendEntranceMap(this);
+        sPendingInitialSync = false;
     });
 
     COND_HOOK(OnLoadGame, isConnected, [&](int32_t fileNum) {
