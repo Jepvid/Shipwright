@@ -43,6 +43,24 @@ static void Sail_GetEntranceSceneRoomSpawn(const EntranceData* data, int32_t* sc
     }
 }
 
+static nlohmann::json Sail_BuildEntranceScenes(const EntranceData* data) {
+    nlohmann::json scenes = nlohmann::json::array();
+    if (data == nullptr || data->scenes.empty()) {
+        return scenes;
+    }
+
+    for (const auto& info : data->scenes) {
+        nlohmann::json entry;
+        entry["scene"] = info.scene;
+        entry["sceneName"] = SohUtils::GetSceneName(info.scene);
+        entry["spawn"] = info.spawn;
+        entry["room"] = (info.scene == SCENE_THIEVES_HIDEOUT && info.spawn >= 0) ? info.spawn : -1;
+        scenes.push_back(entry);
+    }
+
+    return scenes;
+}
+
 static bool Sail_ShouldSkipEntrance(const EntranceData* original, const EntranceData* overrideData, s16 index,
                                     bool hideReverse, bool discoveredOnly) {
     if (original == nullptr || overrideData == nullptr) {
@@ -100,24 +118,17 @@ static void Sail_SendCurrentScene(Sail* sail) {
     const EntranceInfo entranceInfo = gEntranceTable[entranceTableIndex];
     const int32_t roomNum = gPlayState ? static_cast<int32_t>(gPlayState->roomCtx.curRoom.num) : -1;
 
-    std::string sceneName;
     const s16 lastEntranceIndex = GetLastEntranceOverride();
-    if (lastEntranceIndex >= 0) {
-        const s16 nextEntranceIndex = Entrance_PeekNextIndexOverride(lastEntranceIndex);
-        const EntranceData* overrideData = GetEntranceData(nextEntranceIndex);
-        if (overrideData != nullptr) {
-            sceneName = overrideData->destination;
-        }
-    }
+    const s16 lastOverrideEntrance =
+        lastEntranceIndex >= 0 ? Entrance_PeekNextIndexOverride(lastEntranceIndex) : -1;
 
     nlohmann::json currentScenePayload;
     currentScenePayload["type"] = "current_scene";
     currentScenePayload["sceneNum"] = static_cast<int32_t>(entranceInfo.scene);
     currentScenePayload["spawn"] = static_cast<int32_t>(entranceInfo.spawn);
     currentScenePayload["room"] = roomNum;
-    if (!sceneName.empty()) {
-        currentScenePayload["sceneName"] = sceneName;
-    }
+    currentScenePayload["lastEntranceIndex"] = static_cast<int32_t>(entranceIndex);
+    currentScenePayload["lastOverrideEntrance"] = static_cast<int32_t>(lastOverrideEntrance);
 
     sail->SendJsonToRemote(currentScenePayload);
 }
@@ -158,19 +169,28 @@ static void Sail_SendEntranceMap(Sail* sail) {
 
         int32_t fromScene = -1;
         int32_t fromRoom = -1;
+        int32_t fromSpawn = -1;
         int32_t toScene = -1;
+        int32_t toRoom = -1;
         int32_t toSpawn = -1;
 
-        Sail_GetEntranceSceneRoomSpawn(original, &fromScene, &fromRoom, nullptr);
-        Sail_GetEntranceSceneRoomSpawn(overrideData, &toScene, nullptr, &toSpawn);
+        Sail_GetEntranceSceneRoomSpawn(original, &fromScene, &fromRoom, &fromSpawn);
+        Sail_GetEntranceSceneRoomSpawn(overrideData, &toScene, &toRoom, &toSpawn);
 
         nlohmann::json entry;
         entry["fromEntrance"] = static_cast<int32_t>(entrance.index);
         entry["toEntrance"] = static_cast<int32_t>(entrance.override);
+        entry["fromReverseEntrance"] = static_cast<int32_t>(original->reverseIndex);
+        entry["toReverseEntrance"] = static_cast<int32_t>(overrideData->reverseIndex);
         entry["fromScene"] = fromScene;
+        entry["fromSceneName"] = SohUtils::GetSceneName(fromScene);
         entry["fromRoom"] = fromRoom;
+        entry["fromSpawn"] = fromSpawn;
         entry["toScene"] = toScene;
+        entry["toSceneName"] = SohUtils::GetSceneName(toScene);
+        entry["toRoom"] = toRoom;
         entry["spawn"] = toSpawn;
+        entry["toSpawn"] = toSpawn;
         entry["fromName"] = original->source;
         entry["toName"] = overrideData->destination;
         entry["fromGroupId"] = static_cast<int32_t>(original->srcGroup);
@@ -181,6 +201,20 @@ static void Sail_SendEntranceMap(Sail* sail) {
         entry["fromTypeName"] = EntranceTracker_GetTypeName(original->type);
         entry["toTypeId"] = static_cast<int32_t>(overrideData->type);
         entry["toTypeName"] = EntranceTracker_GetTypeName(overrideData->type);
+        entry["fromOneExit"] = static_cast<int32_t>(original->oneExit);
+        entry["toOneExit"] = static_cast<int32_t>(overrideData->oneExit);
+        entry["fromIsOneWay"] = original->type == ENTRANCE_TYPE_ONE_WAY;
+        entry["toIsOneWay"] = overrideData->type == ENTRANCE_TYPE_ONE_WAY;
+        entry["fromReverseIsNull"] = original->reverseIndex < 0;
+        entry["toReverseIsNull"] = overrideData->reverseIndex < 0;
+        entry["fromMetaTag"] = original->metaTag;
+        entry["toMetaTag"] = overrideData->metaTag;
+        entry["fromSource"] = original->source;
+        entry["fromDestination"] = original->destination;
+        entry["toSource"] = overrideData->source;
+        entry["toDestination"] = overrideData->destination;
+        entry["fromScenes"] = Sail_BuildEntranceScenes(original);
+        entry["toScenes"] = Sail_BuildEntranceScenes(overrideData);
 
         payload["connections"].push_back(entry);
     }
