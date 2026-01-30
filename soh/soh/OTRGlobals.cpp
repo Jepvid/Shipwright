@@ -1556,6 +1556,7 @@ extern "C" void DeinitOTR() {
     // Destroying gui here because we have shared ptrs to LUS objects which output to SPDLOG which is destroyed before
     // these shared ptrs.
     SohGui::Destroy();
+    sohFast3dWindow = nullptr;
 
     OTRGlobals::Instance->context = nullptr;
 }
@@ -2429,11 +2430,11 @@ extern "C" void Randomizer_ShowRandomizerMenu() {
 }
 
 extern "C" void EntranceTracker_SetCurrentGrottoID(s16 entranceIndex) {
-    SetCurrentGrottoIDForTracker(entranceIndex);
+    EntranceTracker::SetCurrentGrottoIDForTracker(entranceIndex);
 }
 
 extern "C" void EntranceTracker_SetLastEntranceOverride(s16 entranceIndex) {
-    SetLastEntranceOverrideForTracker(entranceIndex);
+    EntranceTracker::SetLastEntranceOverrideForTracker(entranceIndex);
 }
 
 extern "C" void Gfx_RegisterBlendedTexture(const char* name, u8* mask, u8* replacement) {
