@@ -7,14 +7,23 @@
 #define dgCustomBowDL "__OTR__objects/object_custom_equip/gCustomBowDL"
 static const ALIGN_ASSET(2) char gCustomBowDL[] = dgCustomBowDL;
 
+#define dgCustomBowFPSDL "__OTR__objects/object_custom_equip/gCustomBowFPSDL"
+static const ALIGN_ASSET(2) char gCustomBowFPSDL[] = dgCustomBowFPSDL;
+
 #define dgCustomHammerDL "__OTR__objects/object_custom_equip/gCustomHammerDL"
 static const ALIGN_ASSET(2) char gCustomHammerDL[] = dgCustomHammerDL;
 
 #define dgCustomHookshotDL "__OTR__objects/object_custom_equip/gCustomHookshotDL"
 static const ALIGN_ASSET(2) char gCustomHookshotDL[] = dgCustomHookshotDL;
 
+#define dgCustomHookshotFPSDL "__OTR__objects/object_custom_equip/gCustomHookshotFPSDL"
+static const ALIGN_ASSET(2) char gCustomHookshotFPSDL[] = dgCustomHookshotFPSDL;
+
 #define dgCustomLongshotDL "__OTR__objects/object_custom_equip/gCustomLongshotDL"
 static const ALIGN_ASSET(2) char gCustomLongshotDL[] = dgCustomLongshotDL;
+
+#define dgCustomLongshotFPSDL "__OTR__objects/object_custom_equip/gCustomLongshotFPSDL"
+static const ALIGN_ASSET(2) char gCustomLongshotFPSDL[] = dgCustomLongshotFPSDL;
 
 #define dgCustomHookshotTipDL "__OTR__objects/object_custom_equip/gCustomHookshotTipDL"
 static const ALIGN_ASSET(2) char gCustomHookshotTipDL[] = dgCustomHookshotTipDL;
@@ -22,8 +31,17 @@ static const ALIGN_ASSET(2) char gCustomHookshotTipDL[] = dgCustomHookshotTipDL;
 #define dgCustomHookshotChainDL "__OTR__objects/object_custom_equip/gCustomHookshotChainDL"
 static const ALIGN_ASSET(2) char gCustomHookshotChainDL[] = dgCustomHookshotChainDL;
 
+#define dgCustomLongshotTipDL "__OTR__objects/object_custom_equip/gCustomLongshotTipDL"
+static const ALIGN_ASSET(2) char gCustomLongshotTipDL[] = dgCustomLongshotTipDL;
+
+#define dgCustomLongshotChainDL "__OTR__objects/object_custom_equip/gCustomLongshotChainDL"
+static const ALIGN_ASSET(2) char gCustomLongshotChainDL[] = dgCustomLongshotChainDL;
+
 #define dgCustomSlingshotDL "__OTR__objects/object_custom_equip/gCustomSlingshotDL"
 static const ALIGN_ASSET(2) char gCustomSlingshotDL[] = dgCustomSlingshotDL;
+
+#define dgCustomSlingshotFPSDL "__OTR__objects/object_custom_equip/gCustomSlingshotFPSDL"
+static const ALIGN_ASSET(2) char gCustomSlingshotFPSDL[] = dgCustomSlingshotFPSDL;
 
 #define dgCustomFairyOcarinaDL "__OTR__objects/object_custom_equip/gCustomFairyOcarinaDL"
 static const ALIGN_ASSET(2) char gCustomFairyOcarinaDL[] = dgCustomFairyOcarinaDL;

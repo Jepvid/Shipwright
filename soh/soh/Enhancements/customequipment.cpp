@@ -57,6 +57,34 @@ static const char* GetBrokenLongswordInSheathDL() {
         { gCustomBrokenLongswordInSheathDL, gCustomBreakableLongswordInSheathDL, gCustomLongswordInSheathDL });
 }
 
+static const char* GetLongshotDL() {
+    return ResolveCustomChain({ gCustomLongshotDL, gCustomHookshotDL });
+}
+
+static const char* GetBowFPSDL() {
+    return ResolveCustomChain({ gCustomBowFPSDL, gCustomBowDL });
+}
+
+static const char* GetSlingshotFPSDL() {
+    return ResolveCustomChain({ gCustomSlingshotFPSDL, gCustomSlingshotDL });
+}
+
+static const char* GetHookshotFPSDL() {
+    return ResolveCustomChain({ gCustomHookshotFPSDL, gCustomHookshotDL });
+}
+
+static const char* GetLongshotFPSDL() {
+    return ResolveCustomChain({ gCustomLongshotFPSDL, gCustomLongshotDL, gCustomHookshotDL });
+}
+
+static const char* GetLongshotTipDL() {
+    return ResolveCustomChain({ gCustomLongshotTipDL, gCustomHookshotTipDL });
+}
+
+static const char* GetLongshotChainDL() {
+    return ResolveCustomChain({ gCustomLongshotChainDL, gCustomHookshotChainDL });
+}
+
 static void UpdateCustomEquipmentSetModel(Player* player, u8 ModelGroup) {
     (void)ModelGroup;
 
@@ -395,25 +423,32 @@ static void ApplyCommonEquipmentPatches() {
         ApplyPatchEntries({
             { gLinkAdultRightHandHoldingHookshotNearDL, gCustomHookshotDL, "customHookshot1", "customHookshot2",
               "customHookshot3", rightHandClosed },
-            { gLinkAdultRightHandHoldingHookshotFarDL, gCustomHookshotDL, "customHookshotFPS1", "customHookshotFPS2",
+            { gLinkAdultRightHandHoldingHookshotFarDL, GetHookshotFPSDL(), "customHookshotFPS1", "customHookshotFPS2",
               "customHookshotFPS3", fpsHand },
+            { gLinkAdultHookshotTipDL, gCustomHookshotTipDL, "customHookshotTip1", "customHookshotTip2", nullptr,
+              nullptr },
+            { gLinkAdultHookshotChainDL, gCustomHookshotChainDL, "customHookshotChain1", "customHookshotChain2",
+              nullptr, nullptr },
         });
-    }
-
-    if (INV_CONTENT(ITEM_LONGSHOT) == ITEM_LONGSHOT) {
+    } else if (INV_CONTENT(ITEM_LONGSHOT) == ITEM_LONGSHOT) {
         ApplyPatchEntries({
-            { gLinkAdultRightHandHoldingHookshotNearDL, gCustomLongshotDL, "customHookshot1", "customHookshot2",
+            { gLinkAdultRightHandHoldingHookshotNearDL, GetLongshotDL(), "customHookshot1", "customHookshot2",
               "customHookshot3", rightHandClosed },
-            { gLinkAdultRightHandHoldingHookshotFarDL, gCustomLongshotDL, "customHookshotFPS1", "customHookshotFPS2",
+            { gLinkAdultRightHandHoldingHookshotFarDL, GetLongshotFPSDL(), "customHookshotFPS1", "customHookshotFPS2",
               "customHookshotFPS3", fpsHand },
+            { gLinkAdultHookshotTipDL, GetLongshotTipDL(), "customHookshotTip1", "customHookshotTip2", nullptr,
+              nullptr },
+            { gLinkAdultHookshotChainDL, GetLongshotChainDL(), "customHookshotChain1", "customHookshotChain2", nullptr,
+              nullptr },
+        });
+    } else {
+        ApplyPatchEntries({
+            { gLinkAdultHookshotTipDL, gCustomHookshotTipDL, "customHookshotTip1", "customHookshotTip2", nullptr,
+              nullptr },
+            { gLinkAdultHookshotChainDL, gCustomHookshotChainDL, "customHookshotChain1", "customHookshotChain2",
+              nullptr, nullptr },
         });
     }
-
-    ApplyPatchEntries({
-        { gLinkAdultHookshotTipDL, gCustomHookshotTipDL, "customHookshotTip1", "customHookshotTip2", nullptr, nullptr },
-        { gLinkAdultHookshotChainDL, gCustomHookshotChainDL, "customHookshotChain1", "customHookshotChain2", nullptr,
-          nullptr },
-    });
 
     if (INV_CONTENT(ITEM_OCARINA_FAIRY) == ITEM_OCARINA_FAIRY) {
         ApplyPatchEntries({
@@ -436,7 +471,7 @@ static void ApplyCommonEquipmentPatches() {
           "customChildOcarina3", rightHandNear },
         { gLinkAdultRightHandHoldingBowNearDL, gCustomBowDL, "customBow1", "customBow2", "customBow3",
           rightHandClosed },
-        { gLinkAdultRightHandHoldingBowFirstPersonDL, gCustomBowDL, "customBowFPS1", "customBowFPS2", "customBowFPS3",
+        { gLinkAdultRightHandHoldingBowFirstPersonDL, GetBowFPSDL(), "customBowFPS1", "customBowFPS2", "customBowFPS3",
           fpsHand },
         { gLinkAdultLeftHandHoldingHammerNearDL, gCustomHammerDL, "customHammer1", "customHammer2", "customHammer3",
           leftHandClosed },
@@ -444,7 +479,7 @@ static void ApplyCommonEquipmentPatches() {
           "customBoomerang3", leftHandClosed },
         { gLinkChildRightHandHoldingSlingshotNearDL, gCustomSlingshotDL, "customSlingshot1", "customSlingshot2",
           "customSlingshot3", rightHandClosed },
-        { gLinkChildRightArmStretchedSlingshotDL, gCustomSlingshotDL, "customSlingshotFPS1", "customSlingshotFPS2",
+        { gLinkChildRightArmStretchedSlingshotDL, GetSlingshotFPSDL(), "customSlingshotFPS1", "customSlingshotFPS2",
           "customSlingshotFPS3", fpsHand },
     });
 
@@ -457,7 +492,7 @@ static void ApplyCommonEquipmentPatches() {
           "customBoomerang3", leftHandClosed },
         { gLinkChildRightHandHoldingSlingshotNearDL, gCustomSlingshotDL, "customSlingshot1", "customSlingshot2",
           "customSlingshot3", rightHandClosed },
-        { gLinkChildRightArmStretchedSlingshotDL, gCustomSlingshotDL, "customSlingshotFPS1", "customSlingshotFPS2",
+        { gLinkChildRightArmStretchedSlingshotDL, GetSlingshotFPSDL(), "customSlingshotFPS1", "customSlingshotFPS2",
           "customSlingshotFPS3", fpsHand },
     });
 }
