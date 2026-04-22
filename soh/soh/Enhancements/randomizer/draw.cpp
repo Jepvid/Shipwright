@@ -1396,7 +1396,7 @@ extern "C" void Randomizer_DrawOverworldKey(PlayState* play, GetItemEntry* getIt
 extern "C" void Randomizer_DrawGachaToken(PlayState* play, GetItemEntry* getItemEntry) {
     OPEN_DISPS(play->state.gfxCtx);
     Gfx_SetupDL_25Opa(play->state.gfxCtx);
-    Color_RGBA8 color = CVarGetColor(CVAR_COSMETIC("World.GachaToken.Value"), (Color_RGBA8){ 0, 100, 200, 255 });
+    Color_RGBA8 color = CVarGetColor(CVAR_COSMETIC("World.GachaToken.Value"), Color_RGBA8{ 0, 100, 200, 255 });
     gDPSetEnvColor(POLY_OPA_DISP++, color.r, color.g, color.b, color.a);
     Matrix_Scale(0.035f, 0.035f, 0.035f, MTXMODE_APPLY);
     gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtx(play->state.gfxCtx, (char*)__FILE__, __LINE__),
