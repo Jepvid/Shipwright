@@ -122,6 +122,7 @@ class Context {
     void ParseItemLocationsJson(nlohmann::json spoilerFileJson);
     void WriteHintJson(nlohmann::ordered_json& spoilerFileJson);
     void ParseHintJson(nlohmann::json spoilerFileJson);
+    void ParseGachaListJson(nlohmann::json spoilerFileJson);
     void ParseTricksJson(nlohmann::json spoilerFileJson);
     std::map<RandomizerCheck, ItemOverride> overrides = {};
     std::vector<std::vector<RandomizerCheck>> playthroughLocations = {};
@@ -132,6 +133,12 @@ class Context {
     std::array<uint8_t, 5> hashIconIndexes = {};
     bool playthroughBeatable = false;
     bool allLocationsReachable = false;
+    std::vector<RandomizerGet> gachaList = {};
+    std::vector<RandomizerCheck> gachaCheckList = {};
+    const std::vector<RandomizerGet>& GetGachaList() const;
+    void SetGachaList(std::vector<RandomizerGet> list);
+    const std::vector<RandomizerCheck>& GetGachaCheckList() const;
+    void SetGachaCheckList(std::vector<RandomizerCheck> list);
     RandomizerArea GetAreaFromString(std::string str);
     int CountEmptyLocations(bool countShops);
 

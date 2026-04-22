@@ -1,5 +1,6 @@
 ﻿#include <libultraship/bridge.h>
 #include "soh/OTRGlobals.h"
+#include "soh/Enhancements/randomizer/GachaMachine.h"
 #include "soh/ResourceManagerHelpers.h"
 #include "soh/Enhancements/enhancementTypes.h"
 #include "soh/Enhancements/custom-message/CustomMessageTypes.h"
@@ -2486,6 +2487,11 @@ void RandomizerOnActorInitHandler(void* actorRef) {
 }
 
 void RandomizerOnGameFrameUpdateHandler() {
+    RandomizerCheck gachaRC = GachaMachine_PopNextPendingRC();
+    if (gachaRC != RC_UNKNOWN_CHECK) {
+        randomizerQueuedChecks.push(gachaRC);
+    }
+
     if (Flags_GetRandomizerInf(RAND_INF_HAS_INFINITE_QUIVER)) {
         AMMO(ITEM_BOW) = static_cast<int8_t>(CUR_CAPACITY(UPG_QUIVER));
     }

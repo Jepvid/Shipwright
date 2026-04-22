@@ -202,9 +202,16 @@ typedef struct {
 
 #pragma region SoH
 
+#define GACHA_MAX_ITEMS RC_MAX
+
 typedef struct ShipRandomizerSaveContextData {
     u8 triforcePiecesCollected;
     u8 bombchuUpgradeLevel;
+    u32 gachaTokens;
+    u32 gachaListIndex;
+    u32 gachaItemCount;
+    u32 gachaItems[GACHA_MAX_ITEMS];
+    u32 gachaChecks[GACHA_MAX_ITEMS];
 } ShipRandomizerSaveContextData;
 
 typedef struct ShipBossRushSaveContextData {

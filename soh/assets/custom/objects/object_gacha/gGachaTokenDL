@@ -1,0 +1,10 @@
+<DisplayList Version="0">
+	<CallDisplayList Path="objects/object_gacha/mat_gGachaTokenDL_seashelltex_layerOpaque"/>
+	<CallDisplayList Path="objects/object_gacha/gGachaTokenDL_layer_Opaque_tri_0"/>
+	<CallDisplayList Path="objects/object_gacha/mat_gGachaTokenDL_seashelltexdark_layerOpaque"/>
+	<CallDisplayList Path="objects/object_gacha/gGachaTokenDL_layer_Opaque_tri_1"/>
+	<ClearGeometryMode G_LIGHTING="1"/>
+	<SetGeometryMode G_LIGHTING="1"/>
+	<EndDisplayList/>
+</DisplayList>
+

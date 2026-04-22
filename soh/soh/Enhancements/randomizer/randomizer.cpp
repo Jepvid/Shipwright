@@ -4626,6 +4626,9 @@ extern "C" u16 Randomizer_Item_Give(PlayState* play, GetItemEntry giEntry) {
                 INV_CONTENT(ITEM_NAYRUS_LOVE) = ITEM_ROCS_FEATHER;
             }
             break;
+        case RG_GACHA_TOKEN:
+            gSaveContext.ship.quest.data.randomizer.gachaTokens++;
+            break;
         default:
             LUSLOG_WARN("Randomizer_Item_Give didn't have behaviour specified for getItemId=%d", item);
             assert(false);

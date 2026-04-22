@@ -603,6 +603,40 @@ void SohMenu::AddMenuRandomizer() {
         }
     });
 
+    // Gacha Mode
+    AddWidget(path, "Gacha Mode", WIDGET_SEPARATOR_TEXT);
+    AddWidget(path, "Gacha Mode", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_RANDOMIZER_SETTING("GachaMode"))
+        .Options(CheckboxOptions().Tooltip(
+            "Every location gives a Gacha Token. Spend tokens at Gossip Stones to receive items."));
+    AddWidget(path, "Gacha: Settlements", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_RANDOMIZER_SETTING("GachaStonesCity"))
+        .PreFunc([](WidgetInfo& info) {
+            info.options->disabled = !CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaMode"), 0);
+            info.options->disabledTooltip = "Requires Gacha Mode to be enabled.";
+        })
+        .Options(CheckboxOptions()
+                     .DefaultValue(true)
+                     .Tooltip("Stones in settlements (Kokiri Forest, Kakariko, Goron City, etc.) act as Gacha Machines."));
+    AddWidget(path, "Gacha: Overworld/Grotto Stones", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_RANDOMIZER_SETTING("GachaStonesOverworld"))
+        .PreFunc([](WidgetInfo& info) {
+            info.options->disabled = !CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaMode"), 0);
+            info.options->disabledTooltip = "Requires Gacha Mode to be enabled.";
+        })
+        .Options(CheckboxOptions()
+                     .DefaultValue(true)
+                     .Tooltip("Stones in overworld areas and grottos act as Gacha Machines."));
+    AddWidget(path, "Gacha: Dungeon/Temple Stones", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_RANDOMIZER_SETTING("GachaStonesDungeon"))
+        .PreFunc([](WidgetInfo& info) {
+            info.options->disabled = !CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaMode"), 0);
+            info.options->disabledTooltip = "Requires Gacha Mode to be enabled.";
+        })
+        .Options(CheckboxOptions()
+                     .DefaultValue(true)
+                     .Tooltip("Stones inside dungeons and temples act as Gacha Machines."));
+
     // Enhancements
     AddWidget(path, "Enhancements", WIDGET_SEPARATOR_TEXT);
     AddWidget(path, "These enhancements are only useful in the Randomizer mode but do not affect the randomizer logic.",

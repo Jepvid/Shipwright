@@ -1,8 +1,9 @@
 /**
  * This file handles the custom messages for Gossip Stone
- * hints.
+ * hints, and intercepts stone interaction for Gacha Mode.
  */
 #include <soh/OTRGlobals.h>
+#include "soh/Enhancements/randomizer/GachaMachine.h"
 
 extern "C" {
 extern PlayState* gPlayState;
@@ -12,6 +13,12 @@ extern PlayState* gPlayState;
 }
 
 void BuildHintStoneMessage(uint16_t* textId, bool* loadFromMessageTable) {
+    // Gacha Mode: redirect all stone interactions to the gacha machine handler.
+    if (RAND_GET_OPTION(RSK_GACHA_MODE).Is(RO_GENERIC_ON)) {
+        GachaMachine_Interact(textId, loadFromMessageTable);
+        return;
+    }
+
     if ((RAND_GET_OPTION(RSK_GOSSIP_STONE_HINTS).Is(RO_GOSSIP_STONES_NEED_TRUTH) &&
          Player_GetMask(gPlayState) == PLAYER_MASK_TRUTH) ||
         (RAND_GET_OPTION(RSK_GOSSIP_STONE_HINTS).Is(RO_GOSSIP_STONES_NEED_STONE) &&
@@ -52,8 +59,11 @@ void BuildHintStoneMessage(uint16_t* textId, bool* loadFromMessageTable) {
 }
 
 void RegisterGossipStoneHints() {
+    // Fire for hint mode OR gacha mode (gacha mode overrides hint behaviour inside BuildHintStoneMessage).
     COND_ID_HOOK(OnOpenText, TEXT_RANDOMIZER_GOSSIP_STONE_HINTS,
-                 RAND_GET_OPTION(RSK_GOSSIP_STONE_HINTS).IsNot(RO_GOSSIP_STONES_NONE), BuildHintStoneMessage);
+                 RAND_GET_OPTION(RSK_GOSSIP_STONE_HINTS).IsNot(RO_GOSSIP_STONES_NONE) ||
+                 RAND_GET_OPTION(RSK_GACHA_MODE).Is(RO_GENERIC_ON),
+                 BuildHintStoneMessage);
 }
 
 static RegisterShipInitFunc initFunc(RegisterGossipStoneHints, { "IS_RANDO" });
