@@ -13,6 +13,11 @@ bool GachaMachine_IsStoneActive();
 // Always sets *loadFromMessageTable = false so our message is used.
 void GachaMachine_Interact(uint16_t* textId, bool* loadFromMessageTable);
 
+// If all stone categories are disabled, replaces the token at rc with its real gacha reward
+// before the item give fires. Returns true if substitution happened; caller must re-fetch
+// the GetItemEntry after a true return.
+bool GachaMachine_SubstituteToken(RandomizerCheck rc);
+
 // Returns the next pending gacha RandomizerCheck to push into the randomizer queue, or
 // RC_UNKNOWN_CHECK if nothing is pending. Called every frame from RandomizerOnGameFrameUpdateHandler.
 RandomizerCheck GachaMachine_PopNextPendingRC();

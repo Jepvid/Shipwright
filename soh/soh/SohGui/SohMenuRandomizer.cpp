@@ -607,13 +607,24 @@ void SohMenu::AddMenuRandomizer() {
     AddWidget(path, "Gacha Mode", WIDGET_SEPARATOR_TEXT);
     AddWidget(path, "Gacha Mode", WIDGET_CVAR_CHECKBOX)
         .CVar(CVAR_RANDOMIZER_SETTING("GachaMode"))
+        .PreFunc([](WidgetInfo& info) {
+            if (GameInteractor::IsSaveLoaded()) {
+                info.options->disabled = true;
+                info.options->disabledTooltip = "Cannot change after a seed has been loaded.";
+            }
+        })
         .Options(CheckboxOptions().Tooltip(
             "Every location gives a Gacha Token. Spend tokens at Gossip Stones to receive items."));
     AddWidget(path, "Gacha: Settlements", WIDGET_CVAR_CHECKBOX)
         .CVar(CVAR_RANDOMIZER_SETTING("GachaStonesCity"))
         .PreFunc([](WidgetInfo& info) {
-            info.options->disabled = !CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaMode"), 0);
-            info.options->disabledTooltip = "Requires Gacha Mode to be enabled.";
+            if (GameInteractor::IsSaveLoaded()) {
+                info.options->disabled = true;
+                info.options->disabledTooltip = "Cannot change after a seed has been loaded.";
+            } else if (!CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaMode"), 0)) {
+                info.options->disabled = true;
+                info.options->disabledTooltip = "Requires Gacha Mode to be enabled.";
+            }
         })
         .Options(CheckboxOptions()
                      .DefaultValue(true)
@@ -621,8 +632,13 @@ void SohMenu::AddMenuRandomizer() {
     AddWidget(path, "Gacha: Overworld/Grotto Stones", WIDGET_CVAR_CHECKBOX)
         .CVar(CVAR_RANDOMIZER_SETTING("GachaStonesOverworld"))
         .PreFunc([](WidgetInfo& info) {
-            info.options->disabled = !CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaMode"), 0);
-            info.options->disabledTooltip = "Requires Gacha Mode to be enabled.";
+            if (GameInteractor::IsSaveLoaded()) {
+                info.options->disabled = true;
+                info.options->disabledTooltip = "Cannot change after a seed has been loaded.";
+            } else if (!CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaMode"), 0)) {
+                info.options->disabled = true;
+                info.options->disabledTooltip = "Requires Gacha Mode to be enabled.";
+            }
         })
         .Options(CheckboxOptions()
                      .DefaultValue(true)
@@ -630,12 +646,33 @@ void SohMenu::AddMenuRandomizer() {
     AddWidget(path, "Gacha: Dungeon/Temple Stones", WIDGET_CVAR_CHECKBOX)
         .CVar(CVAR_RANDOMIZER_SETTING("GachaStonesDungeon"))
         .PreFunc([](WidgetInfo& info) {
-            info.options->disabled = !CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaMode"), 0);
-            info.options->disabledTooltip = "Requires Gacha Mode to be enabled.";
+            if (GameInteractor::IsSaveLoaded()) {
+                info.options->disabled = true;
+                info.options->disabledTooltip = "Cannot change after a seed has been loaded.";
+            } else if (!CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaMode"), 0)) {
+                info.options->disabled = true;
+                info.options->disabledTooltip = "Requires Gacha Mode to be enabled.";
+            }
         })
         .Options(CheckboxOptions()
                      .DefaultValue(true)
                      .Tooltip("Stones inside dungeons and temples act as Gacha Machines."));
+    AddWidget(path, "Visit an active Gossip Stone to redeem your tokens for items.", WIDGET_TEXT)
+        .PreFunc([](WidgetInfo& info) {
+            info.isHidden = !CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaMode"), 0) ||
+                            (!CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaStonesCity"), 1) &&
+                             !CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaStonesOverworld"), 1) &&
+                             !CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaStonesDungeon"), 1));
+        })
+        .Options(TextOptions().Color(UIWidgets::Colors::Gray));
+    AddWidget(path, "With all stone types disabled, tokens are redeemed instantly on pickup.", WIDGET_TEXT)
+        .PreFunc([](WidgetInfo& info) {
+            info.isHidden = !CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaMode"), 0) ||
+                            CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaStonesCity"), 1) ||
+                            CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaStonesOverworld"), 1) ||
+                            CVarGetInteger(CVAR_RANDOMIZER_SETTING("GachaStonesDungeon"), 1);
+        })
+        .Options(TextOptions().Color(UIWidgets::Colors::Orange));
 
     // Enhancements
     AddWidget(path, "Enhancements", WIDGET_SEPARATOR_TEXT);

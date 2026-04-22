@@ -127,6 +127,34 @@ void GachaMachine_Interact(uint16_t* textId, bool* loadFromMessageTable) {
 }
 
 // ---------------------------------------------------------------------------
+// Instant redeem (called before item give when all stone types are disabled)
+// ---------------------------------------------------------------------------
+
+bool GachaMachine_SubstituteToken(RandomizerCheck rc) {
+    if (RAND_GET_OPTION(RSK_GACHA_STONES_CITY).Is(RO_GENERIC_ON) ||
+        RAND_GET_OPTION(RSK_GACHA_STONES_OVERWORLD).Is(RO_GENERIC_ON) ||
+        RAND_GET_OPTION(RSK_GACHA_STONES_DUNGEON).Is(RO_GENERIC_ON)) {
+        return false;
+    }
+
+    auto& saveData = gSaveContext.ship.quest.data.randomizer;
+    if (saveData.gachaItemCount == 0) return false;
+    if (saveData.gachaListIndex >= saveData.gachaItemCount) return false;
+
+    saveData.gachaTokens++;
+
+    uint32_t idx = saveData.gachaListIndex;
+    RandomizerGet rg = (RandomizerGet)saveData.gachaItems[idx];
+
+    auto loc = Context::GetInstance()->GetItemLocation(rc);
+    loc->SetPlacedItem(rg);
+    loc->SetCheckStatus(RCSHOW_UNCHECKED);
+
+    saveData.gachaListIndex++;
+    return true;
+}
+
+// ---------------------------------------------------------------------------
 // RC delivery (called from RandomizerOnGameFrameUpdateHandler)
 // ---------------------------------------------------------------------------
 

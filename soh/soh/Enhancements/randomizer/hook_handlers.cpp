@@ -370,6 +370,9 @@ void RandomizerOnPlayerUpdateForRCQueueHandler() {
     auto loc = Rando::Context::GetInstance()->GetItemLocation(rc);
     RandomizerGet vanillaRandomizerGet = Rando::StaticData::GetLocation(rc)->GetVanillaItem();
     GetItemID vanillaItem = (GetItemID)Rando::StaticData::RetrieveItem(vanillaRandomizerGet).GetItemID();
+    if (loc->GetPlacedRandomizerGet() == RG_GACHA_TOKEN) {
+        GachaMachine_SubstituteToken(rc);
+    }
     GetItemEntry getItemEntry =
         Rando::Context::GetInstance()->GetFinalGIEntry(rc, true, (GetItemID)vanillaRandomizerGet);
     GetItemCategory getItemCategory = Randomizer_AdjustItemCategory(getItemEntry);
