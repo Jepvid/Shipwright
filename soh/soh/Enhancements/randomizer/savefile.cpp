@@ -249,6 +249,21 @@ extern "C" void Randomizer_InitSaveFile() {
     // Reset Bombchu Bag Upgrade
     gSaveContext.ship.quest.data.randomizer.bombchuUpgradeLevel = 0;
 
+    // Reset gacha state and bake the gacha list into the save so it's always available.
+    gSaveContext.ship.quest.data.randomizer.gachaTokens = 0;
+    gSaveContext.ship.quest.data.randomizer.gachaListIndex = 0;
+    gSaveContext.ship.quest.data.randomizer.gachaItemCount = 0;
+    if (ctx->GetOption(RSK_GACHA_MODE).Is(RO_GENERIC_ON)) {
+        const auto& gachaList = ctx->GetGachaList();
+        const auto& gachaCheckList = ctx->GetGachaCheckList();
+        uint32_t count = (uint32_t)(gachaList.size() < GACHA_MAX_ITEMS ? gachaList.size() : GACHA_MAX_ITEMS);
+        gSaveContext.ship.quest.data.randomizer.gachaItemCount = count;
+        for (uint32_t i = 0; i < count; i++) {
+            gSaveContext.ship.quest.data.randomizer.gachaItems[i] = (uint32_t)gachaList[i];
+            gSaveContext.ship.quest.data.randomizer.gachaChecks[i] = (uint32_t)gachaCheckList[i];
+        }
+    }
+
     SetStartingItems();
 
     // Set Cutscene flags and texts to skip them.

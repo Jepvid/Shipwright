@@ -361,6 +361,18 @@ void SpoilerLog_Write() {
     WriteShuffledEntrances();
     WriteAllLocations();
 
+    if (RAND_GET_OPTION(RSK_GACHA_MODE).Is(RO_GENERIC_ON)) {
+        const auto& gachaList = ctx->GetGachaList();
+        nlohmann::ordered_json gachaJson = nlohmann::ordered_json::array();
+        for (size_t i = 0; i < gachaList.size(); i++) {
+            gachaJson.push_back({
+                { "index", i },
+                { "item", Rando::StaticData::RetrieveItem(gachaList[i]).GetName().GetEnglish() },
+            });
+        }
+        jsonData["gachaList"] = gachaJson;
+    }
+
     if (!std::filesystem::exists(Ship::Context::GetPathRelativeToAppDirectory("Randomizer"))) {
         std::filesystem::create_directory(Ship::Context::GetPathRelativeToAppDirectory("Randomizer"));
     }

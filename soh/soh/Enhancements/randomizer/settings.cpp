@@ -1337,6 +1337,10 @@ void Settings::CreateOptions() {
     OPT_CALLBACK(RSK_LOGIC_RULES, {
         HandleStartingAgeUI();
     });
+    OPT_BOOL(RSK_GACHA_MODE, "Gacha Mode", {"Off", "On"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GachaMode"), "Every location gives a Gacha Token. Spend tokens at Stones of Truth to receive items from a pre-ordered list that guarantees progression.", WIDGET_CVAR_CHECKBOX, RO_GENERIC_OFF);
+    OPT_BOOL(RSK_GACHA_STONES_CITY, "Gacha: City/Village Stones", {"Off", "On"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GachaStonesCity"), "Stones in cities and villages (Kokiri Forest, Kakariko, Goron City, etc.) act as Gacha Machines.", WIDGET_CVAR_CHECKBOX, RO_GENERIC_ON);
+    OPT_BOOL(RSK_GACHA_STONES_OVERWORLD, "Gacha: Overworld/Grotto Stones", {"Off", "On"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GachaStonesOverworld"), "Stones in overworld areas and grottos act as Gacha Machines.", WIDGET_CVAR_CHECKBOX, RO_GENERIC_ON);
+    OPT_BOOL(RSK_GACHA_STONES_DUNGEON, "Gacha: Dungeon/Temple Stones", {"Off", "On"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("GachaStonesDungeon"), "Stones inside dungeons and temples act as Gacha Machines.", WIDGET_CVAR_CHECKBOX, RO_GENERIC_ON);
     OPT_BOOL(RSK_ALL_LOCATIONS_REACHABLE, "All Locations Reachable", {"Off", "On"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("AllLocationsReachable"), mOptionDescriptions[RSK_ALL_LOCATIONS_REACHABLE], WIDGET_CVAR_CHECKBOX, RO_GENERIC_ON, false, nullptr, IMFLAG_SAME_LINE);
     OPT_BOOL(RSK_SKULLS_SUNS_SONG, "Night Skulltula's Expect Sun's Song", CVAR_RANDOMIZER_SETTING("GsExpectSunsSong"), mOptionDescriptions[RSK_SKULLS_SUNS_SONG]);
     OPT_U8(RSK_DAMAGE_MULTIPLIER, "Damage Multiplier", {"x1/2", "x1", "x2", "x4", "x8", "x16", "OHKO"}, OptionCategory::Setting, "", "", WIDGET_CVAR_SLIDER_INT, RO_DAMAGE_MULTIPLIER_DEFAULT);
@@ -1725,6 +1729,14 @@ void Settings::CreateOptions() {
         }
     }
     mOptionGroups[RSG_TRICKS] = OptionGroup::SubGroup("Logical Tricks", tricksOption);
+    mOptionGroups[RSG_MENU_SECTION_GACHA] = OptionGroup::SubGroup("Gacha Mode",
+                                                                  {
+                                                                      &mOptions[RSK_GACHA_MODE],
+                                                                      &mOptions[RSK_GACHA_STONES_CITY],
+                                                                      &mOptions[RSK_GACHA_STONES_OVERWORLD],
+                                                                      &mOptions[RSK_GACHA_STONES_DUNGEON],
+                                                                  },
+                                                                  WidgetContainerType::SECTION);
     mOptionGroups[RSG_MENU_SECTION_LOGIC] = OptionGroup::SubGroup("Logic",
                                                                   {
                                                                       &mOptions[RSK_LOGIC_RULES],
@@ -1752,7 +1764,7 @@ void Settings::CreateOptions() {
           &mOptions[RSK_LACS_REWARD_COUNT], &mOptions[RSK_LACS_TOKEN_COUNT] },
         WidgetContainerType::SECTION);
     mOptionGroups[RSG_MENU_COLUMN_LOGIC_WINCON] = OptionGroup::SubGroup("",
-                                                                        std::initializer_list<OptionGroup*>{
+                                                                        {
                                                                             &mOptionGroups[RSG_ITEM_POOL],
                                                                             &mOptionGroups[RSG_MENU_SECTION_LOGIC],
                                                                             &mOptionGroups[RSG_MENU_SECTION_WINCON],

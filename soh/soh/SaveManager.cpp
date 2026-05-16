@@ -231,6 +231,16 @@ void SaveManager::LoadRandomizer() {
                                     gSaveContext.ship.quest.data.randomizer.triforcePiecesCollected);
     SaveManager::Instance->LoadData("bombchuUpgradeLevel", gSaveContext.ship.quest.data.randomizer.bombchuUpgradeLevel);
 
+    SaveManager::Instance->LoadData("gachaTokens", gSaveContext.ship.quest.data.randomizer.gachaTokens, (uint32_t)0);
+    SaveManager::Instance->LoadData("gachaListIndex", gSaveContext.ship.quest.data.randomizer.gachaListIndex, (uint32_t)0);
+    SaveManager::Instance->LoadData("gachaItemCount", gSaveContext.ship.quest.data.randomizer.gachaItemCount, (uint32_t)0);
+    SaveManager::Instance->LoadArray("gachaItems", gSaveContext.ship.quest.data.randomizer.gachaItemCount, [&](size_t i) {
+        SaveManager::Instance->LoadData("", gSaveContext.ship.quest.data.randomizer.gachaItems[i], (uint32_t)0);
+    });
+    SaveManager::Instance->LoadArray("gachaChecks", gSaveContext.ship.quest.data.randomizer.gachaItemCount, [&](size_t i) {
+        SaveManager::Instance->LoadData("", gSaveContext.ship.quest.data.randomizer.gachaChecks[i], (uint32_t)0);
+    });
+
     SaveManager::Instance->LoadData("pendingIceTrapCount", gSaveContext.ship.pendingIceTrapCount);
 
     std::shared_ptr<Randomizer> randomizer = OTRGlobals::Instance->gRandomizer;
@@ -384,6 +394,16 @@ void SaveManager::SaveRandomizer(SaveContext* saveContext, int sectionID, bool f
     SaveManager::Instance->SaveData("triforcePiecesCollected",
                                     saveContext->ship.quest.data.randomizer.triforcePiecesCollected);
     SaveManager::Instance->SaveData("bombchuUpgradeLevel", saveContext->ship.quest.data.randomizer.bombchuUpgradeLevel);
+
+    SaveManager::Instance->SaveData("gachaTokens", saveContext->ship.quest.data.randomizer.gachaTokens);
+    SaveManager::Instance->SaveData("gachaListIndex", saveContext->ship.quest.data.randomizer.gachaListIndex);
+    SaveManager::Instance->SaveData("gachaItemCount", saveContext->ship.quest.data.randomizer.gachaItemCount);
+    SaveManager::Instance->SaveArray("gachaItems", saveContext->ship.quest.data.randomizer.gachaItemCount, [&](size_t i) {
+        SaveManager::Instance->SaveData("", saveContext->ship.quest.data.randomizer.gachaItems[i]);
+    });
+    SaveManager::Instance->SaveArray("gachaChecks", saveContext->ship.quest.data.randomizer.gachaItemCount, [&](size_t i) {
+        SaveManager::Instance->SaveData("", saveContext->ship.quest.data.randomizer.gachaChecks[i]);
+    });
 
     SaveManager::Instance->SaveData("pendingIceTrapCount", saveContext->ship.pendingIceTrapCount);
 

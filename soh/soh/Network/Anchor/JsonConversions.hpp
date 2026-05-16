@@ -109,12 +109,16 @@ inline void to_json(json& j, const ShipRandomizerSaveContextData& shipRandomizer
     j = json{
         { "triforcePiecesCollected", shipRandomizerSaveContextData.triforcePiecesCollected },
         { "bombchuUpgradeLevel", shipRandomizerSaveContextData.bombchuUpgradeLevel },
+        { "gachaTokens", shipRandomizerSaveContextData.gachaTokens },
+        { "gachaListIndex", shipRandomizerSaveContextData.gachaListIndex },
     };
 }
 
 inline void from_json(const json& j, ShipRandomizerSaveContextData& shipRandomizerSaveContextData) {
     j.at("triforcePiecesCollected").get_to(shipRandomizerSaveContextData.triforcePiecesCollected);
     j.at("bombchuUpgradeLevel").get_to(shipRandomizerSaveContextData.bombchuUpgradeLevel);
+    shipRandomizerSaveContextData.gachaTokens = j.value("gachaTokens", (u32)0);
+    shipRandomizerSaveContextData.gachaListIndex = j.value("gachaListIndex", (u32)0);
 }
 
 inline void to_json(json& j, const ShipQuestSpecificSaveContextData& shipQuestSpecificSaveContextData) {

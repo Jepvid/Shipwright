@@ -433,6 +433,7 @@ static std::map<std::string, CosmeticOption> cosmeticOptions = {
     COSMETIC_OPTION("World.GossipStone",            "Gossip Stone",             COSMETICS_GROUP_WORLD,        ColorRGBA8(200, 200, 200, 255), false, true, true),
     COSMETIC_OPTION("World.RedIce",                 "Red Ice",                  COSMETICS_GROUP_WORLD,        ColorRGBA8(255,   0,   0, 255), false, true, false),
     COSMETIC_OPTION("World.MysteryItem",            "Mystery Item",             COSMETICS_GROUP_WORLD,        ColorRGBA8(  0,  60, 100, 255), false, true, false),
+    COSMETIC_OPTION("World.GachaToken",             "Gacha Token",              COSMETICS_GROUP_WORLD,        ColorRGBA8(  0, 100, 200, 255), false, true, true),
 
     COSMETIC_OPTION("Navi.IdlePrimary",             "Idle Primary",             COSMETICS_GROUP_NAVI,         ColorRGBA8(255, 255, 255, 255), false, true, false),
     COSMETIC_OPTION("Navi.IdleSecondary",           "Idle Secondary",           COSMETICS_GROUP_NAVI,         ColorRGBA8(  0,   0, 255,   0), false, true, true),

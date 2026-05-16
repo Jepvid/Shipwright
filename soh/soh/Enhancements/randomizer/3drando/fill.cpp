@@ -10,6 +10,7 @@
 #include "pool_functions.hpp"
 #include "soh/Enhancements/randomizer/static_data.h"
 #include "soh/Enhancements/debugger/performanceTimer.h"
+#include "gacha_fill.hpp"
 
 #include <vector>
 #include <list>
@@ -1463,6 +1464,10 @@ int Fill() {
             CreateAllHints();
             CreateWarpSongTexts();
             StopPerformanceTimer(PT_HINTS);
+
+            if (ctx->GetOption(RSK_GACHA_MODE).Is(RO_GENERIC_ON)) {
+                BuildGachaList();
+            }
             SPDLOG_DEBUG("Number of retries {}", retries);
             return 1;
         }

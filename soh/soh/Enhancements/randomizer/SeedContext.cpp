@@ -429,6 +429,7 @@ void Context::ParseSpoiler(const char* spoilerFileName) {
         ParseTricksJson(spoilerFileJson);
         mEntranceShuffler->ParseJson(spoilerFileJson);
         ParseHintJson(spoilerFileJson);
+        ParseGachaListJson(spoilerFileJson);
         mDungeons->ParseJson(spoilerFileJson);
         mTrials->ParseJson(spoilerFileJson);
         mSpoilerLoaded = true;
@@ -466,6 +467,15 @@ void Context::ParseItemLocationsJson(nlohmann::json spoilerFileJson) {
             itemLocationTable[rc].SetPlacedItem(StaticData::itemNameToEnum[it.value().get<std::string>()]);
         }
     }
+}
+
+void Context::ParseGachaListJson(nlohmann::json spoilerFileJson) {
+    if (!spoilerFileJson.contains("gachaList")) return;
+    std::vector<RandomizerGet> list;
+    for (auto& entry : spoilerFileJson["gachaList"]) {
+        list.push_back(StaticData::itemNameToEnum[entry["item"].get<std::string>()]);
+    }
+    gachaList = std::move(list);
 }
 
 void Context::WriteHintJson(nlohmann::ordered_json& spoilerFileJson) {
@@ -571,6 +581,22 @@ std::shared_ptr<Kaleido> Context::GetKaleido() {
         mKaleido = std::make_shared<Kaleido>();
     }
     return mKaleido;
+}
+
+const std::vector<RandomizerGet>& Context::GetGachaList() const {
+    return gachaList;
+}
+
+void Context::SetGachaList(std::vector<RandomizerGet> list) {
+    gachaList = std::move(list);
+}
+
+const std::vector<RandomizerCheck>& Context::GetGachaCheckList() const {
+    return gachaCheckList;
+}
+
+void Context::SetGachaCheckList(std::vector<RandomizerCheck> list) {
+    gachaCheckList = std::move(list);
 }
 
 std::string Context::GetHash() const {
