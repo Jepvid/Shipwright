@@ -97,6 +97,18 @@ union SkeletonLimbData {
     SkinLimb skinLimb;
 };
 
+struct SmoothSkinInfluence {
+    uint8_t boneIndex;
+    uint8_t weight;
+    int16_t localX, localY, localZ;
+    int8_t normX, normY, normZ;
+};
+
+struct SmoothSkinVertex {
+    int16_t domX, domY, domZ;
+    std::vector<SmoothSkinInfluence> influences;
+};
+
 class SkeletonLimb : public Ship::Resource<SkeletonLimbData> {
   public:
     using Resource::Resource;
@@ -131,5 +143,7 @@ class SkeletonLimb : public Ship::Resource<SkeletonLimbData> {
 
     std::vector<std::vector<SkinVertex>> skinLimbModifVertexArrays;
     std::vector<std::vector<SkinTransformation>> skinLimbModifTransformationArrays;
+
+    std::vector<SmoothSkinVertex> smoothSkinVertices;
 };
 } // namespace SOH

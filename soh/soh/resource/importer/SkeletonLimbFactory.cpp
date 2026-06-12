@@ -1,5 +1,6 @@
 #include "soh/resource/importer/SkeletonLimbFactory.h"
 #include "soh/resource/type/SkeletonLimb.h"
+#include "soh/Enhancements/Graphics/SmoothSkinning.h"
 #include "spdlog/spdlog.h"
 #include <tinyxml2.h>
 #include "libultraship/libultraship.h"
@@ -251,6 +252,39 @@ ResourceFactoryXMLSkeletonLimbV0::ReadResource(std::shared_ptr<Ship::File> file,
     limbData.lodLimb.sibling = skelLimb->siblingIndex;
 
     // skelLimb->dList2Ptr = reader->Attribute("DisplayList2");
+
+    auto* smoothSkinElem = reader->FirstChildElement("SmoothSkin");
+    if (smoothSkinElem != nullptr) {
+        for (auto* vtxElem = smoothSkinElem->FirstChildElement("Vertex"); vtxElem != nullptr;
+             vtxElem = vtxElem->NextSiblingElement("Vertex")) {
+            SmoothSkinVertex ssv;
+            ssv.domX = (int16_t)vtxElem->IntAttribute("DomX");
+            ssv.domY = (int16_t)vtxElem->IntAttribute("DomY");
+            ssv.domZ = (int16_t)vtxElem->IntAttribute("DomZ");
+
+            for (auto* infElem = vtxElem->FirstChildElement("Influence"); infElem != nullptr;
+                 infElem = infElem->NextSiblingElement("Influence")) {
+                SmoothSkinInfluence inf;
+                inf.boneIndex = (uint8_t)infElem->IntAttribute("Bone");
+                inf.weight = (uint8_t)infElem->IntAttribute("Weight");
+                inf.localX = (int16_t)infElem->IntAttribute("LocalX");
+                inf.localY = (int16_t)infElem->IntAttribute("LocalY");
+                inf.localZ = (int16_t)infElem->IntAttribute("LocalZ");
+                inf.normX = (int8_t)infElem->IntAttribute("NormX");
+                inf.normY = (int8_t)infElem->IntAttribute("NormY");
+                inf.normZ = (int8_t)infElem->IntAttribute("NormZ");
+                ssv.influences.push_back(inf);
+            }
+
+            if (!ssv.influences.empty()) {
+                skelLimb->smoothSkinVertices.push_back(std::move(ssv));
+            }
+        }
+
+        if (!skelLimb->smoothSkinVertices.empty()) {
+            SmoothSkinning_RegisterLimb(&skelLimb->limbData, skelLimb.get());
+        }
+    }
 
     return skelLimb;
 }
