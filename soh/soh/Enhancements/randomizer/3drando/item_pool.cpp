@@ -212,10 +212,12 @@ void GenerateItemPool() {
                                             3 + infiniteProgressive, 
                                             2 + infiniteProgressive,
                                             1 + infiniteProgressive);
-    AddItemToPool(RG_PROGRESSIVE_MAGIC_METER, 3 + infiniteProgressive, 
-                                              2 + infiniteProgressive, 
-                                              1 + infiniteProgressive,
-                                              1 + infiniteProgressive);
+    if (!ctx->GetOption(RSK_MAGIC_STAT_UPGRADE)) {
+        AddItemToPool(RG_PROGRESSIVE_MAGIC_METER, 3 + infiniteProgressive,
+                                                  2 + infiniteProgressive,
+                                                  1 + infiniteProgressive,
+                                                  1 + infiniteProgressive);
+    }
     //clang-format on
 
     int extraWallets =(ctx->GetOption(RSK_SHUFFLE_CHILD_WALLET) ? 1 : 0) + (ctx->GetOption(RSK_INCLUDE_TYCOON_WALLET) ? 1 : 0);
@@ -399,6 +401,34 @@ void GenerateItemPool() {
 
     if (ctx->GetOption(RSK_ROCS_FEATHER)) {
         AddItemToPool(RG_ROCS_FEATHER, 2, 1, 1, 1);
+    }
+    if (ctx->GetOption(RSK_ADJUSTABLE_STAT_UPGRADE)) {
+        uint8_t statTotal = ctx->GetOption(RSK_STAT_UPGRADE_TOTAL).Get() + 1;
+        if (ctx->GetOption(RSK_DEFENSE_UPGRADE)) {
+            AddItemToPool(RG_DEFENSE_UPGRADE, statTotal, statTotal, statTotal, statTotal, false);
+        }
+        if (ctx->GetOption(RSK_SPEED_UPGRADE)) {
+            AddItemToPool(RG_SPEED_UPGRADE, statTotal, statTotal, statTotal, statTotal, false);
+        }
+        if (ctx->GetOption(RSK_POWER_UPGRADE)) {
+            AddItemToPool(RG_POWER_UPGRADE, statTotal, statTotal, statTotal, statTotal, false);
+        }
+        if (ctx->GetOption(RSK_MAGIC_STAT_UPGRADE)) {
+            AddItemToPool(RG_MAGIC_STAT_UPGRADE, statTotal, statTotal, statTotal, statTotal, false);
+        }
+    } else {
+        if (ctx->GetOption(RSK_DEFENSE_UPGRADE)) {
+            AddItemToPool(RG_DEFENSE_UPGRADE, 7, 5, 3, 1, false);
+        }
+        if (ctx->GetOption(RSK_SPEED_UPGRADE)) {
+            AddItemToPool(RG_SPEED_UPGRADE, 7, 5, 3, 1, false);
+        }
+        if (ctx->GetOption(RSK_POWER_UPGRADE)) {
+            AddItemToPool(RG_POWER_UPGRADE, 7, 5, 3, 1, false);
+        }
+        if (ctx->GetOption(RSK_MAGIC_STAT_UPGRADE)) {
+            AddItemToPool(RG_MAGIC_STAT_UPGRADE, 10, 8, 6, 4, false);
+        }
     }
 
     int bronzeScale = ctx->GetOption(RSK_SHUFFLE_SWIM) ? 1 : 0;
@@ -879,25 +909,34 @@ void GenerateItemPool() {
 
     int startingHearts = ctx->GetOption(RSK_STARTING_HEARTS).Get() + 1;
     if (startingHearts < maxHearts) {
-        AddFixedItemToPool(RG_TREASURE_GAME_HEART, 1, false);
-        AddFixedItemToPool(RG_PIECE_OF_HEART, 3, false);
-        startingHearts++;
-        if (startingHearts < maxHearts) {
-            switch (ctx->GetOption(RSK_ITEM_POOL).Get()) {
-                case RO_ITEM_POOL_PLENTIFUL:
-                case RO_ITEM_POOL_MINIMAL:
-                    AddFixedItemToPool(RG_HEART_CONTAINER, maxHearts - startingHearts, false);
-                    break;
-                case RO_ITEM_POOL_BALANCED: {
-                    int heartsToPlace = maxHearts - startingHearts;
-                    int halfHearts = heartsToPlace / 2;
-                    AddFixedItemToPool(RG_HEART_CONTAINER, heartsToPlace - halfHearts, false);
-                    AddFixedItemToPool(RG_PIECE_OF_HEART, halfHearts * 4, false);
-                    break;
+        if (ctx->GetOption(RSK_QUARTER_HEART)) {
+            // Treasure game heart + 3 pieces = 1 full heart = 4 quarter hearts
+            AddFixedItemToPool(RG_QUARTER_HEART, 4, false);
+            startingHearts++;
+            if (startingHearts < maxHearts) {
+                AddFixedItemToPool(RG_QUARTER_HEART, (maxHearts - startingHearts) * 4, false);
+            }
+        } else {
+            AddFixedItemToPool(RG_TREASURE_GAME_HEART, 1, false);
+            AddFixedItemToPool(RG_PIECE_OF_HEART, 3, false);
+            startingHearts++;
+            if (startingHearts < maxHearts) {
+                switch (ctx->GetOption(RSK_ITEM_POOL).Get()) {
+                    case RO_ITEM_POOL_PLENTIFUL:
+                    case RO_ITEM_POOL_MINIMAL:
+                        AddFixedItemToPool(RG_HEART_CONTAINER, maxHearts - startingHearts, false);
+                        break;
+                    case RO_ITEM_POOL_BALANCED: {
+                        int heartsToPlace = maxHearts - startingHearts;
+                        int halfHearts = heartsToPlace / 2;
+                        AddFixedItemToPool(RG_HEART_CONTAINER, heartsToPlace - halfHearts, false);
+                        AddFixedItemToPool(RG_PIECE_OF_HEART, halfHearts * 4, false);
+                        break;
+                    }
+                    case RO_ITEM_POOL_SCARCE:
+                        AddFixedItemToPool(RG_PIECE_OF_HEART, (maxHearts - startingHearts) * 4, false);
+                        break;
                 }
-                case RO_ITEM_POOL_SCARCE:
-                    AddFixedItemToPool(RG_PIECE_OF_HEART, (maxHearts - startingHearts) * 4, false);
-                    break;
             }
         }
     }

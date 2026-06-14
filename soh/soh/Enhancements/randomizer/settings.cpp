@@ -1313,6 +1313,23 @@ void Settings::CreateOptions() {
     OPT_BOOL(RSK_BLUE_FIRE_ARROWS, "Blue Fire Arrows", CVAR_RANDOMIZER_SETTING("BlueFireArrows"), mOptionDescriptions[RSK_BLUE_FIRE_ARROWS]);
     OPT_BOOL(RSK_SUNLIGHT_ARROWS, "Sunlight Arrows", CVAR_RANDOMIZER_SETTING("SunlightArrows"), mOptionDescriptions[RSK_SUNLIGHT_ARROWS]);
     OPT_BOOL(RSK_ROCS_FEATHER, "Roc's Feather", CVAR_RANDOMIZER_SETTING("RocsFeather"), mOptionDescriptions[RSK_ROCS_FEATHER]);
+    OPT_BOOL(RSK_QUARTER_HEART, "Quarter Heart", CVAR_RANDOMIZER_SETTING("QuarterHeart"), mOptionDescriptions[RSK_QUARTER_HEART]);
+    OPT_BOOL(RSK_DEFENSE_UPGRADE, "Defense Upgrade", CVAR_RANDOMIZER_SETTING("DefenseUpgrade"), mOptionDescriptions[RSK_DEFENSE_UPGRADE]);
+    OPT_BOOL(RSK_SPEED_UPGRADE, "Speed Upgrade", CVAR_RANDOMIZER_SETTING("SpeedUpgrade"), mOptionDescriptions[RSK_SPEED_UPGRADE]);
+    OPT_BOOL(RSK_POWER_UPGRADE, "Power Upgrade", CVAR_RANDOMIZER_SETTING("PowerUpgrade"), mOptionDescriptions[RSK_POWER_UPGRADE]);
+    OPT_BOOL(RSK_MAGIC_STAT_UPGRADE, "Magic Stat Upgrade", CVAR_RANDOMIZER_SETTING("MagicStatUpgrade"), mOptionDescriptions[RSK_MAGIC_STAT_UPGRADE]);
+    OPT_BOOL(RSK_ADJUSTABLE_STAT_UPGRADE, "Adjustable Stat Upgrades", CVAR_RANDOMIZER_SETTING("AdjustableStatUpgrade"), mOptionDescriptions[RSK_ADJUSTABLE_STAT_UPGRADE]);
+    OPT_CALLBACK(RSK_ADJUSTABLE_STAT_UPGRADE, {
+        if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("AdjustableStatUpgrade"), 0)) {
+            mOptions[RSK_STAT_UPGRADE_TOTAL].Unhide();
+            mOptions[RSK_STAT_UPGRADE_REQUIRED].Unhide();
+        } else {
+            mOptions[RSK_STAT_UPGRADE_TOTAL].Hide();
+            mOptions[RSK_STAT_UPGRADE_REQUIRED].Hide();
+        }
+    });
+    OPT_U8(RSK_STAT_UPGRADE_TOTAL, "Stat Upgrade Total", {NumOpts(1, 100)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("StatUpgradeTotal"), mOptionDescriptions[RSK_STAT_UPGRADE_TOTAL], WIDGET_CVAR_SLIDER_INT, 4, false, nullptr, IMFLAG_NONE);
+    OPT_U8(RSK_STAT_UPGRADE_REQUIRED, "Percent Required", {NumOpts(1, 100)}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("StatUpgradeRequired"), mOptionDescriptions[RSK_STAT_UPGRADE_REQUIRED], WIDGET_CVAR_SLIDER_INT, 99, false, nullptr, IMFLAG_NONE);
     OPT_U8(RSK_INFINITE_UPGRADES, "Infinite Upgrades", {"Off", "Progressive", "Condensed Progressive"}, OptionCategory::Setting, CVAR_RANDOMIZER_SETTING("InfiniteUpgrades"), mOptionDescriptions[RSK_INFINITE_UPGRADES]);
     OPT_BOOL(RSK_SKELETON_KEY, "Skeleton Key", CVAR_RANDOMIZER_SETTING("SkeletonKey"), mOptionDescriptions[RSK_SKELETON_KEY]);
     OPT_BOOL(RSK_SLINGBOW_BREAK_BEEHIVES, "Slingshot/Bow Can Break Beehives", CVAR_RANDOMIZER_SETTING("SlingBowBeehives"), mOptionDescriptions[RSK_SLINGBOW_BREAK_BEEHIVES]);
@@ -1952,28 +1969,24 @@ void Settings::CreateOptions() {
                               WidgetContainerType::SECTION);
     mOptionGroups[RSG_MENU_COLUMN_SHOP_SHUFFLES] =
         OptionGroup::SubGroup("", { &mOptionGroups[RSG_MENU_SECTION_SHOP_SHUFFLES] }, WidgetContainerType::COLUMN);
-    mOptionGroups[RSG_MENU_SECTION_ADDITIONAL_ITEMS] = OptionGroup::SubGroup("Additional Items",
-                                                                             {
-                                                                                 &mOptions[RSK_SHUFFLE_CHILD_WALLET],
-                                                                                 &mOptions[RSK_INCLUDE_TYCOON_WALLET],
-                                                                                 &mOptions[RSK_SHUFFLE_FISHING_POLE],
-                                                                                 &mOptions[RSK_SHUFFLE_DEKU_STICK_BAG],
-                                                                                 &mOptions[RSK_SHUFFLE_DEKU_NUT_BAG],
-                                                                                 &mOptions[RSK_SHUFFLE_OCARINA_BUTTONS],
-                                                                                 &mOptions[RSK_SHUFFLE_SWIM],
-                                                                                 &mOptions[RSK_SHUFFLE_GRAB],
-                                                                                 &mOptions[RSK_SHUFFLE_CLIMB],
-                                                                                 &mOptions[RSK_SHUFFLE_CRAWL],
-                                                                                 &mOptions[RSK_SHUFFLE_SPEAK],
-                                                                                 &mOptions[RSK_SHUFFLE_OPEN_CHEST],
-                                                                                 &mOptions[RSK_SHUFFLE_BEAN_SOULS],
-                                                                                 &mOptions[RSK_ROCS_FEATHER],
-                                                                                 &mOptions[RSK_BOMBCHU_BAG],
-                                                                                 &mOptions[RSK_ENABLE_BOMBCHU_DROPS],
-                                                                                 &mOptions[RSK_INFINITE_UPGRADES],
-                                                                                 &mOptions[RSK_SKELETON_KEY],
-                                                                             },
-                                                                             WidgetContainerType::SECTION);
+    mOptionGroups[RSG_MENU_SECTION_ADDITIONAL_ITEMS] =
+        OptionGroup::SubGroup("Additional Items",
+                              {
+                                  &mOptions[RSK_SHUFFLE_CHILD_WALLET], &mOptions[RSK_INCLUDE_TYCOON_WALLET],
+                                  &mOptions[RSK_SHUFFLE_FISHING_POLE], &mOptions[RSK_SHUFFLE_DEKU_STICK_BAG],
+                                  &mOptions[RSK_SHUFFLE_DEKU_NUT_BAG], &mOptions[RSK_SHUFFLE_OCARINA_BUTTONS],
+                                  &mOptions[RSK_SHUFFLE_SWIM],         &mOptions[RSK_SHUFFLE_GRAB],
+                                  &mOptions[RSK_SHUFFLE_CLIMB],        &mOptions[RSK_SHUFFLE_CRAWL],
+                                  &mOptions[RSK_SHUFFLE_SPEAK],        &mOptions[RSK_SHUFFLE_OPEN_CHEST],
+                                  &mOptions[RSK_SHUFFLE_BEAN_SOULS],   &mOptions[RSK_ROCS_FEATHER],
+                                  &mOptions[RSK_QUARTER_HEART],        &mOptions[RSK_DEFENSE_UPGRADE],
+                                  &mOptions[RSK_SPEED_UPGRADE],        &mOptions[RSK_POWER_UPGRADE],
+                                  &mOptions[RSK_MAGIC_STAT_UPGRADE],   &mOptions[RSK_ADJUSTABLE_STAT_UPGRADE],
+                                  &mOptions[RSK_STAT_UPGRADE_TOTAL],   &mOptions[RSK_STAT_UPGRADE_REQUIRED],
+                                  &mOptions[RSK_BOMBCHU_BAG],          &mOptions[RSK_ENABLE_BOMBCHU_DROPS],
+                                  &mOptions[RSK_INFINITE_UPGRADES],    &mOptions[RSK_SKELETON_KEY],
+                              },
+                              WidgetContainerType::SECTION);
     mOptionGroups[RSG_MENU_COLUMN_ADDITIONAL_ITEMS] =
         OptionGroup::SubGroup("", { &mOptionGroups[RSG_MENU_SECTION_ADDITIONAL_ITEMS] }, WidgetContainerType::COLUMN);
     mOptionGroups[RSG_MENU_SIDEBAR_SHUFFLES] =
@@ -2216,6 +2229,14 @@ void Settings::CreateOptions() {
                                             &mOptions[RSK_SHUFFLE_100_GS_REWARD],
                                             &mOptions[RSK_SHUFFLE_BEAN_SOULS],
                                             &mOptions[RSK_ROCS_FEATHER],
+                                            &mOptions[RSK_QUARTER_HEART],
+                                            &mOptions[RSK_DEFENSE_UPGRADE],
+                                            &mOptions[RSK_SPEED_UPGRADE],
+                                            &mOptions[RSK_POWER_UPGRADE],
+                                            &mOptions[RSK_MAGIC_STAT_UPGRADE],
+                                            &mOptions[RSK_ADJUSTABLE_STAT_UPGRADE],
+                                            &mOptions[RSK_STAT_UPGRADE_TOTAL],
+                                            &mOptions[RSK_STAT_UPGRADE_REQUIRED],
                                             &mOptions[RSK_SHUFFLE_BOSS_SOULS],
                                             &mOptions[RSK_SHUFFLE_DEKU_STICK_BAG],
                                             &mOptions[RSK_SHUFFLE_DEKU_NUT_BAG],

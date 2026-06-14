@@ -1,5 +1,6 @@
 #include "logic.h"
 #include "../debugger/performanceTimer.h"
+#include "randostatupgrade.h"
 
 #include <string>
 #include <vector>
@@ -91,8 +92,15 @@ bool Logic::HasItem(RandomizerGet itemName) {
         case RG_PROGRESSIVE_BOMB_BAG:
         case RG_BOMB_BAG:
             return CurrentUpgrade(UPG_BOMB_BAG);
-        case RG_MAGIC_SINGLE:
-            return GetSaveContext()->magicLevel >= 1 || GetSaveContext()->isMagicAcquired;
+        case RG_MAGIC_SINGLE: {
+            if (GetSaveContext()->magicLevel >= 1 || GetSaveContext()->isMagicAcquired) {
+                return true;
+            } else if (Rando::Context::GetInstance()->GetOption(RSK_MAGIC_STAT_UPGRADE)) {
+                return GetSaveContext()->ship.quest.data.randomizer.magicStatUpgrades >= MagicStatLogicThreshold();
+            } else {
+                return false;
+            }
+        }
             // Songs
         case RG_ZELDAS_LULLABY:
         case RG_EPONAS_SONG:
@@ -2169,6 +2177,9 @@ void Logic::ApplyItemEffect(Item& item, bool state) {
                         break;
                     }
                     mSaveContext->magicLevel += (!state ? -1 : 1);
+                } break;
+                case RG_MAGIC_STAT_UPGRADE: {
+                    mSaveContext->ship.quest.data.randomizer.magicStatUpgrades += (!state ? -1 : 1);
                 } break;
                 case RG_PROGRESSIVE_OCARINA: {
                     uint8_t i;

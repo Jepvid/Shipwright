@@ -850,6 +850,35 @@ void Settings::CreateOptionDescriptions() {
     mOptionDescriptions[RSK_ROCS_FEATHER] =
         "Adds Roc's Feather to the item pool. Roc's Feather is a custom item granting the player a jump on demand. "
         "The jump can also be used when already in mid-air. Roc's Feather is not considered by logic.";
+    mOptionDescriptions[RSK_QUARTER_HEART] =
+        "Adds Quarter Heart upgrades to the item pool. Each one permanently increases maximum health by a quarter "
+        "heart. Replaces heart containers and heart pieces.";
+    mOptionDescriptions[RSK_DEFENSE_UPGRADE] =
+        "Adds Defense Upgrade items to the item pool.\n"
+        "Each upgrade incrementally reduces incoming damage, scaling up to 50% reduction at the required cap (default "
+        "5 items).\n"
+        "With Double Defense and a maxed Defense stat, total damage reduction reaches 75%.";
+    mOptionDescriptions[RSK_SPEED_UPGRADE] = "Adds Speed Upgrade items to the item pool.\n"
+                                             "Each upgrade incrementally increases Link's ground movement speed, "
+                                             "scaling up to 1.4x at the required cap (default 5 items).";
+    mOptionDescriptions[RSK_POWER_UPGRADE] = "Adds Power Upgrade items to the item pool.\n"
+                                             "Each upgrade increases the chance of dealing double damage on hit, "
+                                             "reaching guaranteed 2x at the cap (default 5 items).";
+    mOptionDescriptions[RSK_MAGIC_STAT_UPGRADE] =
+        "Replaces progressive magic with a new item that fills the magic bar in smaller increments.\n"
+        "Collecting the required cap fills the bar completely (default 8 items).\n"
+        "Logic considers magic available after 2 magic stat items (half a normal magic bar).\n"
+        "Infinite magic is not in the pool when enabled.";
+    mOptionDescriptions[RSK_ADJUSTABLE_STAT_UPGRADE] =
+        "Enables custom Total and Percent Required sliders for stat upgrades, overriding the default pool counts.\n"
+        "All stats scale incrementally with each item collected toward the cap.\n"
+        "Defense and Speed reduce damage and increase speed. Magic fills the bar. Power increases the chance of "
+        "dealing double damage.\n"
+        "Magic logic threshold is half of a normal magic bar.";
+    mOptionDescriptions[RSK_STAT_UPGRADE_TOTAL] = "How many of each enabled stat upgrade item are placed in the pool.";
+    mOptionDescriptions[RSK_STAT_UPGRADE_REQUIRED] =
+        "Percentage of the total stat items needed to reach the maximum stat bonus.\n"
+        "Items collected beyond this threshold have no further effect.";
     mOptionDescriptions[RSK_SLINGBOW_BREAK_BEEHIVES] =
         "Allows Slingshot and Bow to break beehives when Beehive Shuffle is turned on.";
     mOptionDescriptions[RSK_LOGIC_RULES] =
