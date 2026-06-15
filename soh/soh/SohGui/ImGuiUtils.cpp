@@ -152,7 +152,15 @@ std::map<uint32_t, ItemMapEntry> customItemsMapping = {
     { RG_BONGO_BONGO_SOUL, { RG_BONGO_BONGO_SOUL, "RG_BONGO_BONGO_SOUL", "RG_BONGO_BONGO_SOUL_Faded", gBossSoulTex } },
     { RG_TWINROVA_SOUL, { RG_TWINROVA_SOUL, "RG_TWINROVA_SOUL", "RG_TWINROVA_SOUL_Faded", gBossSoulTex } },
     { RG_GANON_SOUL, { RG_GANON_SOUL, "RG_GANON_SOUL", "RG_GANON_SOUL_Faded", gBossSoulTex } },
-    { RG_OPEN_CHEST, { RG_OPEN_CHEST, "RG_OPEN_CHEST", "RG_OPEN_CHEST_Faded", gMapChestIconTex } }
+    { RG_OPEN_CHEST, { RG_OPEN_CHEST, "RG_OPEN_CHEST", "RG_OPEN_CHEST_Faded", gMapChestIconTex } },
+    { RG_QUARTER_HEART,
+      { RG_QUARTER_HEART, "RG_QUARTER_HEART", "RG_QUARTER_HEART_Faded", (char*)gItemIcons[ITEM_HEART_PIECE] } },
+    { RG_DEFENSE_UPGRADE, { RG_DEFENSE_UPGRADE, "RG_DEFENSE_UPGRADE", "RG_DEFENSE_UPGRADE_Faded", gStatDefenseTex } },
+    { RG_SPEED_UPGRADE, { RG_SPEED_UPGRADE, "RG_SPEED_UPGRADE", "RG_SPEED_UPGRADE_Faded", gStatSpeedTex } },
+    { RG_POWER_UPGRADE, { RG_POWER_UPGRADE, "RG_POWER_UPGRADE", "RG_POWER_UPGRADE_Faded", gStatPowerTex } },
+    { RG_MAGIC_STAT_UPGRADE,
+      { RG_MAGIC_STAT_UPGRADE, "RG_MAGIC_STAT_UPGRADE", "RG_MAGIC_STAT_UPGRADE_Faded",
+        (char*)gItemIcons[ITEM_MAGIC_SMALL] } },
 };
 
 std::map<uint32_t, ItemMapEntry> actionShuffleMapping = {
