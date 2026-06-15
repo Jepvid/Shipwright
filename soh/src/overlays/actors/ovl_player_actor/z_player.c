@@ -8878,6 +8878,7 @@ void Player_Action_80842180(Player* this, PlayState* play) {
                 }
             }
 
+            GameInteractor_Should(VB_PLAYER_SPEED_MULTIPLIER, true, this, &sp2C);
             func_8083DF68(this, sp2C, sp2A);
             func_8083DDC8(this, play);
 
@@ -8911,6 +8912,7 @@ void Player_Action_8084227C(Player* this, PlayState* play) {
                 return;
             }
 
+            GameInteractor_Should(VB_PLAYER_SPEED_MULTIPLIER, true, this, &sp2C);
             func_8083DF68(this, sp2C, sp2A);
             func_8083DDC8(this, play);
 
