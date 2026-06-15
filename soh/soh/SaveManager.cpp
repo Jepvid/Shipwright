@@ -332,6 +332,10 @@ void SaveManager::LoadRandomizer() {
                                     gSaveContext.ship.quest.data.randomizer.silverMqSpiritBigWall);
     SaveManager::Instance->LoadData("silverMqGanonWater", gSaveContext.ship.quest.data.randomizer.silverMqGanonWater);
     SaveManager::Instance->LoadData("silverMqGanonShadow", gSaveContext.ship.quest.data.randomizer.silverMqGanonShadow);
+    SaveManager::Instance->LoadData("defenseUpgrades", gSaveContext.ship.quest.data.randomizer.defenseUpgrades);
+    SaveManager::Instance->LoadData("speedUpgrades", gSaveContext.ship.quest.data.randomizer.speedUpgrades);
+    SaveManager::Instance->LoadData("powerUpgrades", gSaveContext.ship.quest.data.randomizer.powerUpgrades);
+    SaveManager::Instance->LoadData("magicStatUpgrades", gSaveContext.ship.quest.data.randomizer.magicStatUpgrades);
 
     SaveManager::Instance->LoadData("pendingIceTrapCount", gSaveContext.ship.pendingIceTrapCount);
 
@@ -523,6 +527,10 @@ void SaveManager::SaveRandomizer(const SaveContext& saveContext, int sectionID, 
                                     gSaveContext.ship.quest.data.randomizer.silverMqSpiritBigWall);
     SaveManager::Instance->SaveData("silverMqGanonWater", gSaveContext.ship.quest.data.randomizer.silverMqGanonWater);
     SaveManager::Instance->SaveData("silverMqGanonShadow", gSaveContext.ship.quest.data.randomizer.silverMqGanonShadow);
+    SaveManager::Instance->SaveData("defenseUpgrades", saveContext->ship.quest.data.randomizer.defenseUpgrades);
+    SaveManager::Instance->SaveData("speedUpgrades", saveContext->ship.quest.data.randomizer.speedUpgrades);
+    SaveManager::Instance->SaveData("powerUpgrades", saveContext->ship.quest.data.randomizer.powerUpgrades);
+    SaveManager::Instance->SaveData("magicStatUpgrades", saveContext->ship.quest.data.randomizer.magicStatUpgrades);
 
     SaveManager::Instance->SaveData("pendingIceTrapCount", saveContext.ship.pendingIceTrapCount);
 
