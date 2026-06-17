@@ -146,7 +146,7 @@ static void PlaceItemsForType(RandomizerCheckType rctype, bool overworldActive =
     }
 }
 
-void GenerateItemPool() {
+bool GenerateItemPool() {
     // RANDOTODO proper removal of items not in pool or logically relevant instead of dummy checks.
     auto ctx = Rando::Context::GetInstance();
     ctx->possibleIceTrapModels.clear();
@@ -947,7 +947,10 @@ void GenerateItemPool() {
     std::erase(plentifulPool, RG_NONE);
 
     size_t locCount = ctx->CountEmptyLocations(false);
-    assert(itemPool.size() <= locCount);
+    if (itemPool.size() > locCount) {
+        SPDLOG_ERROR("ERROR: Item pool ({} items) exceeds available locations ({})", itemPool.size(), locCount);
+        return false;
+    }
     int iceTrapstoAdd = 0;
     if (itemPool.size() + plentifulPool.size() < locCount) {
         itemPool.insert(itemPool.end(), plentifulPool.begin(), plentifulPool.end());
@@ -1003,5 +1006,9 @@ void GenerateItemPool() {
         }
     }
 
-    assert(itemPool.size() == locCount);
+    if (itemPool.size() != locCount) {
+        SPDLOG_ERROR("ERROR: Item pool size ({}) does not match location count ({})", itemPool.size(), locCount);
+        return false;
+    }
+    return true;
 }
