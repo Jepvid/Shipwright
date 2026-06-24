@@ -301,6 +301,7 @@ void SkelAnime_DrawLimbOpa(PlayState* play, s32 limbIndex, void** skeleton, Vec3
 // function...
 void SkelAnime_DrawSkeletonOpa(PlayState* play, SkelAnime* skelAnime, OverrideLimbDrawOpa overrideLimbDraw,
                                PostLimbDrawOpa postLimbDraw, void* arg) {
+    GameInteractor_Should(VB_DRAW_SMOOTH_SKIN_OPA, false, play, skelAnime, arg);
     if (skelAnime->skeletonHeader->skeletonType == SKELANIME_TYPE_NORMAL) {
         SkelAnime_DrawOpa(play, skelAnime->skeleton, skelAnime->jointTable, overrideLimbDraw, postLimbDraw, arg);
     } else if (skelAnime->skeletonHeader->skeletonType == SKELANIME_TYPE_FLEX) {

@@ -620,6 +620,16 @@ typedef enum {
 
     // #### `result`
     // ```c
+    // false
+    // ```
+    // #### `args`
+    // - `*PlayState`
+    // - `*SkelAnime`
+    // - `*void` (actor arg)
+    VB_DRAW_SMOOTH_SKIN_OPA,
+
+    // #### `result`
+    // ```c
     // true
     // ```
     // #### `args`
