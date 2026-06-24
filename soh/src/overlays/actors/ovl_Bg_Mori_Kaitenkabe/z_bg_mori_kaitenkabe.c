@@ -8,6 +8,7 @@
 #include "objects/object_mori_objects/object_mori_objects.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include <libultraship/bridge/consolevariablebridge.h>
+#include "soh/Enhancements/randomizer/randostatupgrade.h"
 
 #define FLAGS 0
 
@@ -96,7 +97,9 @@ void BgMoriKaitenkabe_Wait(BgMoriKaitenkabe* this, PlayState* play) {
 
     if (this->dyna.unk_150 > 0.001f) {
         this->timer++;
-        if ((this->timer > (28 - CVarGetInteger(CVAR_ENHANCEMENT("FasterBlockPush"), 0) * 4)) &&
+        if ((this->timer >
+             (28 - (IsPushStatActive() ? GetPushStatValue() : CVarGetInteger(CVAR_ENHANCEMENT("FasterBlockPush"), 0)) *
+                       4)) &&
             !Player_InCsMode(play)) {
             BgMoriKaitenkabe_SetupRotate(this);
             if (GameInteractor_Should(VB_FREEZE_LINK_FOR_FOREST_PILLARS, true)) {
@@ -123,7 +126,8 @@ void BgMoriKaitenkabe_Wait(BgMoriKaitenkabe* this, PlayState* play) {
 
 void BgMoriKaitenkabe_SetupRotate(BgMoriKaitenkabe* this) {
     this->actionFunc = BgMoriKaitenkabe_Rotate;
-    this->rotSpeed = CVarGetInteger(CVAR_ENHANCEMENT("FasterBlockPush"), 0) * 0.1f;
+    this->rotSpeed =
+        (IsPushStatActive() ? GetPushStatValue() : CVarGetInteger(CVAR_ENHANCEMENT("FasterBlockPush"), 0)) * 0.1f;
     this->rotYdeg = 0.0f;
 }
 
