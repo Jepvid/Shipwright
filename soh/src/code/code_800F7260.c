@@ -3,6 +3,7 @@
 #include "vt.h"
 
 #include "soh/Enhancements/audio/AudioEditor.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 
 typedef struct {
     /* 0x00 */ u16 sfxId;
@@ -508,6 +509,7 @@ void Audio_PlayActiveSounds(u8 bankId) {
             channel = gAudioContext.seqPlayers[SEQ_PLAYER_SFX].channels[sCurSfxPlayerChannelIdx];
             if (entry->state == SFX_STATE_READY) {
                 entry->channelIdx = sCurSfxPlayerChannelIdx;
+                GameInteractor_Should(VB_SFX_CHANNEL_START, true, entry, (int32_t)sCurSfxPlayerChannelIdx);
                 if (entry->sfxParams & 8) {
                     Audio_QueueSeqCmdMute(sCurSfxPlayerChannelIdx);
                 }

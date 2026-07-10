@@ -4,6 +4,7 @@
 #include "global.h"
 
 #include "soh/Enhancements/audio/AudioEditor.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "soh/ResourceManagerHelpers.h"
 
 extern char** sequenceMap;
@@ -943,6 +944,8 @@ u8 AudioSeq_GetInstrument(SequenceChannel* channel, u8 instId, Instrument** inst
         *instOut = NULL;
         return 0;
     }
+
+    GameInteractor_Should(VB_SFX_USE_VANILLA_INSTRUMENT, true, channel, (int32_t)instId, &inst);
 
     if (inst->envelope != NULL) {
         adsr->envelope = inst->envelope;
