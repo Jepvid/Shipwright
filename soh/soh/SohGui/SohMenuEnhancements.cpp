@@ -336,6 +336,29 @@ void SohMenu::AddMenuEnhancements() {
         .Options(
             CheckboxOptions().Tooltip("Resets the Navi timer on scene change. If you have already talked to her, "
                                       "she will try and talk to you again, instead of needing a save warp or death."));
+    AddWidget(path, "Navi Fetches Nearby Drops", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_ENHANCEMENT("NaviItemFetch"))
+        .Options(CheckboxOptions().Tooltip(
+            "Navi flies out to nearby drops (rupees, hearts, ammo, magic) and picks them up for Link, "
+            "like Sparx from the Spyro games. She won't fetch heart pieces, small keys or randomizer checks."));
+    AddWidget(path, "Navi Fetches Everything", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_ENHANCEMENT("NaviItemFetchEverything"))
+        .PreFunc(
+            [](WidgetInfo& info) { info.options->disabled = !CVarGetInteger(CVAR_ENHANCEMENT("NaviItemFetch"), 0); })
+        .Options(CheckboxOptions().Tooltip(
+            "Navi also fetches heart pieces, heart containers, small keys, shields, tunics and even "
+            "randomizer checks."));
+    AddWidget(path, "Navi Fetch Range: %d units", WIDGET_CVAR_SLIDER_INT)
+        .CVar(CVAR_ENHANCEMENT("NaviItemFetchRange"))
+        .PreFunc(
+            [](WidgetInfo& info) { info.options->disabled = !CVarGetInteger(CVAR_ENHANCEMENT("NaviItemFetch"), 0); })
+        .Options(IntSliderOptions()
+                     .Min(40)
+                     .Max(200)
+                     .DefaultValue(70)
+                     .Format("%d units")
+                     .Tooltip("How far away Navi will spot and fetch drops. The default (70) matches the "
+                              "standard Z-targeting range."));
     AddWidget(path, "Link's Cow in Both Time Periods", WIDGET_CVAR_CHECKBOX)
         .CVar(CVAR_ENHANCEMENT("CowOfTime"))
         .Options(CheckboxOptions().Tooltip(
