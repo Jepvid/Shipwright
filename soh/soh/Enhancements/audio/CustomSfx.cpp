@@ -1553,9 +1553,15 @@ static Instrument* GetOverrideInstrument(SequenceChannel* channel, int32_t instI
     clone->lowNotesSound.sample = sample;
     clone->normalNotesSound.sample = sample;
     clone->highNotesSound.sample = sample;
+    if (entry.resource->tuning > 0.0f) {
+        // Sets tuning from the sample's rate (V3 binary or streamed formats). V2 binary
+        // samples have no rate field and keep the vanilla instrument's tuning.
+        clone->lowNotesSound.tuning = entry.resource->tuning;
+        clone->normalNotesSound.tuning = entry.resource->tuning;
+        clone->highNotesSound.tuning = entry.resource->tuning;
+    }
     if (!entry.pitched) {
-        // Play as recorded: streamed samples carry rate/32000 in the resource tuning, raw
-        // binary samples are authored at the engine's 32 kHz.
+        // Locked ratio consumed by VB_SFX_NOTE_USE_VANILLA_PITCH below.
         float ratio = entry.resource->tuning > 0.0f ? entry.resource->tuning : 1.0f;
         sLockedSounds[&clone->lowNotesSound] = ratio;
         sLockedSounds[&clone->normalNotesSound] = ratio;
@@ -1600,9 +1606,8 @@ static void RegisterCustomSfx() {
         }
         auto lockedIter = sLockedSounds.find(layer->sound);
         if (lockedIter != sLockedSounds.end()) {
-            // Play as recorded: nullifies the scripted note pitch, portamento and vibrato, but
-            // keeps the channel-level frequency effects (per-play random pitch variation and
-            // positional scaling) that vanilla applies per play.
+            // Replaces the scripted note pitch, portamento and vibrato; keeps the
+            // channel-level random pitch and positional scaling.
             *frequency = lockedIter->second * layer->channel->freqScale;
             *should = false;
         }

@@ -11,6 +11,13 @@ class ResourceFactoryBinaryAudioSampleV2 final : public Ship::ResourceFactoryBin
                                                   std::shared_ptr<Ship::ResourceInitData> initData) override;
 };
 
+// Same layout as V2, plus a trailing sample rate (Hz, f32).
+class ResourceFactoryBinaryAudioSampleV3 final : public Ship::ResourceFactoryBinary {
+  public:
+    std::shared_ptr<Ship::IResource> ReadResource(std::shared_ptr<Ship::File> file,
+                                                  std::shared_ptr<Ship::ResourceInitData> initData) override;
+};
+
 class ResourceFactoryXMLAudioSampleV0 final : public Ship::ResourceFactoryXML {
   public:
     std::shared_ptr<Ship::IResource> ReadResource(std::shared_ptr<Ship::File> file,
