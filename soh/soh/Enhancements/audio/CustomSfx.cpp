@@ -1449,7 +1449,6 @@ static const CustomSfxName sCustomSfxNames[] = {
 
 // NA_SE_OC_OCARINA cycles through several font instruments (ocarina, Malon, whistle, harp,
 // grind organ, flute). An override for it should only replace the actual ocarina.
-#define OCARINA_SFX_ID 0x5800
 #define OCARINA_FONT_INSTRUMENT 52
 
 struct CustomSfxEntry {
@@ -1458,6 +1457,9 @@ struct CustomSfxEntry {
     // Copies of the vanilla instruments this sfx was seen playing through, with the sample
     // pointers swapped to the custom sample. Built lazily on the audio thread.
     std::unordered_map<Instrument*, Instrument*> clones;
+    // Copies of the vanilla font sfx-table sounds this sfx was seen playing through, with the
+    // sample pointer swapped to the custom sample. Built lazily on the audio thread.
+    std::unordered_map<SoundFontSound*, SoundFontSound*> sfxSoundClones;
 };
 
 // sfx ids carry flag bits (SFX_FLAG 0x800 and the 0xC00 state bits) that call sites may add or
@@ -1470,6 +1472,17 @@ static std::unordered_map<uint16_t, CustomSfxEntry> sOverrides;
 // SoundFontSounds belonging to as-recorded clones -> frequency ratio playing them as recorded.
 static std::unordered_map<SoundFontSound*, float> sLockedSounds;
 static uint16_t sChannelSfx[16] = { 0 };
+
+// Strips a ".pitched" suffix from `name` in place; reports whether it was present.
+static bool StripPitchedSuffix(std::string& name) {
+    constexpr std::string_view kPitchedSuffix = ".pitched";
+    if (name.size() > kPitchedSuffix.size() &&
+        name.compare(name.size() - kPitchedSuffix.size(), std::string::npos, kPitchedSuffix) == 0) {
+        name.resize(name.size() - kPitchedSuffix.size());
+        return true;
+    }
+    return false;
+}
 
 static void ScanCustomSfx() {
     static std::unordered_map<std::string, uint32_t> nameToId;
@@ -1487,14 +1500,7 @@ static void ScanCustomSfx() {
     for (int i = 0; i < fileCount; i++) {
         std::string path = fileList[i];
         std::string name = path.substr(path.find_last_of('/') + 1);
-
-        bool pitched = false;
-        constexpr std::string_view kPitchedSuffix = ".pitched";
-        if (name.size() > kPitchedSuffix.size() &&
-            name.compare(name.size() - kPitchedSuffix.size(), std::string::npos, kPitchedSuffix) == 0) {
-            pitched = true;
-            name.resize(name.size() - kPitchedSuffix.size());
-        }
+        bool pitched = StripPitchedSuffix(name);
 
         auto idIter = nameToId.find(name);
         if (idIter == nameToId.end()) {
@@ -1521,7 +1527,9 @@ static void ScanCustomSfx() {
     free(fileList);
 }
 
-static Instrument* GetOverrideInstrument(SequenceChannel* channel, int32_t instId, Instrument* vanilla) {
+// Finds the sfx channel index for `channel`, and the override entry active on it (or
+// nullptr). Reports the sfx id that channel is currently playing.
+static CustomSfxEntry* ResolveOverrideEntry(SequenceChannel* channel, uint16_t* sfxKeyOut) {
     int channelIdx = -1;
     for (int i = 0; i < 16; i++) {
         if (gAudioContext.seqPlayers[SEQ_PLAYER_SFX].channels[i] == channel) {
@@ -1530,51 +1538,87 @@ static Instrument* GetOverrideInstrument(SequenceChannel* channel, int32_t instI
         }
     }
     if (channelIdx < 0) {
-        return vanilla;
+        *sfxKeyOut = 0;
+        return nullptr;
     }
 
     uint16_t sfxKey = NormalizeSfxId(sChannelSfx[channelIdx]);
+    *sfxKeyOut = sfxKey;
+
     auto overrideIter = sOverrides.find(sfxKey);
-    if (overrideIter == sOverrides.end()) {
+    return overrideIter != sOverrides.end() ? &overrideIter->second : nullptr;
+}
+
+static Instrument* GetOverrideInstrument(SequenceChannel* channel, int32_t instId, Instrument* vanilla) {
+    uint16_t sfxKey = 0;
+    CustomSfxEntry* entry = ResolveOverrideEntry(channel, &sfxKey);
+    if (entry == nullptr) {
         return vanilla;
     }
-    if (sfxKey == NormalizeSfxId(OCARINA_SFX_ID) && instId != OCARINA_FONT_INSTRUMENT) {
+    if (sfxKey == NormalizeSfxId(NA_SE_OC_OCARINA) && instId != OCARINA_FONT_INSTRUMENT) {
         return vanilla;
     }
 
-    CustomSfxEntry& entry = overrideIter->second;
-    auto cloneIter = entry.clones.find(vanilla);
-    if (cloneIter != entry.clones.end()) {
+    auto cloneIter = entry->clones.find(vanilla);
+    if (cloneIter != entry->clones.end()) {
         return cloneIter->second;
     }
 
     Instrument* clone = new Instrument(*vanilla);
-    SoundFontSample* sample = (SoundFontSample*)&entry.resource->sample;
+    SoundFontSample* sample = (SoundFontSample*)&entry->resource->sample;
     clone->lowNotesSound.sample = sample;
     clone->normalNotesSound.sample = sample;
     clone->highNotesSound.sample = sample;
-    if (entry.resource->tuning > 0.0f) {
+    if (entry->resource->tuning > 0.0f) {
         // Sets tuning from the sample's rate (V3 binary or streamed formats). V2 binary
         // samples have no rate field and keep the vanilla instrument's tuning.
-        clone->lowNotesSound.tuning = entry.resource->tuning;
-        clone->normalNotesSound.tuning = entry.resource->tuning;
-        clone->highNotesSound.tuning = entry.resource->tuning;
+        clone->lowNotesSound.tuning = entry->resource->tuning;
+        clone->normalNotesSound.tuning = entry->resource->tuning;
+        clone->highNotesSound.tuning = entry->resource->tuning;
     }
-    if (!entry.pitched) {
+    if (!entry->pitched) {
         // Locked ratio consumed by VB_SFX_NOTE_USE_VANILLA_PITCH below.
-        float ratio = entry.resource->tuning > 0.0f ? entry.resource->tuning : 1.0f;
+        float ratio = entry->resource->tuning > 0.0f ? entry->resource->tuning : 1.0f;
         sLockedSounds[&clone->lowNotesSound] = ratio;
         sLockedSounds[&clone->normalNotesSound] = ratio;
         sLockedSounds[&clone->highNotesSound] = ratio;
     }
-    entry.clones[vanilla] = clone;
+    entry->clones[vanilla] = clone;
+    return clone;
+}
+
+// Same as GetOverrideInstrument, for sfx resolved through the font's flat sfx table (voice
+// bank and similar) instead of through an Instrument.
+static SoundFontSound* GetOverrideSfxSound(SequenceChannel* channel, SoundFontSound* vanilla) {
+    uint16_t sfxKey = 0;
+    CustomSfxEntry* entry = ResolveOverrideEntry(channel, &sfxKey);
+    if (entry == nullptr) {
+        return vanilla;
+    }
+
+    auto cloneIter = entry->sfxSoundClones.find(vanilla);
+    if (cloneIter != entry->sfxSoundClones.end()) {
+        return cloneIter->second;
+    }
+
+    SoundFontSound* clone = new SoundFontSound(*vanilla);
+    clone->sample = (SoundFontSample*)&entry->resource->sample;
+    if (entry->resource->tuning > 0.0f) {
+        clone->tuning = entry->resource->tuning;
+    }
+    if (!entry->pitched) {
+        float ratio = entry->resource->tuning > 0.0f ? entry->resource->tuning : 1.0f;
+        sLockedSounds[clone] = ratio;
+    }
+    entry->sfxSoundClones[vanilla] = clone;
     return clone;
 }
 
 static void RegisterCustomSfx() {
     ScanCustomSfx();
+    bool anyOverrides = !sOverrides.empty();
 
-    COND_VB_SHOULD(VB_SFX_CHANNEL_START, !sOverrides.empty(), {
+    COND_VB_SHOULD(VB_SFX_CHANNEL_START, anyOverrides, {
         SoundBankEntry* entry = va_arg(args, SoundBankEntry*);
         int32_t channelIdx = va_arg(args, int32_t);
         if (channelIdx >= 0 && channelIdx < 16) {
@@ -1582,7 +1626,7 @@ static void RegisterCustomSfx() {
         }
     });
 
-    COND_VB_SHOULD(VB_SFX_USE_VANILLA_INSTRUMENT, !sOverrides.empty(), {
+    COND_VB_SHOULD(VB_SFX_USE_VANILLA_INSTRUMENT, anyOverrides, {
         SequenceChannel* channel = va_arg(args, SequenceChannel*);
         int32_t instId = va_arg(args, int32_t);
         Instrument** instOut = va_arg(args, Instrument**);
@@ -1596,7 +1640,20 @@ static void RegisterCustomSfx() {
         }
     });
 
-    COND_VB_SHOULD(VB_SFX_NOTE_USE_VANILLA_PITCH, !sOverrides.empty(), {
+    COND_VB_SHOULD(VB_SFX_USE_VANILLA_SFX_SOUND, anyOverrides, {
+        SequenceChannel* channel = va_arg(args, SequenceChannel*);
+        SoundFontSound** soundOut = va_arg(args, SoundFontSound**);
+        if (channel->seqPlayer->playerIdx != SEQ_PLAYER_SFX) {
+            return;
+        }
+        SoundFontSound* replacement = GetOverrideSfxSound(channel, *soundOut);
+        if (replacement != *soundOut) {
+            *soundOut = replacement;
+            *should = false;
+        }
+    });
+
+    COND_VB_SHOULD(VB_SFX_NOTE_USE_VANILLA_PITCH, anyOverrides, {
         NotePlaybackState* playbackState = va_arg(args, NotePlaybackState*);
         f32* frequency = va_arg(args, f32*);
         SequenceLayer* layer = playbackState->parentLayer;

@@ -689,6 +689,7 @@ s32 AudioSeq_SeqLayerProcessScriptStep4(SequenceLayer* layer, s32 cmd) {
                 layer->delay2 = layer->delay + 1;
                 return -1;
             }
+            GameInteractor_Should(VB_SFX_USE_VANILLA_SFX_SOUND, true, channel, &sound);
             layer->sound = sound;
             layer->freqScale = sound->tuning;
             break;

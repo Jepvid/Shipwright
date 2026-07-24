@@ -2441,6 +2441,11 @@ typedef enum {
 
     // #### `args`
     // - `SequenceChannel*`
+    // - `SoundFontSound**` (the resolved sfx sound)
+    VB_SFX_USE_VANILLA_SFX_SOUND,
+
+    // #### `args`
+    // - `SequenceChannel*`
     // - `int32_t` (font instrument id)
     // - `Instrument**` (the resolved instrument)
     VB_SFX_USE_VANILLA_INSTRUMENT,
