@@ -2573,6 +2573,27 @@ typedef enum {
     // - `*int16_t` - original next entrance index (`play->setupExitList[exitIndex - 1]`)
     VB_SET_VOIDOUT_FROM_SURFACE,
 
+    // #### `args`
+    // - `SoundBankEntry*`
+    // - `int32_t` (SFX seq player channel index)
+    VB_SFX_CHANNEL_START,
+
+    // #### `args`
+    // - `NotePlaybackState*`
+    // - `f32*` (the note's frequency ratio)
+    VB_SFX_NOTE_USE_VANILLA_PITCH,
+
+    // #### `args`
+    // - `SequenceChannel*`
+    // - `SoundFontSound**` (the resolved sfx sound)
+    VB_SFX_USE_VANILLA_SFX_SOUND,
+
+    // #### `args`
+    // - `SequenceChannel*`
+    // - `int32_t` (font instrument id)
+    // - `Instrument**` (the resolved instrument)
+    VB_SFX_USE_VANILLA_INSTRUMENT,
+
     // #### `result`
     // ```c
     // true

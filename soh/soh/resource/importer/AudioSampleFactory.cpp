@@ -240,6 +240,60 @@ ResourceFactoryBinaryAudioSampleV2::ReadResource(std::shared_ptr<Ship::File> fil
 }
 
 std::shared_ptr<Ship::IResource>
+ResourceFactoryBinaryAudioSampleV3::ReadResource(std::shared_ptr<Ship::File> file,
+                                                 std::shared_ptr<Ship::ResourceInitData> initData) {
+    if (!FileHasValidFormatAndReader(file, initData)) {
+        return nullptr;
+    }
+
+    auto audioSample = std::make_shared<AudioSample>(initData);
+    auto reader = std::get<std::shared_ptr<Ship::BinaryReader>>(file->Reader);
+
+    audioSample->sample.codec = reader->ReadUByte();
+    audioSample->sample.medium = reader->ReadUByte();
+    audioSample->sample.unk_bit26 = reader->ReadUByte();
+    audioSample->sample.isRelocated = reader->ReadUByte();
+    audioSample->sample.size = reader->ReadUInt32();
+
+    audioSample->sample.sampleAddr = new uint8_t[audioSample->sample.size];
+    for (uint32_t i = 0; i < audioSample->sample.size; i++) {
+        audioSample->sample.sampleAddr[i] = reader->ReadUByte();
+    }
+
+    audioSample->loop.start = reader->ReadUInt32();
+    audioSample->loop.end = reader->ReadUInt32();
+    audioSample->loop.count = reader->ReadUInt32();
+
+    uint32_t loopStateCount = reader->ReadUInt32();
+    for (int i = 0; i < 16; i++) {
+        audioSample->loop.state[i] = 0;
+    }
+    for (uint32_t i = 0; i < loopStateCount; i++) {
+        audioSample->loop.state[i] = reader->ReadInt16();
+    }
+    audioSample->sample.loop = &audioSample->loop;
+
+    audioSample->book.order = reader->ReadInt32();
+    audioSample->book.npredictors = reader->ReadInt32();
+    uint32_t bookDataCount = reader->ReadUInt32();
+
+    audioSample->book.book = new int16_t[bookDataCount];
+
+    for (uint32_t i = 0; i < bookDataCount; i++) {
+        audioSample->book.book[i] = reader->ReadInt16();
+    }
+    audioSample->sample.book = &audioSample->book;
+
+    // V3 addition: sample rate in Hz.
+    float sampleRate = reader->ReadFloat();
+    if (sampleRate > 0.0f) {
+        audioSample->tuning = sampleRate / 32000.0f;
+    }
+
+    return audioSample;
+}
+
+std::shared_ptr<Ship::IResource>
 ResourceFactoryXMLAudioSampleV0::ReadResource(std::shared_ptr<Ship::File> file,
                                               std::shared_ptr<Ship::ResourceInitData> initData) {
     if (!FileHasValidFormatAndReader(file, initData)) {

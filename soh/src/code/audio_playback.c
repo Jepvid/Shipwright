@@ -1,4 +1,5 @@
 #include "global.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "soh/ResourceManagerHelpers.h"
 
 extern bool gUseLegacySD;
@@ -298,6 +299,7 @@ void Audio_ProcessNotes(void) {
             }
 
             subAttrs.frequency *= playbackState->vibratoFreqScale * playbackState->portamentoFreqScale;
+            GameInteractor_Should(VB_SFX_NOTE_USE_VANILLA_PITCH, true, playbackState, &subAttrs.frequency);
 
             f32 resampRate = gAudioContext.audioBufferParameters.resampleRate;
 
