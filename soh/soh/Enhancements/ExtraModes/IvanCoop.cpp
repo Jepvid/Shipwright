@@ -1,4 +1,3 @@
-#include "soh/ActorDB.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/ShipInit.hpp"
 
@@ -11,30 +10,6 @@ extern PlayState* gPlayState;
 
 #define CVAR_NAME CVAR_ENHANCEMENT("IvanCoopModeEnabled")
 #define CVAR_VALUE CVarGetInteger(CVAR_NAME, 0)
-
-static bool addedToActorDB = false;
-
-static void AddToActorDB() {
-    if (!addedToActorDB) {
-        ActorDBInit entry = {
-            "En_Partner",
-            "Ivan",
-            ACTOR_EN_PARTNER,
-            ACTORCAT_ITEMACTION,
-            (ACTOR_FLAG_UPDATE_CULLING_DISABLED | ACTOR_FLAG_DRAW_CULLING_DISABLED | ACTOR_FLAG_HOOKSHOT_PULLS_PLAYER |
-             ACTOR_FLAG_CAN_PRESS_SWITCHES),
-            OBJECT_GAMEPLAY_KEEP,
-            sizeof(EnPartner),
-            (ActorFunc)EnPartner_Init,
-            (ActorFunc)EnPartner_Destroy,
-            (ActorFunc)EnPartner_Update,
-            (ActorFunc)EnPartner_Draw,
-            nullptr,
-        };
-        ActorDB::Instance->AddEntry(entry);
-        addedToActorDB = true;
-    }
-}
 
 static Actor* FindIvan(ActorContext* actorCtx) {
     return Actor_Find(actorCtx, ACTOR_EN_PARTNER, ACTORCAT_ITEMACTION);
@@ -50,8 +25,6 @@ static void SpawnIvan() {
 
     if (FindIvan(&gPlayState->actorCtx))
         return;
-
-    AddToActorDB();
 
     PosRot& world = player->actor.world;
     Actor_Spawn(&gPlayState->actorCtx, gPlayState, ACTOR_EN_PARTNER, world.pos.x,
