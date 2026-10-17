@@ -932,6 +932,11 @@ void SohMenu::AddMenuEnhancements() {
     AddWidget(path, "Unsheathe Sword Without Slashing", WIDGET_CVAR_CHECKBOX)
         .CVar(CVAR_ENHANCEMENT("UnsheatheWithoutSlashing"))
         .Options(CheckboxOptions().Tooltip("Allows Link to unsheathe the sword without slashing automatically."));
+    AddWidget(path, "Spin Attack Collects Drops", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_ENHANCEMENT("SpinAttackPickup"))
+        .Options(CheckboxOptions().Tooltip(
+            "Spin Attacks collect item drops within reach of the sword or the spin's magic wave, "
+            "like in later Zelda games."));
     AddWidget(path, "Sword Toggle Options", WIDGET_CVAR_COMBOBOX)
         .CVar(CVAR_ENHANCEMENT("SwordToggle"))
         .PreFunc(
