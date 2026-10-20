@@ -3258,6 +3258,14 @@ typedef enum {
 
     // #### `result`
     // ```c
+    // i == 9
+    // ```
+    // #### `args`
+    // - `s32` (heart index)
+    VB_START_HEART_ROW,
+
+    // #### `result`
+    // ```c
     // ABS(wallPoly->normal.y) < 600
     // ```
     // #### `args`

@@ -312,6 +312,10 @@ void GameInteractor_ExecuteOnMinimapDrawCompassIcons() {
     GameInteractor::Instance->ExecuteHooks<GameInteractor::OnMinimapDrawCompassIcons>();
 }
 
+void GameInteractor_ExecuteOnHudElementPosition(int32_t element, int16_t* x, int16_t* y, float* scale) {
+    GameInteractor::Instance->ExecuteHooks<GameInteractor::OnHudElementPosition>(element, x, y, scale);
+}
+
 // MARK: - Main Menu
 
 void GameInteractor_ExecuteOnPresentFileSelect() {

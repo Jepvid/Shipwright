@@ -70,6 +70,7 @@ void GameInteractor_ExecuteOnPresentTitleCard();
 void GameInteractor_ExecuteOnInterfaceUpdate();
 void GameInteractor_ExecuteOnKaleidoscopeUpdate(int16_t inDungeonScene);
 void GameInteractor_ExecuteOnMinimapDrawCompassIcons();
+void GameInteractor_ExecuteOnHudElementPosition(int32_t element, int16_t* x, int16_t* y, float* scale);
 
 // MARK: - Main Menu
 void GameInteractor_ExecuteOnPresentFileSelect();
