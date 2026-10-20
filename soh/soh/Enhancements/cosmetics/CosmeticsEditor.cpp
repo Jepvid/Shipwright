@@ -52,11 +52,16 @@ extern "C" {
 
 extern SaveContext gSaveContext;
 extern PlayState* gPlayState;
+extern GameInfo* gGameInfo;
 void ResourceMgr_PatchGfxByName(const char* path, const char* patchName, int index, Gfx instruction);
 void ResourceMgr_PatchGfxCopyCommandByName(const char* path, const char* patchName, int destinationIndex,
                                            int sourceIndex);
 void ResourceMgr_UnpatchGfxByName(const char* path, const char* patchName);
 u8 Randomizer_GetSettingValue(RandomizerSettingKey randoSettingKey);
+float OTRGetDimensionFromLeftEdge(float v);
+float OTRGetDimensionFromRightEdge(float v);
+int16_t OTRGetRectDimensionFromLeftEdge(float v);
+int16_t OTRGetRectDimensionFromRightEdge(float v);
 }
 
 static WidgetInfo goronNeck;
@@ -489,6 +494,186 @@ void ResetPositionAll() {
             CVarSetInteger(cvarPosType.c_str(), 0);
             CVarSetInteger(cvarNameMargins.c_str(), false); // Turn margin off to everythings as that original position.
         }
+    }
+}
+
+enum HudEdge { HUD_EDGE_LEFT, HUD_EDGE_RIGHT, HUD_EDGE_NONE };
+enum HudYMargin { HUD_Y_MARGIN_TOP, HUD_Y_MARGIN_BOTTOM, HUD_Y_MARGIN_NONE };
+
+struct HudElementInfo {
+    const char* cvar;
+    int16_t originX = 0; // vanilla position the editor position replaces
+    int16_t originY = 0;
+    HudEdge edge = HUD_EDGE_RIGHT; // screen edge the vanilla position is anchored to
+    HudYMargin yMargin = HUD_Y_MARGIN_TOP;
+    bool truncOrigin = false;     // src truncates the vanilla edge position instead of rounding it outwards
+    bool dynamicOrigin = false;   // vanilla position changes at runtime, src only passes the element origin
+    int16_t placementOffsetX = 0; // added to the editor position
+    int16_t placementOffsetY = 0;
+    int16_t noAnchorOffsetX = 0;      // added to the editor position without anchor
+    int16_t leftAnchorOffsetX = 0;    // added to the editor position anchored left
+    const char* marginCvar = nullptr; // UseMargins prefix when it differs from cvar
+};
+
+static const HudElementInfo hudElements[HUD_ELEMENT_MAX] = {
+    { .cvar = CVAR_COSMETIC("HUD.BButton"), .originX = B_BUTTON_X, .originY = B_BUTTON_Y },
+    { .cvar = CVAR_COSMETIC("HUD.CLeftButton"), .originX = C_LEFT_BUTTON_X, .originY = C_LEFT_BUTTON_Y },
+    { .cvar = CVAR_COSMETIC("HUD.CDownButton"), .originX = C_DOWN_BUTTON_X, .originY = C_DOWN_BUTTON_Y },
+    { .cvar = CVAR_COSMETIC("HUD.CRightButton"), .originX = C_RIGHT_BUTTON_X, .originY = C_RIGHT_BUTTON_Y },
+    { .cvar = CVAR_COSMETIC("HUD.Dpad"), .originX = DPAD_X, .originY = DPAD_Y },
+    { .cvar = CVAR_COSMETIC("HUD.CUpButton"), .originX = C_UP_BUTTON_X, .originY = C_UP_BUTTON_Y },
+    { .cvar = CVAR_COSMETIC("HUD.StartButton"),
+      .originX = 132,
+      .originY = 17,
+      .placementOffsetX = -10,
+      .placementOffsetY = -10 },
+    { .cvar = CVAR_COSMETIC("HUD.Rupees"),
+      .originX = 26,
+      .originY = 206,
+      .edge = HUD_EDGE_LEFT,
+      .yMargin = HUD_Y_MARGIN_BOTTOM },
+    { .cvar = CVAR_COSMETIC("HUD.AButton"), .originX = A_BUTTON_X, .originY = A_BUTTON_Y, .truncOrigin = true },
+    { .cvar = CVAR_COSMETIC("HUD.MagicBar"), .originX = 18, .originY = 34, .edge = HUD_EDGE_LEFT },
+    { .cvar = CVAR_COSMETIC("HUD.HeartsCount"),
+      .edge = HUD_EDGE_LEFT,
+      .truncOrigin = true,
+      .placementOffsetX = 70,
+      .placementOffsetY = 10,
+      .marginCvar = CVAR_COSMETIC("HUD.Hearts") },
+    { .cvar = CVAR_COSMETIC("HUD.Minimap"), .yMargin = HUD_Y_MARGIN_BOTTOM },
+    { .cvar = CVAR_COSMETIC("HUD.SmallKey"),
+      .originX = 26,
+      .originY = 190,
+      .edge = HUD_EDGE_LEFT,
+      .yMargin = HUD_Y_MARGIN_BOTTOM },
+    { .cvar = CVAR_COSMETIC("HUD.Carrots"),
+      .edge = HUD_EDGE_NONE,
+      .yMargin = HUD_Y_MARGIN_NONE,
+      .dynamicOrigin = true },
+    { .cvar = CVAR_COSMETIC("HUD.ArcheryScore"),
+      .yMargin = HUD_Y_MARGIN_NONE,
+      .dynamicOrigin = true,
+      .noAnchorOffsetX = 204 },
+    { .cvar = CVAR_COSMETIC("HUD.Timers"),
+      .edge = HUD_EDGE_LEFT,
+      .yMargin = HUD_Y_MARGIN_NONE,
+      .dynamicOrigin = true,
+      .noAnchorOffsetX = 204 },
+    { .cvar = CVAR_COSMETIC("HUD.TitleCard.Map"),
+      .edge = HUD_EDGE_NONE,
+      .yMargin = HUD_Y_MARGIN_NONE,
+      .dynamicOrigin = true,
+      .leftAnchorOffsetX = -11 },
+    { .cvar = CVAR_COSMETIC("HUD.TitleCard.Boss"),
+      .edge = HUD_EDGE_NONE,
+      .yMargin = HUD_Y_MARGIN_NONE,
+      .dynamicOrigin = true,
+      .leftAnchorOffsetX = -11 },
+    { .cvar = CVAR_COSMETIC("HUD.IGT"),
+      .originX = 24,
+      .originY = 73,
+      .edge = HUD_EDGE_LEFT,
+      .yMargin = HUD_Y_MARGIN_NONE,
+      .noAnchorOffsetX = 204 },
+};
+
+// Rows of hearts below the first one
+static int16_t HudElement_ExtraHeartRows() {
+    int32_t lineLength = CVarGetInteger(CVAR_COSMETIC("HUD.Hearts.LineLength"), 10);
+    return lineLength == 0 ? 0 : (gSaveContext.healthCapacity - 1) / (FULL_HEART_HEALTH * lineLength);
+}
+
+// Moves a HUD element part from its vanilla position along with its element's editor placement
+void HudElement_ApplyPosition(int32_t element, int16_t* x, int16_t* y, float* scale) {
+    const HudElementInfo& info = hudElements[element];
+    std::string cvar = info.cvar;
+    std::string marginCvar = info.marginCvar != nullptr ? info.marginCvar : info.cvar;
+    int32_t posType = CVarGetInteger((cvar + ".PosType").c_str(), ORIGINAL_LOCATION);
+    bool useMargins = CVarGetInteger((marginCvar + ".UseMargins").c_str(), 0) != 0;
+    int16_t leftMargin = useMargins ? CVarGetInteger(CVAR_COSMETIC("HUD.Margin.L"), 0) : 0;
+    int16_t rightMargin = useMargins ? CVarGetInteger(CVAR_COSMETIC("HUD.Margin.R"), 0) : 0;
+    int16_t yMargin = 0;
+    if (useMargins && info.yMargin == HUD_Y_MARGIN_TOP) {
+        yMargin = -CVarGetInteger(CVAR_COSMETIC("HUD.Margin.T"), 0);
+    } else if (useMargins && info.yMargin == HUD_Y_MARGIN_BOTTOM) {
+        yMargin = CVarGetInteger(CVAR_COSMETIC("HUD.Margin.B"), 0);
+    }
+
+    int16_t vanillaX = info.originX;
+    int16_t vanillaY = info.originY;
+    int16_t placementOffsetX = info.placementOffsetX;
+    int16_t placementOffsetY = info.placementOffsetY;
+    if (element == HUD_ELEMENT_MINIMAP) {
+        // Editor position offsets the minimap from its vanilla spot, except X without anchor which is absolute
+        bool overworld = gPlayState != nullptr && gPlayState->sceneNum >= SCENE_HYRULE_FIELD &&
+                         gPlayState->sceneNum <= SCENE_OUTSIDE_GANONS_CASTLE;
+        vanillaX = overworld ? R_OW_MINIMAP_X : R_DGN_MINIMAP_X;
+        vanillaY = overworld ? R_OW_MINIMAP_Y : R_DGN_MINIMAP_Y;
+        placementOffsetX = posType == ANCHOR_NONE ? 0 : vanillaX;
+        placementOffsetY = vanillaY;
+    }
+
+    int16_t originX = vanillaX;
+    if (info.edge == HUD_EDGE_LEFT) {
+        originX = info.truncOrigin ? OTRGetDimensionFromLeftEdge(vanillaX) : OTRGetRectDimensionFromLeftEdge(vanillaX);
+    } else if (info.edge == HUD_EDGE_RIGHT) {
+        originX =
+            info.truncOrigin ? OTRGetDimensionFromRightEdge(vanillaX) : OTRGetRectDimensionFromRightEdge(vanillaX);
+    }
+    int16_t partX = info.dynamicOrigin ? 0 : *x - originX;
+    int16_t partY = info.dynamicOrigin ? 0 : *y - vanillaY;
+    if (posType == ANCHOR_NONE) {
+        placementOffsetX += info.noAnchorOffsetX;
+    } else if (posType == ANCHOR_LEFT) {
+        placementOffsetX += info.leftAnchorOffsetX;
+    }
+    int16_t posX = CVarGetInteger((cvar + ".PosX").c_str(), 0) + placementOffsetX;
+    int16_t posY = CVarGetInteger((cvar + ".PosY").c_str(), 0) + placementOffsetY;
+
+    if (element == HUD_ELEMENT_MAGIC_BAR) {
+        // Magic bar follows the heart rows, except when placed freely
+        int16_t rows = HudElement_ExtraHeartRows();
+        int16_t rowDrop = R_MAGIC_BAR_LARGE_Y - R_MAGIC_BAR_SMALL_Y + 2;
+        if (posType == ORIGINAL_LOCATION) {
+            *y = (rows > 0 ? R_MAGIC_BAR_LARGE_Y + rowDrop * (rows - 1) : R_MAGIC_BAR_SMALL_Y) + yMargin;
+            *x += leftMargin;
+            return;
+        }
+        if (posType == ANCHOR_TO_LIFE_METER) {
+            int16_t heartsX = OTRGetDimensionFromLeftEdge(0.0f);
+            int16_t heartsY = 0;
+            HudElement_ApplyPosition(HUD_ELEMENT_HEARTS, &heartsX, &heartsY, nullptr);
+            *x = posX + heartsX + info.originX - 1 + partX;
+            *y = R_MAGIC_BAR_SMALL_Y - 2 + rowDrop * rows + posY + heartsY;
+            return;
+        }
+        partY = 0;
+    }
+
+    if (posType == ORIGINAL_LOCATION) {
+        if (info.edge == HUD_EDGE_LEFT) {
+            *x += leftMargin;
+        } else if (info.edge == HUD_EDGE_RIGHT) {
+            *x += rightMargin;
+        }
+        *y += yMargin;
+        return;
+    }
+
+    *y = posY + yMargin + partY;
+    switch (posType) {
+        case ANCHOR_LEFT:
+            *x = OTRGetDimensionFromLeftEdge(posX + leftMargin) + partX;
+            break;
+        case ANCHOR_RIGHT:
+            *x = OTRGetDimensionFromRightEdge(posX + rightMargin) + partX;
+            break;
+        case ANCHOR_NONE:
+            *x = posX + partX;
+            break;
+        case HIDDEN:
+            *x = -9999;
+            break;
     }
 }
 
@@ -2589,6 +2774,12 @@ void RegisterCosmeticHooks() {
 
     COND_HOOK(OnGameFrameUpdate, true, CosmeticsUpdateTick);
     COND_HOOK(OnAssetAltChange, true, []() { ApplyOrResetCustomGfxPatches(true); });
+    COND_HOOK(OnHudElementPosition, true, HudElement_ApplyPosition);
+    COND_VB_SHOULD(VB_START_HEART_ROW, true, {
+        int32_t heartIndex = va_arg(args, int32_t);
+        int32_t lineLength = CVarGetInteger(CVAR_COSMETIC("HUD.Hearts.LineLength"), 10);
+        *should = lineLength != 0 && (heartIndex + 1) % lineLength == 0;
+    });
 }
 
 void RegisterCosmeticWidgets() {

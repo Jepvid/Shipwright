@@ -1135,37 +1135,11 @@ void TitleCard_Draw(PlayState* play, TitleCardContext* titleCtx) {
     if (titleCtx->alpha != 0) {
         width = titleCtx->width;
         height = titleCtx->height;
-        s16 TitleCard_PosX_Modifier = titleCtx->isBossCard ? CVarGetInteger(CVAR_COSMETIC("HUD.TitleCard.Boss.PosX"), 0)
-                                                           : CVarGetInteger(CVAR_COSMETIC("HUD.TitleCard.Map.PosX"), 0);
-        s16 TitleCard_PosY_Modifier = titleCtx->isBossCard ? CVarGetInteger(CVAR_COSMETIC("HUD.TitleCard.Boss.PosY"), 0)
-                                                           : CVarGetInteger(CVAR_COSMETIC("HUD.TitleCard.Map.PosY"), 0);
-        s16 TitleCard_PosType_Checker = titleCtx->isBossCard
-                                            ? CVarGetInteger(CVAR_COSMETIC("HUD.TitleCard.Boss.PosType"), 0)
-                                            : CVarGetInteger(CVAR_COSMETIC("HUD.TitleCard.Map.PosType"), 0);
-        s16 TitleCard_Margin_Checker = titleCtx->isBossCard
-                                           ? CVarGetInteger(CVAR_COSMETIC("HUD.TitleCard.Boss.UseMargins"), 0)
-                                           : CVarGetInteger(CVAR_COSMETIC("HUD.TitleCard.Map.UseMargins"), 0);
-        s16 TitleCard_MarginX = 0;
         s16 TitleCard_PosX = titleCtx->x;
         s16 TitleCard_PosY = titleCtx->y;
-        if (TitleCard_PosType_Checker != 0) {
-            TitleCard_PosY = TitleCard_PosY_Modifier;
-            if (TitleCard_PosType_Checker == ANCHOR_LEFT) {
-                if (TitleCard_Margin_Checker != 0) {
-                    TitleCard_MarginX = CVarGetInteger(CVAR_COSMETIC("HUD.Margin.L"), 0) * -1;
-                };
-                TitleCard_PosX = OTRGetDimensionFromLeftEdge(TitleCard_PosX_Modifier + TitleCard_MarginX) - 11;
-            } else if (TitleCard_PosType_Checker == ANCHOR_RIGHT) {
-                if (TitleCard_Margin_Checker != 0) {
-                    TitleCard_MarginX = CVarGetInteger(CVAR_COSMETIC("HUD.Margin.R"), 0);
-                };
-                TitleCard_PosX = OTRGetDimensionFromRightEdge(TitleCard_PosX_Modifier + TitleCard_MarginX);
-            } else if (TitleCard_PosType_Checker == ANCHOR_NONE) {
-                TitleCard_PosX = TitleCard_PosX_Modifier;
-            } else if (TitleCard_PosType_Checker == HIDDEN) {
-                TitleCard_PosX = -9999;
-            }
-        }
+        GameInteractor_ExecuteOnHudElementPosition(titleCtx->isBossCard ? HUD_ELEMENT_TITLE_CARD_BOSS
+                                                                        : HUD_ELEMENT_TITLE_CARD_MAP,
+                                                   &TitleCard_PosX, &TitleCard_PosY, NULL);
 
         titleX = (TitleCard_PosX * 4) - (width * 2);
         titleY = (TitleCard_PosY * 4) - (height * 2);
