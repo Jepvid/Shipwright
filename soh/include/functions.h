@@ -984,8 +984,6 @@ void Color_RGBA8_Copy(Color_RGBA8* dst, Color_RGBA8* src);
 void Sfx_PlaySfxCentered(u16 sfxId);
 void Sfx_PlaySfxCentered2(u16 sfxId);
 void Sfx_PlaySfxAtPos(Vec3f* arg0, u16 sfxId);
-s16 getHealthMeterXOffset();
-s16 getHealthMeterYOffset();
 void HealthMeter_Init(PlayState* play);
 void HealthMeter_Update(PlayState* play);
 void HealthMeter_Draw(PlayState* play);
