@@ -4,6 +4,7 @@
 #include "global.h"
 
 #include "soh/Enhancements/audio/AudioEditor.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "soh/ResourceManagerHelpers.h"
 
 extern char** sequenceMap;
@@ -688,6 +689,7 @@ s32 AudioSeq_SeqLayerProcessScriptStep4(SequenceLayer* layer, s32 cmd) {
                 layer->delay2 = layer->delay + 1;
                 return -1;
             }
+            GameInteractor_Should(VB_SFX_USE_VANILLA_SFX_SOUND, true, channel, &sound);
             layer->sound = sound;
             layer->freqScale = sound->tuning;
             break;
@@ -943,6 +945,8 @@ u8 AudioSeq_GetInstrument(SequenceChannel* channel, u8 instId, Instrument** inst
         *instOut = NULL;
         return 0;
     }
+
+    GameInteractor_Should(VB_SFX_USE_VANILLA_INSTRUMENT, true, channel, (int32_t)instId, &inst);
 
     if (inst->envelope != NULL) {
         adsr->envelope = inst->envelope;
