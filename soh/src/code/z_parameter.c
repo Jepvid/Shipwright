@@ -158,8 +158,9 @@ static u16 sCUpTimer = 0;
 s16 gSpoilingItems[] = { ITEM_ODD_MUSHROOM, ITEM_FROG, ITEM_EYEDROPS };
 s16 gSpoilingItemReverts[] = { ITEM_COJIRO, ITEM_PRESCRIPTION, ITEM_PRESCRIPTION };
 
-static Color_RGB8 sMagicBorder = { 255, 255, 255 };
-static Color_RGB8 sMagicBorder_ori = { 255, 255, 255 };
+static s16 sMagicBorderR = 255;
+static s16 sMagicBorderG = 255;
+static s16 sMagicBorderB = 255;
 
 static s16 sExtraItemBases[] = {
     ITEM_STICK, ITEM_STICK, ITEM_NUT,   ITEM_NUT,     ITEM_BOMB,    ITEM_BOMB,  ITEM_BOMB,  ITEM_BOMB, ITEM_BOW,
@@ -3172,39 +3173,6 @@ void Interface_UpdateMagicBar(PlayState* play) {
         { 255, 255, 150 },
         { 255, 255, 50 },
     };
-    Color_RGB8 MagicBorder_0 = { 255, 255, 255 };
-    Color_RGB8 MagicBorder_1 = { 150, 150, 150 };
-    Color_RGB8 MagicBorder_2 = { 255, 255, 150 };
-    Color_RGB8 MagicBorder_3 = { 255, 255, 50 };
-
-    if (CVarGetInteger(CVAR_COSMETIC("Consumable.MagicBorderActive.Changed"),
-                       0)) { // This will make custom color based on users selected colors.
-        sMagicBorderColors[0][0] = CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorderActive.Value"), MagicBorder_0).r;
-        sMagicBorderColors[0][1] = CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorderActive.Value"), MagicBorder_0).g;
-        sMagicBorderColors[0][2] = CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorderActive.Value"), MagicBorder_0).b;
-
-        sMagicBorderColors[1][0] =
-            CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorderActive.Value"), MagicBorder_1).r / 2;
-        sMagicBorderColors[1][1] =
-            CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorderActive.Value"), MagicBorder_1).g / 2;
-        sMagicBorderColors[1][2] =
-            CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorderActive.Value"), MagicBorder_1).b / 2;
-
-        sMagicBorderColors[2][0] =
-            CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorderActive.Value"), MagicBorder_2).r / 2.5;
-        sMagicBorderColors[2][1] =
-            CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorderActive.Value"), MagicBorder_2).g / 2.5;
-        sMagicBorderColors[2][2] =
-            CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorderActive.Value"), MagicBorder_2).b / 2.5;
-
-        sMagicBorderColors[3][0] =
-            CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorderActive.Value"), MagicBorder_3).r / 3;
-        sMagicBorderColors[3][1] =
-            CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorderActive.Value"), MagicBorder_3).g / 3;
-        sMagicBorderColors[3][2] =
-            CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorderActive.Value"), MagicBorder_3).b / 3;
-    }
-
     static s16 sMagicBorderIndexes[] = { 0, 1, 1, 0 };
     static s16 sMagicBorderRatio = 2;
     static s16 sMagicBorderStep = 1;
@@ -3263,51 +3231,43 @@ void Interface_UpdateMagicBar(PlayState* play) {
                 if (gSaveContext.magic <= 0) {
                     gSaveContext.magic = 0;
                     gSaveContext.magicState = MAGIC_STATE_METER_FLASH_1;
-                    if (CVarGetInteger(CVAR_COSMETIC("Consumable.MagicBorder.Changed"), 0)) {
-                        sMagicBorder = CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorder.Value"), sMagicBorder_ori);
-                    } else {
-                        sMagicBorder = sMagicBorder_ori;
-                    }
+                    sMagicBorderR = sMagicBorderG = sMagicBorderB = 255;
                 } else if (gSaveContext.magic == gSaveContext.magicTarget) {
                     gSaveContext.magicState = MAGIC_STATE_METER_FLASH_1;
-                    if (CVarGetInteger(CVAR_COSMETIC("Consumable.MagicBorder.Changed"), 0)) {
-                        sMagicBorder = CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorder.Value"), sMagicBorder_ori);
-                    } else {
-                        sMagicBorder = sMagicBorder_ori;
-                    }
+                    sMagicBorderR = sMagicBorderG = sMagicBorderB = 255;
                 }
             }
         case MAGIC_STATE_METER_FLASH_1:
         case MAGIC_STATE_METER_FLASH_2:
         case MAGIC_STATE_METER_FLASH_3:
             temp = sMagicBorderIndexes[sMagicBorderStep];
-            borderChangeR = ABS(sMagicBorder.r - sMagicBorderColors[temp][0]) / sMagicBorderRatio;
-            borderChangeG = ABS(sMagicBorder.g - sMagicBorderColors[temp][1]) / sMagicBorderRatio;
-            borderChangeB = ABS(sMagicBorder.b - sMagicBorderColors[temp][2]) / sMagicBorderRatio;
+            borderChangeR = ABS(sMagicBorderR - sMagicBorderColors[temp][0]) / sMagicBorderRatio;
+            borderChangeG = ABS(sMagicBorderG - sMagicBorderColors[temp][1]) / sMagicBorderRatio;
+            borderChangeB = ABS(sMagicBorderB - sMagicBorderColors[temp][2]) / sMagicBorderRatio;
 
-            if (sMagicBorder.r >= sMagicBorderColors[temp][0]) {
-                sMagicBorder.r -= borderChangeR;
+            if (sMagicBorderR >= sMagicBorderColors[temp][0]) {
+                sMagicBorderR -= borderChangeR;
             } else {
-                sMagicBorder.r += borderChangeR;
+                sMagicBorderR += borderChangeR;
             }
 
-            if (sMagicBorder.g >= sMagicBorderColors[temp][1]) {
-                sMagicBorder.g -= borderChangeG;
+            if (sMagicBorderG >= sMagicBorderColors[temp][1]) {
+                sMagicBorderG -= borderChangeG;
             } else {
-                sMagicBorder.g += borderChangeG;
+                sMagicBorderG += borderChangeG;
             }
 
-            if (sMagicBorder.b >= sMagicBorderColors[temp][2]) {
-                sMagicBorder.b -= borderChangeB;
+            if (sMagicBorderB >= sMagicBorderColors[temp][2]) {
+                sMagicBorderB -= borderChangeB;
             } else {
-                sMagicBorder.b += borderChangeB;
+                sMagicBorderB += borderChangeB;
             }
 
             sMagicBorderRatio--;
             if (sMagicBorderRatio == 0) {
-                sMagicBorder.r = sMagicBorderColors[temp][0];
-                sMagicBorder.g = sMagicBorderColors[temp][1];
-                sMagicBorder.b = sMagicBorderColors[temp][2];
+                sMagicBorderR = sMagicBorderColors[temp][0];
+                sMagicBorderG = sMagicBorderColors[temp][1];
+                sMagicBorderB = sMagicBorderColors[temp][2];
                 sMagicBorderRatio = YREG(40 + sMagicBorderStep);
                 sMagicBorderStep++;
                 if (sMagicBorderStep >= 4) {
@@ -3317,11 +3277,7 @@ void Interface_UpdateMagicBar(PlayState* play) {
             break;
 
         case MAGIC_STATE_RESET:
-            if (CVarGetInteger(CVAR_COSMETIC("Consumable.MagicBorder.Changed"), 0)) {
-                sMagicBorder = CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorder.Value"), sMagicBorder_ori);
-            } else {
-                sMagicBorder = sMagicBorder_ori;
-            }
+            sMagicBorderR = sMagicBorderG = sMagicBorderB = 255;
             gSaveContext.magicState = MAGIC_STATE_IDLE;
             break;
 
@@ -3346,11 +3302,7 @@ void Interface_UpdateMagicBar(PlayState* play) {
                     Audio_PlaySfxGeneral(NA_SE_SY_GLASSMODE_OFF, &gSfxDefaultPos, 4, &gSfxDefaultFreqAndVolScale,
                                          &gSfxDefaultFreqAndVolScale, &gSfxDefaultReverb);
                     gSaveContext.magicState = MAGIC_STATE_IDLE;
-                    if (CVarGetInteger(CVAR_COSMETIC("Consumable.MagicBorder.Changed"), 0)) {
-                        sMagicBorder = CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorder.Value"), sMagicBorder_ori);
-                    } else {
-                        sMagicBorder = sMagicBorder_ori;
-                    }
+                    sMagicBorderR = sMagicBorderG = sMagicBorderB = 255;
                     break;
                 }
 
@@ -3362,33 +3314,33 @@ void Interface_UpdateMagicBar(PlayState* play) {
             }
 
             temp = sMagicBorderIndexes[sMagicBorderStep];
-            borderChangeR = ABS(sMagicBorder.r - sMagicBorderColors[temp][0]) / sMagicBorderRatio;
-            borderChangeG = ABS(sMagicBorder.g - sMagicBorderColors[temp][1]) / sMagicBorderRatio;
-            borderChangeB = ABS(sMagicBorder.b - sMagicBorderColors[temp][2]) / sMagicBorderRatio;
+            borderChangeR = ABS(sMagicBorderR - sMagicBorderColors[temp][0]) / sMagicBorderRatio;
+            borderChangeG = ABS(sMagicBorderG - sMagicBorderColors[temp][1]) / sMagicBorderRatio;
+            borderChangeB = ABS(sMagicBorderB - sMagicBorderColors[temp][2]) / sMagicBorderRatio;
 
-            if (sMagicBorder.r >= sMagicBorderColors[temp][0]) {
-                sMagicBorder.r -= borderChangeR;
+            if (sMagicBorderR >= sMagicBorderColors[temp][0]) {
+                sMagicBorderR -= borderChangeR;
             } else {
-                sMagicBorder.r += borderChangeR;
+                sMagicBorderR += borderChangeR;
             }
 
-            if (sMagicBorder.g >= sMagicBorderColors[temp][1]) {
-                sMagicBorder.g -= borderChangeG;
+            if (sMagicBorderG >= sMagicBorderColors[temp][1]) {
+                sMagicBorderG -= borderChangeG;
             } else {
-                sMagicBorder.g += borderChangeG;
+                sMagicBorderG += borderChangeG;
             }
 
-            if (sMagicBorder.b >= sMagicBorderColors[temp][2]) {
-                sMagicBorder.b -= borderChangeB;
+            if (sMagicBorderB >= sMagicBorderColors[temp][2]) {
+                sMagicBorderB -= borderChangeB;
             } else {
-                sMagicBorder.b += borderChangeB;
+                sMagicBorderB += borderChangeB;
             }
 
             sMagicBorderRatio--;
             if (sMagicBorderRatio == 0) {
-                sMagicBorder.r = sMagicBorderColors[temp][0];
-                sMagicBorder.g = sMagicBorderColors[temp][1];
-                sMagicBorder.b = sMagicBorderColors[temp][2];
+                sMagicBorderR = sMagicBorderColors[temp][0];
+                sMagicBorderG = sMagicBorderColors[temp][1];
+                sMagicBorderB = sMagicBorderColors[temp][2];
                 sMagicBorderRatio = YREG(40 + sMagicBorderStep);
                 sMagicBorderStep++;
                 if (sMagicBorderStep >= 4) {
@@ -3410,11 +3362,6 @@ void Interface_UpdateMagicBar(PlayState* play) {
 
         default:
             gSaveContext.magicState = MAGIC_STATE_IDLE;
-            if (CVarGetInteger(CVAR_COSMETIC("Consumable.MagicBorder.Changed"), 0)) {
-                sMagicBorder = CVarGetColor24(CVAR_COSMETIC("Consumable.MagicBorder.Value"), sMagicBorder_ori);
-            } else {
-                sMagicBorder = sMagicBorder_ori;
-            }
             break;
     }
 }
@@ -3445,16 +3392,12 @@ void Interface_DrawLineupTick(PlayState* play) {
 void Interface_DrawMagicBar(PlayState* play) {
     InterfaceContext* interfaceCtx = &play->interfaceCtx;
     s16 magicBarY;
-    Color_RGB8 magicbar_yellow = { 250, 250, 0 }; // Magic bar being used
-    Color_RGB8 magicbar_green = { R_MAGIC_FILL_COLOR(0), R_MAGIC_FILL_COLOR(1),
-                                  R_MAGIC_FILL_COLOR(2) }; // Magic bar fill
+    Color_RGBA8 magicbar_yellow = { 250, 250, 0, 255 }; // Magic bar being used
+    Color_RGBA8 magicbar_green = { R_MAGIC_FILL_COLOR(0), R_MAGIC_FILL_COLOR(1), R_MAGIC_FILL_COLOR(2),
+                                   255 }; // Magic bar fill
 
-    if (CVarGetInteger(CVAR_COSMETIC("Consumable.MagicActive.Changed"), 0)) {
-        magicbar_yellow = CVarGetColor24(CVAR_COSMETIC("Consumable.MagicActive.Value"), magicbar_yellow);
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("Consumable.Magic.Changed"), 0)) {
-        magicbar_green = CVarGetColor24(CVAR_COSMETIC("Consumable.Magic.Value"), magicbar_green);
-    }
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MAGIC_ACTIVE, &magicbar_yellow);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MAGIC, &magicbar_green);
     GameInteractor_Should(VB_APPLY_MAGIC_METER_FILL_COLOR, true, &magicbar_green);
 
     OPEN_DISPS(play->state.gfxCtx);
@@ -3475,7 +3418,10 @@ void Interface_DrawMagicBar(PlayState* play) {
 
         Gfx_SetupDL_39Overlay(play->state.gfxCtx);
 
-        gDPSetPrimColor(OVERLAY_DISP++, 0, 0, sMagicBorder.r, sMagicBorder.g, sMagicBorder.b, interfaceCtx->magicAlpha);
+        Color_RGBA8 magicBorder = { sMagicBorderR, sMagicBorderG, sMagicBorderB, 255 };
+
+        GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MAGIC_BORDER, &magicBorder);
+        gDPSetPrimColor(OVERLAY_DISP++, 0, 0, magicBorder.r, magicBorder.g, magicBorder.b, interfaceCtx->magicAlpha);
         gDPSetEnvColor(OVERLAY_DISP++, 100, 50, 50, 255);
 
         OVERLAY_DISP =
@@ -3555,12 +3501,8 @@ void Interface_DrawEnemyHealthBar(TargetContext* targetCtx, PlayState* play) {
     s32 healthbar_offsetY = CVarGetInteger(CVAR_COSMETIC("HUD.EnemyHealthBar.PosY"), 0);
     s8 anchorType = CVarGetInteger(CVAR_COSMETIC("HUD.EnemyHealthBar.PosType"), ENEMYHEALTH_ANCHOR_ACTOR);
 
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.EnemyHealthBar.Changed"), 0)) {
-        healthbar_red = CVarGetColor(CVAR_COSMETIC("HUD.EnemyHealthBar.Value"), healthbar_red);
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.EnemyHealthBorder.Changed"), 0)) {
-        healthbar_border = CVarGetColor(CVAR_COSMETIC("HUD.EnemyHealthBorder.Value"), healthbar_border);
-    }
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_ENEMY_HEALTH_BAR, &healthbar_red);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_ENEMY_HEALTH_BORDER, &healthbar_border);
     if (CVarGetInteger(CVAR_COSMETIC("HUD.EnemyHealthBar.Width.Changed"), 0)) {
         healthbar_fillWidth = CVarGetInteger(CVAR_COSMETIC("HUD.EnemyHealthBar.Width.Value"), healthbar_fillWidth);
     }
@@ -3743,43 +3685,28 @@ void Interface_DrawItemButtons(PlayState* play) {
     s16 width;
     s16 height;
 
-    Color_RGB8 bButtonColor = { 0, 150, 0 };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.BButton.Changed"), 0)) {
-        bButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.BButton.Value"), bButtonColor);
-    } else if (CVarGetInteger(CVAR_COSMETIC("DefaultColorScheme"), COLORSCHEME_N64) == COLORSCHEME_GAMECUBE) {
-        bButtonColor = (Color_RGB8){ 255, 30, 30 };
-    }
-
-    Color_RGB8 cButtonsColor = { 255, 160, 0 };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CButtons.Changed"), 0)) {
-        cButtonsColor = CVarGetColor24(CVAR_COSMETIC("HUD.CButtons.Value"), cButtonsColor);
-    }
-    Color_RGB8 cUpButtonColor = cButtonsColor;
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CUpButton.Changed"), 0)) {
-        cUpButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.CUpButton.Value"), cUpButtonColor);
-    }
-    Color_RGB8 cDownButtonColor = cButtonsColor;
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CDownButton.Changed"), 0)) {
-        cDownButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.CDownButton.Value"), cDownButtonColor);
-    }
-    Color_RGB8 cLeftButtonColor = cButtonsColor;
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CLeftButton.Changed"), 0)) {
-        cLeftButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.CLeftButton.Value"), cLeftButtonColor);
-    }
-    Color_RGB8 cRightButtonColor = cButtonsColor;
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CRightButton.Changed"), 0)) {
-        cRightButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.CRightButton.Value"), cRightButtonColor);
-    }
-
-    Color_RGB8 startButtonColor = { 200, 0, 0 };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.StartButton.Changed"), 0)) {
-        startButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.StartButton.Value"), startButtonColor);
-    } else if (CVarGetInteger(CVAR_COSMETIC("DefaultColorScheme"), COLORSCHEME_N64) == COLORSCHEME_GAMECUBE) {
-        startButtonColor = (Color_RGB8){ 120, 120, 120 };
-    }
-
+    Color_RGBA8 bButtonColor = { R_B_BTN_COLOR(0), R_B_BTN_COLOR(1), R_B_BTN_COLOR(2), 255 };
+    Color_RGBA8 cUpButtonColor = { R_C_BTN_COLOR(0), R_C_BTN_COLOR(1), R_C_BTN_COLOR(2), 255 };
+    Color_RGBA8 cDownButtonColor = cUpButtonColor;
+    Color_RGBA8 cLeftButtonColor = cUpButtonColor;
+    Color_RGBA8 cRightButtonColor = cUpButtonColor;
+    Color_RGBA8 startButtonColor = { 120, 120, 120, 255 };
     s16 posX;
     s16 posY;
+    // #region SOH [NTSC]
+    s32 languageOffset = gSaveContext.language;
+
+    if (languageOffset == LANGUAGE_JPN) {
+        languageOffset = LANGUAGE_ENG;
+    }
+    // #endregion
+
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_HUD_B_BUTTON, &bButtonColor);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_HUD_C_UP_BUTTON, &cUpButtonColor);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_HUD_C_DOWN_BUTTON, &cDownButtonColor);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_HUD_C_LEFT_BUTTON, &cLeftButtonColor);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_HUD_C_RIGHT_BUTTON, &cRightButtonColor);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_HUD_START_BUTTON, &startButtonColor);
 
     OPEN_DISPS(play->state.gfxCtx);
 
@@ -3849,17 +3776,14 @@ void Interface_DrawItemButtons(PlayState* play) {
                                    DO_ACTION_TEX_HEIGHT(), 0, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP,
                                    G_TX_NOMASK, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOLOD);
 
-            gDPPipeSync(OVERLAY_DISP++);
-            gSPSetGeometryMode(OVERLAY_DISP++, G_CULL_BACK);
-            gDPSetCombineLERP(OVERLAY_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0,
-                              PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0);
-            gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 255, 255, 255, interfaceCtx->startAlpha);
-            gDPSetEnvColor(OVERLAY_DISP++, 0, 0, 0, 0);
-            Matrix_Translate(posX - 160 + 11.5f, (posY - 120 + 11.5f) * -1, 1.0f, MTXMODE_NEW);
-            gSPMatrix(OVERLAY_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_MODELVIEW | G_MTX_LOAD);
-            gSPVertex(OVERLAY_DISP++, &interfaceCtx->actionVtx[4], 4, 0);
-            Interface_DrawActionLabel(play->state.gfxCtx, interfaceCtx->doActionSegment[2]);
-            gDPPipeSync(OVERLAY_DISP++);
+            dxdy = (1 << 10) / (R_START_LABEL_DD(languageOffset) / 100.0f);
+            width = DO_ACTION_TEX_WIDTH() / (R_START_LABEL_DD(languageOffset) / 100.0f);
+            height = DO_ACTION_TEX_HEIGHT() / (R_START_LABEL_DD(languageOffset) / 100.0f);
+            posX = OTRGetRectDimensionFromRightEdge(R_START_LABEL_X(languageOffset));
+            posY = R_START_LABEL_Y(languageOffset);
+            GameInteractor_ExecuteOnHudElementPosition(HUD_ELEMENT_START_BUTTON, &posX, &posY, NULL);
+            gSPWideTextureRectangle(OVERLAY_DISP++, posX << 2, posY << 2, (posX + width) << 2, (posY + height) << 2,
+                                    G_TX_RENDERTILE, 0, 0, dxdy, dxdy);
         }
     }
 
@@ -4200,30 +4124,12 @@ void Interface_Draw(PlayState* play) {
     static s16 rupeeDigitsCount[] = { 2, 3, 3, 3 };
 
     // courtesy of https://github.com/TestRunnerSRL/OoT-Randomizer/blob/Dev/ASM/c/hud_colors.c
-    static Color_RGB8 rupeeWalletColors[4] = {
+    static s16 rupeeWalletColors[4][3] = {
         { 0xC8, 0xFF, 0x64 }, // Base Wallet (Green)
         { 0x82, 0x82, 0xFF }, // Adult's Wallet (Blue)
         { 0xFF, 0x64, 0x64 }, // Giant's Wallet (Red)
         { 0xFF, 0x5A, 0xFF }, // Tycoon's Wallet (Purple). Only used in rando shopsanity.
     };
-    Color_RGB8 rColor;
-
-    Color_RGB8 keyCountColor = { 200, 230, 255 };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.KeyCount.Changed"), 0)) {
-        keyCountColor = CVarGetColor24(CVAR_COSMETIC("HUD.KeyCount.Value"), keyCountColor);
-    }
-
-    Color_RGB8 dPadColor = { 255, 255, 255 };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.Dpad.Changed"), 0)) {
-        dPadColor = CVarGetColor24(CVAR_COSMETIC("HUD.Dpad.Value"), dPadColor);
-    }
-
-    Color_RGB8 aButtonColor = { 90, 90, 255 };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.AButton.Changed"), 0)) {
-        aButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.AButton.Value"), aButtonColor);
-    } else if (CVarGetInteger(CVAR_COSMETIC("DefaultColorScheme"), COLORSCHEME_N64) == COLORSCHEME_GAMECUBE) {
-        aButtonColor = (Color_RGB8){ 0, 200, 50 };
-    }
 
     static s16 spoilingItemEntrances[] = { ENTR_LOST_WOODS_2, ENTR_ZORAS_DOMAIN_3, ENTR_ZORAS_DOMAIN_3 };
     static f32 D_80125B54[] = { -40.0f, -35.0f }; // unused
@@ -4252,6 +4158,14 @@ void Interface_Draw(PlayState* play) {
     }
     // #endregion
 
+    Color_RGBA8 keyCountColor = { 200, 230, 255, 255 };
+    Color_RGBA8 dPadColor = { 255, 255, 255, 255 };
+    Color_RGBA8 aButtonColor = { R_A_BTN_COLOR(0), R_A_BTN_COLOR(1), R_A_BTN_COLOR(2), 255 };
+
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_HUD_KEY_COUNT, &keyCountColor);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_HUD_DPAD, &dPadColor);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_HUD_A_BUTTON, &aButtonColor);
+
     if (GameInteractor_NoUIActive()) {
         return;
     }
@@ -4277,54 +4191,25 @@ void Interface_Draw(PlayState* play) {
             s16 PosY_RC;
             if (GameInteractor_Should(VB_RENDER_RUPEE_COUNTER, true)) {
                 // Rupee Icon
+                s16* rColor;
+
                 if (CVarGetInteger(CVAR_ENHANCEMENT("DynamicWalletIcon"), 0)) {
-                    switch (CUR_UPG_VALUE(UPG_WALLET)) {
-                        case 0:
-                            if (CVarGetInteger(CVAR_COSMETIC("Consumable.GreenRupee.Changed"), 0)) {
-                                rColor =
-                                    CVarGetColor24(CVAR_COSMETIC("Consumable.GreenRupee.Value"), rupeeWalletColors[0]);
-                            } else {
-                                rColor = rupeeWalletColors[0];
-                            }
-                            break;
-                        case 1:
-                            if (CVarGetInteger(CVAR_COSMETIC("Consumable.BlueRupee.Changed"), 0)) {
-                                rColor =
-                                    CVarGetColor24(CVAR_COSMETIC("Consumable.BlueRupee.Value"), rupeeWalletColors[1]);
-                            } else {
-                                rColor = rupeeWalletColors[1];
-                            }
-                            break;
-                        case 2:
-                            if (CVarGetInteger(CVAR_COSMETIC("Consumable.RedRupee.Changed"), 0)) {
-                                rColor =
-                                    CVarGetColor24(CVAR_COSMETIC("Consumable.RedRupee.Value"), rupeeWalletColors[2]);
-                            } else {
-                                rColor = rupeeWalletColors[2];
-                            }
-                            break;
-                        case 3:
-                            if (CVarGetInteger(CVAR_COSMETIC("Consumable.PurpleRupee.Changed"), 0)) {
-                                rColor =
-                                    CVarGetColor24(CVAR_COSMETIC("Consumable.PurpleRupee.Value"), rupeeWalletColors[3]);
-                            } else {
-                                rColor = rupeeWalletColors[3];
-                            }
-                            break;
-                    }
+                    rColor = rupeeWalletColors[CUR_UPG_VALUE(UPG_WALLET)];
                 } else {
-                    if (CVarGetInteger(CVAR_COSMETIC("Consumable.GreenRupee.Changed"), rupeeWalletColors)) {
-                        rColor = CVarGetColor24(CVAR_COSMETIC("Consumable.GreenRupee.Value"), rupeeWalletColors[0]);
-                    } else {
-                        rColor = rupeeWalletColors[0];
-                    }
+                    rColor = rupeeWalletColors[0];
                 }
+
+                Color_RGBA8 rupeeColor = { rColor[0], rColor[1], rColor[2], 255 };
+
+                GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_HUD_RUPEE_ICON, &rupeeColor);
 
                 // Rupee icon & counter
                 PosX_RC = OTRGetRectDimensionFromLeftEdge(26);
                 PosY_RC = 206;
                 GameInteractor_ExecuteOnHudElementPosition(HUD_ELEMENT_RUPEES, &PosX_RC, &PosY_RC, NULL);
-                gDPSetPrimColor(OVERLAY_DISP++, 0, 0, rColor.r, rColor.g, rColor.b, interfaceCtx->magicAlpha);
+                gDPSetPrimColor(OVERLAY_DISP++, 0, 0, rupeeColor.r, rupeeColor.g, rupeeColor.b,
+                                interfaceCtx->magicAlpha);
+                gDPSetEnvColor(OVERLAY_DISP++, 0, 80, 0, 255);
                 OVERLAY_DISP = Gfx_TextureIA8(OVERLAY_DISP, gRupeeCounterIconTex, 16, 16, PosX_RC, PosY_RC, 16, 16,
                                               1 << 10, 1 << 10);
             }
@@ -4355,8 +4240,7 @@ void Interface_Draw(PlayState* play) {
 
                             gDPSetPrimColor(OVERLAY_DISP++, 0, 0, keyCountColor.r, keyCountColor.g, keyCountColor.b,
                                             interfaceCtx->magicAlpha);
-                            gDPSetEnvColor(OVERLAY_DISP++, 0, 0, 20,
-                                           255); // We reset this here so it match user color :)
+                            gDPSetEnvColor(OVERLAY_DISP++, 0, 0, 20, 255);
                             OVERLAY_DISP = Gfx_TextureIA8(OVERLAY_DISP, gSmallKeyCounterIconTex, 16, 16, PosX_SKC,
                                                           PosY_SKC, 16, 16, 1 << 10, 1 << 10);
 
@@ -4374,17 +4258,26 @@ void Interface_Draw(PlayState* play) {
                                 interfaceCtx->counterDigits[3] -= 10;
                             }
 
-                            svar3 = 16;
+                            svar3 = OTRGetRectDimensionFromLeftEdge(42);
+
                             if (interfaceCtx->counterDigits[2] != 0) {
+                                PosX_SKC = svar3;
+                                PosY_SKC = 190;
+                                GameInteractor_ExecuteOnHudElementPosition(HUD_ELEMENT_SMALL_KEYS, &PosX_SKC, &PosY_SKC,
+                                                                           NULL);
                                 OVERLAY_DISP = Gfx_TextureI8(
                                     OVERLAY_DISP, ((u8*)((u8*)digitTextures[interfaceCtx->counterDigits[2]])), 8, 16,
-                                    PosX_SKC + 16, PosY_SKC, 8, 16, 1 << 10, 1 << 10);
-                                svar3 = 24;
+                                    PosX_SKC, PosY_SKC, 8, 16, 1 << 10, 1 << 10);
+                                svar3 += 8;
                             }
 
+                            PosX_SKC = svar3;
+                            PosY_SKC = 190;
+                            GameInteractor_ExecuteOnHudElementPosition(HUD_ELEMENT_SMALL_KEYS, &PosX_SKC, &PosY_SKC,
+                                                                       NULL);
                             OVERLAY_DISP =
                                 Gfx_TextureI8(OVERLAY_DISP, ((u8*)digitTextures[interfaceCtx->counterDigits[3]]), 8, 16,
-                                              PosX_SKC + svar3, PosY_SKC, 8, 16, 1 << 10, 1 << 10);
+                                              PosX_SKC, PosY_SKC, 8, 16, 1 << 10, 1 << 10);
                         }
                         break;
                     default:
@@ -4427,9 +4320,12 @@ void Interface_Draw(PlayState* play) {
                 svar2 = rupeeDigitsFirst[CUR_UPG_VALUE(UPG_WALLET)];
                 svar5 = rupeeDigitsCount[CUR_UPG_VALUE(UPG_WALLET)];
 
-                for (svar1 = 0, svar3 = 16; svar1 < svar5; svar1++, svar2++, svar3 += 8) {
+                for (svar1 = 0, svar3 = 42; svar1 < svar5; svar1++, svar2++, svar3 += 8) {
+                    PosX_RC = OTRGetRectDimensionFromLeftEdge(svar3);
+                    PosY_RC = 206;
+                    GameInteractor_ExecuteOnHudElementPosition(HUD_ELEMENT_RUPEES, &PosX_RC, &PosY_RC, NULL);
                     OVERLAY_DISP = Gfx_TextureI8(OVERLAY_DISP, ((u8*)digitTextures[interfaceCtx->counterDigits[svar2]]),
-                                                 8, 16, PosX_RC + svar3, PosY_RC, 8, 16, 1 << 10, 1 << 10);
+                                                 8, 16, PosX_RC, PosY_RC, 8, 16, 1 << 10, 1 << 10);
                 }
             }
         } else {

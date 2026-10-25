@@ -66,6 +66,9 @@ DEFINE_HOOK(OnInterfaceUpdate, ());
 DEFINE_HOOK(OnKaleidoscopeUpdate, (int16_t inDungeonScene));
 DEFINE_HOOK(OnMinimapDrawCompassIcons, ());
 DEFINE_HOOK(OnHudElementPosition, (int32_t element, int16_t* x, int16_t* y, float* scale));
+DEFINE_HOOK(OnCosmeticColor, (int32_t option, Color_RGBA8* color));
+DEFINE_HOOK(OnCosmeticTint, (int32_t option, Gfx** gfx, bool enable));
+DEFINE_HOOK(OnEffectBlureUpdate, (void* effect));
 
 DEFINE_HOOK(OnPresentFileSelect, ());
 DEFINE_HOOK(OnUpdateFileSelectSelection, (uint16_t optionIndex));
@@ -90,6 +93,7 @@ DEFINE_HOOK(OnKaleidoUpdate, ());
 
 // Messages
 DEFINE_HOOK(OnOpenText, (uint16_t * textId, bool* loadFromMessageTable));
+DEFINE_HOOK(OnMessageTextColor, (void* msgCtx, uint16_t colorParameter));
 
 // Audio
 DEFINE_HOOK(OnSeqPlayerInit, (int32_t playerIdx, int32_t seqId));

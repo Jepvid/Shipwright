@@ -3,6 +3,7 @@
 #include "objects/gameplay_keep/gameplay_keep.h"
 #include "overlays/effects/ovl_Effect_Ss_Dead_Sound/z_eff_ss_dead_sound.h"
 #include "textures/icon_item_static/icon_item_static.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "soh/OTRGlobals.h"
 #include <libultraship/bridge/consolevariablebridge.h>
@@ -1350,41 +1351,10 @@ void EnItem00_DrawRupee(EnItem00* this, PlayState* play) {
 
     gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_MODELVIEW | G_MTX_LOAD);
 
-    Color_RGB8 rupeeColor;
-    u8 shouldColor = 0;
-    switch (texIndex) {
-        case 0:
-            rupeeColor = CVarGetColor24(CVAR_COSMETIC("Consumable.GreenRupee.Value"), (Color_RGB8){ 255, 255, 255 });
-            shouldColor = CVarGetInteger(CVAR_COSMETIC("Consumable.GreenRupee.Changed"), 0);
-            break;
-        case 1:
-            rupeeColor = CVarGetColor24(CVAR_COSMETIC("Consumable.BlueRupee.Value"), (Color_RGB8){ 255, 255, 255 });
-            shouldColor = CVarGetInteger(CVAR_COSMETIC("Consumable.BlueRupee.Changed"), 0);
-            break;
-        case 2:
-            rupeeColor = CVarGetColor24(CVAR_COSMETIC("Consumable.RedRupee.Value"), (Color_RGB8){ 255, 255, 255 });
-            shouldColor = CVarGetInteger(CVAR_COSMETIC("Consumable.RedRupee.Changed"), 0);
-            break;
-        case 4: // orange rupee texture corresponds to the purple rupee (authentic bug)
-            rupeeColor = CVarGetColor24(CVAR_COSMETIC("Consumable.PurpleRupee.Value"), (Color_RGB8){ 255, 255, 255 });
-            shouldColor = CVarGetInteger(CVAR_COSMETIC("Consumable.PurpleRupee.Changed"), 0);
-            break;
-        case 3: // pink rupee texture corresponds to the gold rupee (authentic bug)
-            rupeeColor = CVarGetColor24(CVAR_COSMETIC("Consumable.GoldRupee.Value"), (Color_RGB8){ 255, 255, 255 });
-            shouldColor = CVarGetInteger(CVAR_COSMETIC("Consumable.GoldRupee.Changed"), 0);
-            break;
-    }
-
-    if (shouldColor) {
-        gDPSetGrayscaleColor(POLY_OPA_DISP++, rupeeColor.r, rupeeColor.g, rupeeColor.b, 255);
-        gSPGrayscale(POLY_OPA_DISP++, true);
-        gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sRupeeTex[texIndex]));
-        gSPDisplayList(POLY_OPA_DISP++, gRupeeDL);
-        gSPGrayscale(POLY_OPA_DISP++, false);
-    } else {
-        gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sRupeeTex[texIndex]));
-        gSPDisplayList(POLY_OPA_DISP++, gRupeeDL);
-    }
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sRupeeTex[texIndex]));
+    GameInteractor_ExecuteOnCosmeticTint(COSMETIC_COLOR_RUPEE_TEX(texIndex), &POLY_OPA_DISP, true);
+    gSPDisplayList(POLY_OPA_DISP++, gRupeeDL);
+    GameInteractor_ExecuteOnCosmeticTint(COSMETIC_COLOR_RUPEE_TEX(texIndex), &POLY_OPA_DISP, false);
 
     CLOSE_DISPS(play->state.gfxCtx);
 }

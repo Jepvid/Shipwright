@@ -837,9 +837,7 @@ void Flags_SetCollectible(PlayState* play, s32 flag) {
 }
 
 void TitleCard_Init(PlayState* play, TitleCardContext* titleCtx) {
-    titleCtx->durationTimer = titleCtx->delayTimer = titleCtx->intensityR = titleCtx->alpha = 0;
-    titleCtx->durationTimer = titleCtx->delayTimer = titleCtx->intensityG = titleCtx->alpha = 0;
-    titleCtx->durationTimer = titleCtx->delayTimer = titleCtx->intensityB = titleCtx->alpha = 0;
+    titleCtx->durationTimer = titleCtx->delayTimer = titleCtx->intensity = titleCtx->alpha = 0;
 }
 
 void TitleCard_InitBossName(PlayState* play, TitleCardContext* titleCtx, void* texture, s16 x, s16 y, u8 width,
@@ -1099,13 +1097,6 @@ void TitleCard_InitPlaceName(PlayState* play, TitleCardContext* titleCtx, void* 
 }
 
 void TitleCard_Update(PlayState* play, TitleCardContext* titleCtx) {
-    Color_RGB8 TitleCard_Colors = { 255, 255, 255 };
-    if (titleCtx->isBossCard && CVarGetInteger(CVAR_COSMETIC("HUD.TitleCard.Boss.Changed"), 0) == 1) {
-        TitleCard_Colors = CVarGetColor24(CVAR_COSMETIC("HUD.TitleCard.Boss.Value"), TitleCard_Colors);
-    } else if (!titleCtx->isBossCard && CVarGetInteger(CVAR_COSMETIC("HUD.TitleCard.Map.Changed"), 0) == 1) {
-        TitleCard_Colors = CVarGetColor24(CVAR_COSMETIC("HUD.TitleCard.Map.Value"), TitleCard_Colors);
-    }
-
     if (DECR(titleCtx->delayTimer) == 0) {
         if (titleCtx->durationTimer == 80) {
             GameInteractor_ExecuteOnPresentTitleCard();
@@ -1113,14 +1104,10 @@ void TitleCard_Update(PlayState* play, TitleCardContext* titleCtx) {
 
         if (DECR(titleCtx->durationTimer) == 0) {
             Math_StepToS(&titleCtx->alpha, 0, 30);
-            Math_StepToS(&titleCtx->intensityR, 0, 70);
-            Math_StepToS(&titleCtx->intensityG, 0, 70);
-            Math_StepToS(&titleCtx->intensityB, 0, 70);
+            Math_StepToS(&titleCtx->intensity, 0, 70);
         } else {
             Math_StepToS(&titleCtx->alpha, 255, 10);
-            Math_StepToS(&titleCtx->intensityR, TitleCard_Colors.r, 20);
-            Math_StepToS(&titleCtx->intensityG, TitleCard_Colors.g, 20);
-            Math_StepToS(&titleCtx->intensityB, TitleCard_Colors.b, 20);
+            Math_StepToS(&titleCtx->intensity, 255, 20);
         }
     }
 }
@@ -1149,8 +1136,11 @@ void TitleCard_Draw(PlayState* play, TitleCardContext* titleCtx) {
 
         OVERLAY_DISP = Gfx_SetupDL_52NoCD(OVERLAY_DISP);
 
-        gDPSetPrimColor(OVERLAY_DISP++, 0, 0, (u8)titleCtx->intensityR, (u8)titleCtx->intensityG,
-                        (u8)titleCtx->intensityB, (u8)titleCtx->alpha);
+        Color_RGBA8 titleColor = { (u8)titleCtx->intensity, (u8)titleCtx->intensity, (u8)titleCtx->intensity, 255 };
+
+        GameInteractor_ExecuteOnCosmeticColor(
+            titleCtx->isBossCard ? COSMETIC_COLOR_TITLE_CARD_BOSS : COSMETIC_COLOR_TITLE_CARD_MAP, &titleColor);
+        gDPSetPrimColor(OVERLAY_DISP++, 0, 0, titleColor.r, titleColor.g, titleColor.b, (u8)titleCtx->alpha);
 
         gDPLoadTextureBlock(OVERLAY_DISP++, (uintptr_t)titleCtx->texture, G_IM_FMT_IA, G_IM_SIZ_8b, width, height, 0,
                             G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK, G_TX_NOLOD,
@@ -2369,14 +2359,8 @@ void Actor_DrawFaroresWindPointer(PlayState* play) {
         } else if (D_8015BC18 > 0.0f) {
             static Vec3f effectVel = { 0.0f, -0.05f, 0.0f };
             static Vec3f effectAccel = { 0.0f, -0.025f, 0.0f };
-            Color_RGBA8 effectPrimCol = { 255, 255, 255, 0 };
-            Color_RGBA8 effectEnvCol = { 100, 200, 0, 0 };
-            if (CVarGetInteger(CVAR_COSMETIC("Magic.FaroresSecondary.Changed"), 0)) {
-                effectEnvCol = CVarGetColor(CVAR_COSMETIC("Magic.FaroresSecondary.Value"), effectEnvCol);
-            }
-            if (CVarGetInteger(CVAR_COSMETIC("Magic.FaroresPrimary.Changed"), 0)) {
-                effectPrimCol = CVarGetColor(CVAR_COSMETIC("Magic.FaroresPrimary.Value"), effectPrimCol);
-            }
+            static Color_RGBA8 effectPrimCol = { 255, 255, 255, 0 };
+            static Color_RGBA8 effectEnvCol = { 100, 200, 0, 0 };
             Vec3f* curPos = &gSaveContext.respawn[RESPAWN_MODE_TOP].pos;
             Vec3f* nextPos = &gSaveContext.respawn[RESPAWN_MODE_DOWN].pos;
             f32 prevNum = D_8015BC18;
@@ -2410,6 +2394,8 @@ void Actor_DrawFaroresWindPointer(PlayState* play) {
             effectPos.y = curPos->y + 80.0f + (6.0f * Rand_ZeroOne());
             effectPos.z = curPos->z + Rand_CenteredFloat(6.0f);
 
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MAGIC_FARORES_PARTICLE_PRIM, &effectPrimCol);
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MAGIC_FARORES_PARTICLE_ENV, &effectEnvCol);
             EffectSsKiraKira_SpawnDispersed(play, &effectPos, &effectVel, &effectAccel, &effectPrimCol, &effectEnvCol,
                                             1000, 16);
 
@@ -2471,16 +2457,12 @@ void Actor_DrawFaroresWindPointer(PlayState* play) {
             Matrix_Push();
 
             gDPPipeSync(POLY_XLU_DISP++);
-            Color_RGB8 Spell_env = { 100, 200, 0 };
-            Color_RGB8 Spell_col = { 255, 255, 200 };
-            if (CVarGetInteger(CVAR_COSMETIC("Magic.FaroresSecondary.Changed"), 0)) {
-                Spell_env = CVarGetColor24(CVAR_COSMETIC("Magic.FaroresSecondary.Value"), Spell_env);
-            }
-            if (CVarGetInteger(CVAR_COSMETIC("Magic.FaroresPrimary.Changed"), 0)) {
-                Spell_col = CVarGetColor24(CVAR_COSMETIC("Magic.FaroresPrimary.Value"), Spell_col);
-            }
-            gDPSetPrimColor(POLY_XLU_DISP++, 128, 128, Spell_col.r, Spell_col.g, Spell_col.b, alpha);
-            gDPSetEnvColor(POLY_XLU_DISP++, Spell_env.r, Spell_env.g, Spell_env.b, 255);
+            Color_RGBA8 primColor = { 255, 255, 200, 255 };
+            Color_RGBA8 envColor = { 100, 200, 0, 255 };
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MAGIC_FARORES_PRIM, &primColor);
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MAGIC_FARORES_ENV, &envColor);
+            gDPSetPrimColor(POLY_XLU_DISP++, 128, 128, primColor.r, primColor.g, primColor.b, alpha);
+            gDPSetEnvColor(POLY_XLU_DISP++, envColor.r, envColor.g, envColor.b, 255);
 
             Matrix_RotateZ(((play->gameplayFrames * 1500) & 0xFFFF) * M_PI / 32768.0f, MTXMODE_APPLY);
             gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);

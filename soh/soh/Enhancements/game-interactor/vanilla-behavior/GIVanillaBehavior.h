@@ -46,8 +46,17 @@ typedef enum {
     // true
     // ```
     // #### `args`
-    // - `*Color_RGB8`
+    // - `*Color_RGBA8`
     VB_APPLY_MAGIC_METER_FILL_COLOR,
+
+    // #### `result`
+    // ```c
+    // true
+    // ```
+    // #### `args`
+    // - `u8` (ocarina button)
+    // - `*Color_RGBA8`
+    VB_APPLY_PAUSE_OCARINA_NOTE_COLOR,
 
     // #### `result`
     // ```c

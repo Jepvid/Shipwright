@@ -2,6 +2,7 @@
 #include "textures/title_static/title_static.h"
 #include "assets/overlays/ovl_File_Choose/ovl_file_choose.h"
 #include "assets/soh_assets.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "soh/OTRGlobals.h"
 #include "soh/ResourceManagerHelpers.h"
@@ -123,7 +124,6 @@ void FileChoose_SetNameEntryVtx(GameState* thisx) {
     u8 temp;
     s16 phi_v0;
     char* filename = Save_GetSaveMetaInfo(this->buttonIndex)->playerName;
-    Color_RGB8 Background_Color = { this->windowColor[0], this->windowColor[1], this->windowColor[2] };
 
     OPEN_DISPS(this->state.gfxCtx);
 
@@ -274,7 +274,6 @@ void FileChoose_DrawNameEntry(GameState* thisx) {
     u16 dayTime;
     s16 validName;
     char* filename = Save_GetSaveMetaInfo(this->buttonIndex)->playerName;
-    Color_RGB8 Background_Color = { this->windowColor[0], this->windowColor[1], this->windowColor[2] };
 
     OPEN_DISPS(this->state.gfxCtx);
 
@@ -872,26 +871,14 @@ void FileChoose_DrawOptionsImpl(GameState* thisx) {
     static s16 cursorEnvBlue = 0;
     static s16 cursorPulseDir = 1;
     static s16 cursorFlashTimer = 20;
-    s16 cursorPrimColors[][3] = {
+    static s16 cursorPrimColors[][3] = {
         { 255, 255, 255 },
         { 0, 255, 255 },
     };
-    s16 cursorEnvColors[][3] = {
+    static s16 cursorEnvColors[][3] = {
         { 0, 0, 0 },
         { 0, 150, 150 },
     };
-
-    if (CVarGetInteger(CVAR_COSMETIC("Title.FileChoose.Changed"), 0)) {
-        Color_RGB8 backgroundColor =
-            CVarGetColor24(CVAR_COSMETIC("Title.FileChoose.Value"), (Color_RGB8){ 100, 150, 255 });
-        cursorPrimColors[1][0] = MIN(backgroundColor.r + 100, 255);
-        cursorPrimColors[1][1] = MIN(backgroundColor.g + 100, 255);
-        cursorPrimColors[1][2] = MIN(backgroundColor.b + 100, 255);
-        cursorEnvColors[1][0] = MIN(backgroundColor.r + 50, 255);
-        cursorEnvColors[1][1] = MIN(backgroundColor.g + 50, 255);
-        cursorEnvColors[1][2] = MIN(backgroundColor.b + 50, 255);
-    }
-
     FileChooseContext* this = (FileChooseContext*)thisx;
     s16 cursorRed;
     s16 cursorGreen;
@@ -962,6 +949,11 @@ void FileChoose_DrawOptionsImpl(GameState* thisx) {
         }
     }
 
+    Color_RGBA8 cursorPrim = { cursorPrimRed, cursorPrimGreen, cursorPrimBlue, 255 };
+    Color_RGBA8 cursorEnv = { cursorEnvRed, cursorEnvGreen, cursorEnvBlue, 255 };
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_FILE_SELECT_OPTIONS_CURSOR_PRIM, &cursorPrim);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_FILE_SELECT_OPTIONS_CURSOR_ENV, &cursorEnv);
+
     uint8_t versionIndex = ResourceMgr_GameHasMasterQuest() && ResourceMgr_GameHasOriginal();
     uint8_t isPalN64 = ResourceMgr_GetGameRegion(versionIndex) == GAME_REGION_PAL &&
                        ResourceMgr_GetGamePlatform(versionIndex) == GAME_PLATFORM_N64;
@@ -1019,9 +1011,8 @@ void FileChoose_DrawOptionsImpl(GameState* thisx) {
         gDPPipeSync(POLY_OPA_DISP++);
         if (i == gSaveContext.audioSetting) {
             if (sSelectedSetting == FS_SETTING_AUDIO) {
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cursorPrimRed, cursorPrimGreen, cursorPrimBlue,
-                                this->titleAlpha[0]);
-                gDPSetEnvColor(POLY_OPA_DISP++, cursorEnvRed, cursorEnvGreen, cursorEnvBlue, 255);
+                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cursorPrim.r, cursorPrim.g, cursorPrim.b, this->titleAlpha[0]);
+                gDPSetEnvColor(POLY_OPA_DISP++, cursorEnv.r, cursorEnv.g, cursorEnv.b, 255);
             } else {
                 gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, 255, 255, 255, this->titleAlpha[0]);
                 gDPSetEnvColor(POLY_OPA_DISP++, 0, 0, 0, 255);
@@ -1043,9 +1034,8 @@ void FileChoose_DrawOptionsImpl(GameState* thisx) {
 
         if (i == (gSaveContext.zTargetSetting + 4)) {
             if (sSelectedSetting == FS_SETTING_TARGET) {
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cursorPrimRed, cursorPrimGreen, cursorPrimBlue,
-                                this->titleAlpha[0]);
-                gDPSetEnvColor(POLY_OPA_DISP++, cursorEnvRed, cursorEnvGreen, cursorEnvBlue, 0xFF);
+                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cursorPrim.r, cursorPrim.g, cursorPrim.b, this->titleAlpha[0]);
+                gDPSetEnvColor(POLY_OPA_DISP++, cursorEnv.r, cursorEnv.g, cursorEnv.b, 0xFF);
             } else {
                 gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, 255, 255, 255, this->titleAlpha[0]);
                 gDPSetEnvColor(POLY_OPA_DISP++, 0, 0, 0, 255);
@@ -1098,9 +1088,9 @@ void FileChoose_DrawOptionsImpl(GameState* thisx) {
 
             if (i == (gSaveContext.language + 6)) {
                 if (sSelectedSetting == FS_SETTING_LANGUAGE) {
-                    gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cursorPrimRed, cursorPrimGreen, cursorPrimBlue,
+                    gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cursorPrim.r, cursorPrim.g, cursorPrim.b,
                                     this->titleAlpha[0]);
-                    gDPSetEnvColor(POLY_OPA_DISP++, cursorEnvRed, cursorEnvGreen, cursorEnvBlue, 0xFF);
+                    gDPSetEnvColor(POLY_OPA_DISP++, cursorEnv.r, cursorEnv.g, cursorEnv.b, 0xFF);
                 } else {
                     gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, 255, 255, 255, this->titleAlpha[0]);
                     gDPSetEnvColor(POLY_OPA_DISP++, 0, 0, 0, 255);

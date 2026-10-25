@@ -316,6 +316,18 @@ void GameInteractor_ExecuteOnHudElementPosition(int32_t element, int16_t* x, int
     GameInteractor::Instance->ExecuteHooks<GameInteractor::OnHudElementPosition>(element, x, y, scale);
 }
 
+void GameInteractor_ExecuteOnCosmeticColor(int32_t option, Color_RGBA8* color) {
+    GameInteractor::Instance->ExecuteHooks<GameInteractor::OnCosmeticColor>(option, color);
+}
+
+void GameInteractor_ExecuteOnCosmeticTint(int32_t option, Gfx** gfx, bool enable) {
+    GameInteractor::Instance->ExecuteHooks<GameInteractor::OnCosmeticTint>(option, gfx, enable);
+}
+
+void GameInteractor_ExecuteOnEffectBlureUpdate(void* effect) {
+    GameInteractor::Instance->ExecuteHooks<GameInteractor::OnEffectBlureUpdate>(effect);
+}
+
 // MARK: - Main Menu
 
 void GameInteractor_ExecuteOnPresentFileSelect() {
@@ -402,6 +414,10 @@ void GameInteractor_ExecuteOnOpenText(uint16_t* textId, bool* loadFromMessageTab
     GameInteractor::Instance->ExecuteHooks<GameInteractor::OnOpenText>(textId, loadFromMessageTable);
     GameInteractor::Instance->ExecuteHooksForID<GameInteractor::OnOpenText>(*textId, textId, loadFromMessageTable);
     GameInteractor::Instance->ExecuteHooksForFilter<GameInteractor::OnOpenText>(textId, loadFromMessageTable);
+}
+
+void GameInteractor_ExecuteOnMessageTextColor(void* msgCtx, uint16_t colorParameter) {
+    GameInteractor::Instance->ExecuteHooks<GameInteractor::OnMessageTextColor>(msgCtx, colorParameter);
 }
 
 // Mark: Audio

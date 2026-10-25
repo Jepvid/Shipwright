@@ -2,6 +2,8 @@
 #include "vt.h"
 #include "../ovl_En_Diving_Game/z_en_diving_game.h"
 #include "objects/gameplay_keep/gameplay_keep.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 
 #define FLAGS ACTOR_FLAG_UPDATE_CULLING_DISABLED
 
@@ -396,50 +398,14 @@ void EnExRuppy_Draw(Actor* thisx, PlayState* play) {
             Matrix_Scale(mtxScale, mtxScale, mtxScale, MTXMODE_APPLY);
             GetItem_Draw(play, rupeeTexturesNew[this->colorIdx]);
         } else {
-            Color_RGB8 rupeeColor;
-            u8 shouldColor = 0;
-            switch (this->colorIdx) {
-                case 0:
-                    rupeeColor =
-                        CVarGetColor24(CVAR_COSMETIC("Consumable.GreenRupee.Value"), (Color_RGB8){ 255, 255, 255 });
-                    shouldColor = CVarGetInteger(CVAR_COSMETIC("Consumable.GreenRupee.Changed"), 0);
-                    break;
-                case 1:
-                    rupeeColor =
-                        CVarGetColor24(CVAR_COSMETIC("Consumable.BlueRupee.Value"), (Color_RGB8){ 255, 255, 255 });
-                    shouldColor = CVarGetInteger(CVAR_COSMETIC("Consumable.BlueRupee.Changed"), 0);
-                    break;
-                case 2:
-                    rupeeColor =
-                        CVarGetColor24(CVAR_COSMETIC("Consumable.RedRupee.Value"), (Color_RGB8){ 255, 255, 255 });
-                    shouldColor = CVarGetInteger(CVAR_COSMETIC("Consumable.RedRupee.Changed"), 0);
-                    break;
-                case 4: // orange rupee texture corresponds to the purple rupee (authentic bug)
-                    rupeeColor =
-                        CVarGetColor24(CVAR_COSMETIC("Consumable.PurpleRupee.Value"), (Color_RGB8){ 255, 255, 255 });
-                    shouldColor = CVarGetInteger(CVAR_COSMETIC("Consumable.PurpleRupee.Changed"), 0);
-                    break;
-                case 3: // pink rupee texture corresponds to the gold rupee (authentic bug)
-                    rupeeColor =
-                        CVarGetColor24(CVAR_COSMETIC("Consumable.GoldRupee.Value"), (Color_RGB8){ 255, 255, 255 });
-                    shouldColor = CVarGetInteger(CVAR_COSMETIC("Consumable.GoldRupee.Changed"), 0);
-                    break;
-            }
-
             Gfx_SetupDL_25Opa(play->state.gfxCtx);
             func_8002EBCC(thisx, play, 0);
             gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
 
-            if (shouldColor) {
-                gDPSetGrayscaleColor(POLY_OPA_DISP++, rupeeColor.r, rupeeColor.g, rupeeColor.b, 255);
-                gSPGrayscale(POLY_OPA_DISP++, true);
-                gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(rupeeTextures[this->colorIdx]));
-                gSPDisplayList(POLY_OPA_DISP++, gRupeeDL);
-                gSPGrayscale(POLY_OPA_DISP++, false);
-            } else {
-                gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(rupeeTextures[this->colorIdx]));
-                gSPDisplayList(POLY_OPA_DISP++, gRupeeDL);
-            }
+            gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(rupeeTextures[this->colorIdx]));
+            GameInteractor_ExecuteOnCosmeticTint(COSMETIC_COLOR_RUPEE_TEX(this->colorIdx), &POLY_OPA_DISP, true);
+            gSPDisplayList(POLY_OPA_DISP++, gRupeeDL);
+            GameInteractor_ExecuteOnCosmeticTint(COSMETIC_COLOR_RUPEE_TEX(this->colorIdx), &POLY_OPA_DISP, false);
         }
 
         CLOSE_DISPS(play->state.gfxCtx);

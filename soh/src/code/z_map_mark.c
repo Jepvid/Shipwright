@@ -126,32 +126,28 @@ void MapMark_DrawForDungeon(PlayState* play) {
         for (i = 0; i < mapMarkIconData->count; i++) {
             if ((mapMarkIconData->markType != MAP_MARK_CHEST) || !Flags_GetTreasure(play, markPoint->chestFlag)) {
                 markInfo = &sMapMarkInfoTable[mapMarkIconData->markType];
-                int height = markInfo->textureHeight * 1.0f; // Adjust Height with scale
-                int width = markInfo->textureWidth * 1.0f;   // Adjust Width with scale
-                int height_factor = (1 << 10) * markInfo->textureHeight / height;
-                int width_factor = (1 << 10) * markInfo->textureWidth / width;
-
                 // The original mark point X originates from the left edge of the map
                 // For mirror mode, we compute the new mark point X by subtracting it from the right side of the
                 // dungeon map and the textures width
-                s16 markPointX =
-                    CVarGetInteger(CVAR_ENHANCEMENT("MirroredWorld"), 0) ? 96 - markPoint->x - width : markPoint->x;
+                s16 markPointX = CVarGetInteger(CVAR_ENHANCEMENT("MirroredWorld"), 0)
+                                     ? 96 - markPoint->x - markInfo->textureWidth
+                                     : markPoint->x;
 
                 // Minimap chest / boss icon
                 s16 markPosX = GREG(94) + OTRGetRectDimensionFromRightEdge(markPointX) + 204;
                 s16 markPosY = GREG(95) + markPoint->y + 140;
                 GameInteractor_ExecuteOnHudElementPosition(HUD_ELEMENT_MINIMAP, &markPosX, &markPosY, NULL);
-                rectLeft = markPosX;
-                rectTop = markPosY;
+                rectLeft = markPosX << 2;
+                rectTop = markPosY << 2;
 
                 gDPPipeSync(OVERLAY_DISP++);
 
                 gDPLoadTextureBlock(OVERLAY_DISP++, markInfo->texture, markInfo->imageFormat, G_IM_SIZ_MARK,
                                     markInfo->textureWidth, markInfo->textureHeight, 0, G_TX_NOMIRROR | G_TX_WRAP,
                                     G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOLOD);
-                // Changed to a Wide texture to support Left anchor.
-                gSPWideTextureRectangle(OVERLAY_DISP++, rectLeft << 2, rectTop << 2, rectLeft + width << 2,
-                                        rectTop + height << 2, G_TX_RENDERTILE, 0, 0, width_factor, height_factor);
+                gSPWideTextureRectangle(OVERLAY_DISP++, rectLeft, rectTop, markInfo->rectWidth + rectLeft,
+                                        rectTop + markInfo->rectHeight, G_TX_RENDERTILE, 0, 0, markInfo->dsdx,
+                                        markInfo->dtdy);
             }
 
             markPoint++;
