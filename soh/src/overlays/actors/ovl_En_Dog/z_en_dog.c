@@ -6,6 +6,8 @@
 
 #include "z_en_dog.h"
 #include "objects/object_dog/object_dog.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 
 #define FLAGS 0
 
@@ -497,20 +499,15 @@ void EnDog_PostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s* rot,
 
 void EnDog_Draw(Actor* thisx, PlayState* play) {
     EnDog* this = (EnDog*)thisx;
-    Color_RGB8 colors[] = { { 255, 255, 200 }, { 150, 100, 50 } };
-
-    if (CVarGetInteger(CVAR_COSMETIC("NPC.Dog1.Changed"), 0)) {
-        colors[0] = CVarGetColor24(CVAR_COSMETIC("NPC.Dog1.Value"), colors[0]);
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("NPC.Dog2.Changed"), 0)) {
-        colors[1] = CVarGetColor24(CVAR_COSMETIC("NPC.Dog2.Value"), colors[1]);
-    }
+    Color_RGBA8 colors[] = { { 255, 255, 200, 0 }, { 150, 100, 50, 0 } };
 
     OPEN_DISPS(play->state.gfxCtx);
 
     Gfx_SetupDL_25Opa(play->state.gfxCtx);
 
     gDPPipeSync(POLY_OPA_DISP++);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_DOG_TYPE(this->actor.params & 0xF),
+                                          &colors[this->actor.params & 0xF]);
     gDPSetEnvColor(POLY_OPA_DISP++, colors[this->actor.params & 0xF].r, colors[this->actor.params & 0xF].g,
                    colors[this->actor.params & 0xF].b, 0);
 
