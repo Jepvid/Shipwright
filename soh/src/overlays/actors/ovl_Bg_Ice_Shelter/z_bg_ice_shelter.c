@@ -1,5 +1,6 @@
 #include "z_bg_ice_shelter.h"
 #include "objects/object_ice_objects/object_ice_objects.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include <libultraship/bridge/consolevariablebridge.h>
 
@@ -455,12 +456,9 @@ void BgIceShelter_Draw(Actor* thisx, PlayState* play2) {
             break;
     }
 
-    if (CVarGetInteger(CVAR_COSMETIC("World.RedIce.Changed"), 0)) {
-        Color_RGB8 color = CVarGetColor24(CVAR_COSMETIC("World.RedIce.Value"), (Color_RGB8){ 255, 0, 0 });
-        gDPSetEnvColor(POLY_XLU_DISP++, color.r, color.g, color.b, this->alpha);
-    } else {
-        gDPSetEnvColor(POLY_XLU_DISP++, 255, 0, 0, this->alpha);
-    }
+    Color_RGBA8 iceColor = { 255, 0, 0, 255 };
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_RED_ICE, &iceColor);
+    gDPSetEnvColor(POLY_XLU_DISP++, iceColor.r, iceColor.g, iceColor.b, this->alpha);
 
     switch ((this->dyna.actor.params >> 8) & 7) {
         case RED_ICE_LARGE:

@@ -1014,6 +1014,11 @@ static const CosmeticColorInfo cosmeticColors[COSMETIC_COLOR_MAX] = {
     { .option = "NPC.Kokiri" },
     { .option = "NPC.IronKnuckles" },
     { .option = "World.GossipStone" },
+    // Moon prim and env, block of time, red ice
+    { .option = "World.Moon" },
+    { .option = "World.Moon", .customScale = 0.5f },
+    { .option = "World.BlockOfTime" },
+    { .option = "World.RedIce" },
 };
 
 // Custom color of a color entry or its first changed parent

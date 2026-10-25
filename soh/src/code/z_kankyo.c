@@ -7,6 +7,7 @@
 #include "soh/OTRGlobals.h"
 #include "soh/ResourceManagerHelpers.h"
 #include "soh/Enhancements/savestate_serialize.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include <libultraship/bridge/consolevariablebridge.h>
 
@@ -1395,14 +1396,12 @@ void Environment_DrawSunAndMoon(PlayState* play) {
             gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_LOAD);
             Gfx_SetupDL_51Opa(play->state.gfxCtx);
             gDPPipeSync(POLY_OPA_DISP++);
-            if (CVarGetInteger(CVAR_COSMETIC("World.Moon.Changed"), 0)) {
-                Color_RGB8 moonColor = CVarGetColor24(CVAR_COSMETIC("World.Moon.Value"), (Color_RGB8){ 0, 0, 240 });
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, moonColor.r, moonColor.g, moonColor.b, alpha);
-                gDPSetEnvColor(POLY_OPA_DISP++, moonColor.r / 2, moonColor.g / 2, moonColor.b / 2, alpha);
-            } else {
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, 240, 255, 180, alpha);
-                gDPSetEnvColor(POLY_OPA_DISP++, 80, 70, 20, alpha);
-            }
+            Color_RGBA8 moonPrimColor = { 240, 255, 180, 255 };
+            Color_RGBA8 moonEnvColor = { 80, 70, 20, 255 };
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MOON_PRIM, &moonPrimColor);
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MOON_ENV, &moonEnvColor);
+            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, moonPrimColor.r, moonPrimColor.g, moonPrimColor.b, alpha);
+            gDPSetEnvColor(POLY_OPA_DISP++, moonEnvColor.r, moonEnvColor.g, moonEnvColor.b, alpha);
             gSPDisplayList(POLY_OPA_DISP++, gMoonDL);
         }
     }
