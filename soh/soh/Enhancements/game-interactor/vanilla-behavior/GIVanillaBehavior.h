@@ -3733,7 +3733,7 @@ typedef enum {
     // ```
     // #### `args`
     // - `*Player`
-    // - `*Color_RGB8`
+    // - `*Color_RGBA8`
     VB_APPLY_TUNIC_COLOR,
 
     // #### `result`

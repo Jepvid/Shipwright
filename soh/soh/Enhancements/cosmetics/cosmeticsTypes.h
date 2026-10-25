@@ -149,6 +149,10 @@ typedef enum {
     COSMETIC_COLOR_NAVI_OUTER_LAST = COSMETIC_COLOR_NAVI_OUTER + 12,
     COSMETIC_COLOR_IVAN_PRIM,
     COSMETIC_COLOR_IVAN_ENV,
+    COSMETIC_COLOR_LINK_TUNIC,
+    COSMETIC_COLOR_LINK_TUNIC_LAST = COSMETIC_COLOR_LINK_TUNIC + 2,
+    COSMETIC_COLOR_LINK_GAUNTLETS,
+    COSMETIC_COLOR_LINK_GAUNTLETS_LAST = COSMETIC_COLOR_LINK_GAUNTLETS + 1,
     COSMETIC_COLOR_MAX,
 } CosmeticColor;
 
@@ -162,6 +166,10 @@ typedef enum {
 // Text box ocarina note prim and env colors of an ocarina button
 #define COSMETIC_COLOR_MESSAGE_OCARINA_NOTE_PRIM_BUTTON(button) (COSMETIC_COLOR_MESSAGE_OCARINA_NOTE_PRIM + (button))
 #define COSMETIC_COLOR_MESSAGE_OCARINA_NOTE_ENV_BUTTON(button) (COSMETIC_COLOR_MESSAGE_OCARINA_NOTE_ENV + (button))
+
+// Link tunic color of a tunic (kokiri, goron, zora) and gauntlet color of a gauntlet (silver, golden)
+#define COSMETIC_COLOR_LINK_TUNIC_TYPE(tunic) (COSMETIC_COLOR_LINK_TUNIC + (tunic))
+#define COSMETIC_COLOR_LINK_GAUNTLETS_TYPE(gauntlets) (COSMETIC_COLOR_LINK_GAUNTLETS + (gauntlets))
 
 // Navi inner and outer color of an actor category
 #define COSMETIC_COLOR_NAVI_INNER_CATEGORY(category) (COSMETIC_COLOR_NAVI_INNER + (category))

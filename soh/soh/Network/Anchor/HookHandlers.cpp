@@ -178,7 +178,7 @@ void Anchor::RegisterHooks() {
     COND_VB_SHOULD(VB_APPLY_TUNIC_COLOR, isConnected, {
         Actor* myPlayer = (Actor*)GET_PLAYER(gPlayState);
         Actor* actor = va_arg(args, Actor*);
-        Color_RGB8* color = va_arg(args, Color_RGB8*);
+        Color_RGBA8* color = va_arg(args, Color_RGBA8*);
 
         if (actor == myPlayer) {
             Color_RGBA8 ownColor = CVarGetColor(CVAR_REMOTE_ANCHOR("Color.Value"), { 100, 255, 100 });
