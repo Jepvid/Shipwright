@@ -8,6 +8,7 @@
 #include "objects/object_gs/object_gs.h"
 #include "overlays/actors/ovl_En_Elf/z_en_elf.h"
 #include "objects/gameplay_keep/gameplay_keep.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include <libultraship/bridge/consolevariablebridge.h>
 
@@ -592,13 +593,9 @@ void EnGs_Draw(Actor* thisx, PlayState* play) {
             gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, this->flashColor.r, this->flashColor.g, this->flashColor.b,
                             this->flashColor.a);
         } else {
-            if (CVarGetInteger(CVAR_COSMETIC("World.GossipStone.Changed"), 0)) {
-                Color_RGB8 color =
-                    CVarGetColor24(CVAR_COSMETIC("World.GossipStone.Value"), (Color_RGB8){ 255, 255, 255 });
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, color.r, color.g, color.b, 255);
-            } else {
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, 255, 255, 255, 255);
-            }
+            Color_RGBA8 stoneColor = { 255, 255, 255, 255 };
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_GOSSIP_STONE, &stoneColor);
+            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, stoneColor.r, stoneColor.g, stoneColor.b, 255);
         }
 
         gSPDisplayList(POLY_OPA_DISP++, gGossipStoneDL);

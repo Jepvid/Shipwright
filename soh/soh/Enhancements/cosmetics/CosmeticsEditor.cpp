@@ -499,6 +499,7 @@ void ResetPositionAll() {
             CVarSetInteger(cvarPosType.c_str(), 0);
             CVarSetInteger(cvarNameMargins.c_str(), false); // Turn margin off to everythings as that original position.
         }
+        CVarClear(CVAR_COSMETIC("HUD.Hearts.LineLength"));
     }
 }
 
@@ -1000,6 +1001,19 @@ static const CosmeticColorInfo cosmeticColors[COSMETIC_COLOR_MAX] = {
     { .option = "Link.ZoraTunic" },
     { .option = "Gloves.SilverGauntlets" },
     { .option = "Gloves.GoldenGauntlets" },
+    // Keese auras: fire prim and env, ice prim and env
+    { .option = "NPC.FireKeesePrimary", .vanillaColor = { 255, 255, 100 }, .persistent = true },
+    { .option = "NPC.FireKeeseSecondary", .vanillaColor = { 255, 50, 0 }, .persistent = true },
+    { .option = "NPC.IceKeesePrimary", .vanillaColor = { 100, 200, 255 }, .persistent = true },
+    { .option = "NPC.IceKeeseSecondary", .vanillaColor = { 0, 0, 255 }, .persistent = true },
+    // Dogs: white, brown
+    { .option = "NPC.Dog1" },
+    { .option = "NPC.Dog2" },
+    // Kokiri tunic and boots, iron knuckle armor, gossip stone
+    { .option = "NPC.Kokiri" },
+    { .option = "NPC.Kokiri" },
+    { .option = "NPC.IronKnuckles" },
+    { .option = "World.GossipStone" },
 };
 
 // Custom color of a color entry or its first changed parent
@@ -2429,7 +2443,7 @@ void Draw_Placements() {
                 UIWidgets::IntSliderOptions()
                     .Min(0)
                     .Max(20)
-                    .DefaultValue(0)
+                    .DefaultValue(10)
                     .Size(ImVec2(300.0f, 0.0f))
                     .Color(THEME_COLOR)
                     .Tooltip("This will set the length of a row of hearts. Set to 0 for unlimited length."));
