@@ -1030,13 +1030,30 @@ void RandomizerOnVanillaBehaviorHandler(GIVanillaBehavior id, bool* should, va_l
             *should = *should && !Flags_GetRandomizerInf(RAND_INF_HAS_INFINITE_MAGIC_METER);
             break;
         case VB_APPLY_MAGIC_METER_FILL_COLOR: {
-            Color_RGB8* color = va_arg(args, Color_RGB8*);
+            Color_RGBA8* color = va_arg(args, Color_RGBA8*);
 
             if (Flags_GetRandomizerInf(RAND_INF_HAS_INFINITE_MAGIC_METER)) {
-                *color = { 0, 0, 200 };
+                Color_RGB8 infinite = { 0, 0, 200 };
                 if (CVarGetInteger(CVAR_COSMETIC("Consumable_MagicInfinite.Changed"), 0)) {
-                    *color = CVarGetColor24(CVAR_COSMETIC("Consumable_MagicInfinite.Value"), *color);
+                    infinite = CVarGetColor24(CVAR_COSMETIC("Consumable_MagicInfinite.Value"), infinite);
                 }
+                color->r = infinite.r;
+                color->g = infinite.g;
+                color->b = infinite.b;
+            }
+            break;
+        }
+        case VB_APPLY_PAUSE_OCARINA_NOTE_COLOR: {
+            static const RandomizerInf noteButtonInfs[] = {
+                RAND_INF_HAS_OCARINA_A,      RAND_INF_HAS_OCARINA_C_DOWN, RAND_INF_HAS_OCARINA_C_RIGHT,
+                RAND_INF_HAS_OCARINA_C_LEFT, RAND_INF_HAS_OCARINA_C_UP,
+            };
+            int32_t button = va_arg(args, int32_t);
+            Color_RGBA8* color = va_arg(args, Color_RGBA8*);
+
+            // Unowned notes are greyed out
+            if (!Flags_GetRandomizerInf(noteButtonInfs[button])) {
+                *color = { 191, 191, 191, 255 };
             }
             break;
         }

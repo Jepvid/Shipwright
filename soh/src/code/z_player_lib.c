@@ -6,6 +6,7 @@
 #include "overlays/actors/ovl_Demo_Effect/z_demo_effect.h"
 
 #include <libultraship/bridge/resourcebridge.h>
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "soh/Enhancements/randomizer/draw.h"
@@ -1069,21 +1070,11 @@ void Player_DrawImpl(PlayState* play, void** skeleton, Vec3s* jointTable, s32 dL
     gSPSegment(POLY_OPA_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(sMouthTextures[eyeIndex]));
 #endif
 
-    Color_RGB8 sTemp;
     color = &sTunicColors[tunic];
-    if (tunic == PLAYER_TUNIC_KOKIRI && CVarGetInteger(CVAR_COSMETIC("Link.KokiriTunic.Changed"), 0)) {
-        sTemp = CVarGetColor24(CVAR_COSMETIC("Link.KokiriTunic.Value"), sTunicColors[PLAYER_TUNIC_KOKIRI]);
-        color = &sTemp;
-    } else if (tunic == PLAYER_TUNIC_GORON && CVarGetInteger(CVAR_COSMETIC("Link.GoronTunic.Changed"), 0)) {
-        sTemp = CVarGetColor24(CVAR_COSMETIC("Link.GoronTunic.Value"), sTunicColors[PLAYER_TUNIC_GORON]);
-        color = &sTemp;
-    } else if (tunic == PLAYER_TUNIC_ZORA && CVarGetInteger(CVAR_COSMETIC("Link.ZoraTunic.Changed"), 0)) {
-        sTemp = CVarGetColor24(CVAR_COSMETIC("Link.ZoraTunic.Value"), sTunicColors[PLAYER_TUNIC_ZORA]);
-        color = &sTemp;
-    }
-
-    if (GameInteractor_Should(VB_APPLY_TUNIC_COLOR, true, data, color)) {
-        gDPSetEnvColor(POLY_OPA_DISP++, color->r, color->g, color->b, 0);
+    Color_RGBA8 tunicColor = { color->r, color->g, color->b, 255 };
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_LINK_TUNIC_TYPE(tunic), &tunicColor);
+    if (GameInteractor_Should(VB_APPLY_TUNIC_COLOR, true, data, &tunicColor)) {
+        gDPSetEnvColor(POLY_OPA_DISP++, tunicColor.r, tunicColor.g, tunicColor.b, 0);
     }
 
     // If we have a custom link model, always use the most detailed LOD
@@ -1107,16 +1098,10 @@ void Player_DrawImpl(PlayState* play, void** skeleton, Vec3s* jointTable, s32 dL
                 gDPPipeSync(POLY_OPA_DISP++);
 
                 color = &sGauntletColors[strengthUpgrade - 2];
-                if (strengthUpgrade == PLAYER_STR_SILVER_G &&
-                    CVarGetInteger(CVAR_COSMETIC("Gloves.SilverGauntlets.Changed"), 0)) {
-                    sTemp = CVarGetColor24(CVAR_COSMETIC("Gloves.SilverGauntlets.Value"), *color);
-                    color = &sTemp;
-                } else if (strengthUpgrade == PLAYER_STR_GOLD_G &&
-                           CVarGetInteger(CVAR_COSMETIC("Gloves.GoldenGauntlets.Changed"), 0)) {
-                    sTemp = CVarGetColor24(CVAR_COSMETIC("Gloves.GoldenGauntlets.Value"), *color);
-                    color = &sTemp;
-                }
-                gDPSetEnvColor(POLY_OPA_DISP++, color->r, color->g, color->b, 0);
+                Color_RGBA8 gauntletColor = { color->r, color->g, color->b, 255 };
+                GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_LINK_GAUNTLETS_TYPE(strengthUpgrade - 2),
+                                                      &gauntletColor);
+                gDPSetEnvColor(POLY_OPA_DISP++, gauntletColor.r, gauntletColor.g, gauntletColor.b, 0);
 
                 gSPDisplayList(POLY_OPA_DISP++, gLinkAdultLeftGauntletPlate1DL);
                 gSPDisplayList(POLY_OPA_DISP++, gLinkAdultRightGauntletPlate1DL);

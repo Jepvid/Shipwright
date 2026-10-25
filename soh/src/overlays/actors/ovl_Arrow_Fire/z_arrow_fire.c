@@ -6,6 +6,8 @@
 
 #include "z_arrow_fire.h"
 #include "overlays/actors/ovl_En_Arrow/z_en_arrow.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 
 #define FLAGS (ACTOR_FLAG_UPDATE_CULLING_DISABLED | ACTOR_FLAG_UPDATE_DURING_OCARINA)
 
@@ -194,15 +196,6 @@ void ArrowFire_Draw(Actor* thisx, PlayState* play2) {
     EnArrow* arrow;
     Actor* tranform;
 
-    Color_RGB8 primaryColor = { 255, 200, 0 };
-    if (CVarGetInteger(CVAR_COSMETIC("Arrows.FirePrimary.Changed"), 0)) {
-        primaryColor = CVarGetColor24(CVAR_COSMETIC("Arrows.FirePrimary.Value"), primaryColor);
-    }
-    Color_RGB8 secondaryColor = { 255, 0, 0 };
-    if (CVarGetInteger(CVAR_COSMETIC("Arrows.FireSecondary.Changed"), 0)) {
-        secondaryColor = CVarGetColor24(CVAR_COSMETIC("Arrows.FireSecondary.Value"), secondaryColor);
-    }
-
     stateFrames = play->state.frames;
     arrow = (EnArrow*)this->actor.parent;
 
@@ -220,9 +213,11 @@ void ArrowFire_Draw(Actor* thisx, PlayState* play2) {
         // Draw red effect over the screen when arrow hits
         if (this->unk_15C > 0) {
             POLY_XLU_DISP = Gfx_SetupDL_57(POLY_XLU_DISP);
-            gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, (s32)((secondaryColor.r / 6) * this->unk_15C) & 0xFF,
-                            (s32)((secondaryColor.g / 6) * this->unk_15C) & 0xFF,
-                            (s32)((secondaryColor.b / 6) * this->unk_15C) & 0xFF, (s32)(150.0f * this->unk_15C) & 0xFF);
+            Color_RGBA8 flashColor = { 40, 0, 0, 255 };
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_ARROW_FIRE_FLASH, &flashColor);
+            gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, (s32)(flashColor.r * this->unk_15C) & 0xFF,
+                            (s32)(flashColor.g * this->unk_15C) & 0xFF, (s32)(flashColor.b * this->unk_15C) & 0xFF,
+                            (s32)(150.0f * this->unk_15C) & 0xFF);
             gDPSetAlphaDither(POLY_XLU_DISP++, G_AD_DISABLE);
             gDPSetColorDither(POLY_XLU_DISP++, G_CD_DISABLE);
             gDPFillRectangle(POLY_XLU_DISP++, 0, 0, SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1);
@@ -230,8 +225,12 @@ void ArrowFire_Draw(Actor* thisx, PlayState* play2) {
 
         // Draw fire on the arrow
         Gfx_SetupDL_25Xlu(play->state.gfxCtx);
-        gDPSetPrimColor(POLY_XLU_DISP++, 0x80, 0x80, primaryColor.r, primaryColor.g, primaryColor.b, this->alpha);
-        gDPSetEnvColor(POLY_XLU_DISP++, secondaryColor.r, secondaryColor.g, secondaryColor.b, 128);
+        Color_RGBA8 primColor = { 255, 200, 0, 255 };
+        Color_RGBA8 envColor = { 255, 0, 0, 255 };
+        GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_ARROW_FIRE_PRIM, &primColor);
+        GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_ARROW_FIRE_ENV, &envColor);
+        gDPSetPrimColor(POLY_XLU_DISP++, 0x80, 0x80, primColor.r, primColor.g, primColor.b, this->alpha);
+        gDPSetEnvColor(POLY_XLU_DISP++, envColor.r, envColor.g, envColor.b, 128);
         Matrix_RotateZYX(0x4000, 0x0, 0x0, MTXMODE_APPLY);
         if (this->timer != 0) {
             Matrix_Translate(0.0f, 0.0f, 0.0f, MTXMODE_APPLY);

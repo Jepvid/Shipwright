@@ -178,7 +178,7 @@ void Anchor::RegisterHooks() {
     COND_VB_SHOULD(VB_APPLY_TUNIC_COLOR, isConnected, {
         Actor* myPlayer = (Actor*)GET_PLAYER(gPlayState);
         Actor* actor = va_arg(args, Actor*);
-        Color_RGB8* color = va_arg(args, Color_RGB8*);
+        Color_RGBA8* color = va_arg(args, Color_RGBA8*);
 
         if (actor == myPlayer) {
             Color_RGBA8 ownColor = CVarGetColor(CVAR_REMOTE_ANCHOR("Color.Value"), { 100, 255, 100 });
@@ -462,21 +462,10 @@ void Anchor::RegisterHooks() {
                                             CVarGetColor24(CVAR_REMOTE_ANCHOR("Color.Value"), { 100, 255, 100 }) });
 
         // Adapted internals of Minimap_DrawCompassIcons()
-        s16 leftMinimapMargin = CVarGetInteger(CVAR_COSMETIC("HUD.Margin.L"), 0);
-        s16 rightMinimapMargin = CVarGetInteger(CVAR_COSMETIC("HUD.Margin.R"), 0);
-        s16 bottomMinimapMargin = CVarGetInteger(CVAR_COSMETIC("HUD.Margin.B"), 0);
-
-        s16 xMarginsMinimap = 0;
-        s16 yMarginsMinimap = 0;
-        if (CVarGetInteger(CVAR_COSMETIC("HUD.Minimap.UseMargins"), 0) != 0) {
-            if (CVarGetInteger(CVAR_COSMETIC("HUD.Minimap.PosType"), 0) == ORIGINAL_LOCATION) {
-                xMarginsMinimap = rightMinimapMargin;
-            }
-            yMarginsMinimap = bottomMinimapMargin;
-        } else {
-            xMarginsMinimap = 0;
-            yMarginsMinimap = 0;
-        }
+        s16 shiftX = 0;
+        s16 shiftY = 0;
+        GameInteractor::Instance->ExecuteHooks<GameInteractor::OnHudElementPosition>(HUD_ELEMENT_MINIMAP, &shiftX,
+                                                                                     &shiftY, nullptr);
 
         s16 mapWidth = isInDungeon ? R_DGN_MINIMAP_X : R_OW_MINIMAP_X;
         s16 mapStartPosX = isInDungeon ? 96 : gMapData->owMinimapWidth[R_MAP_INDEX];
@@ -504,44 +493,8 @@ void Anchor::RegisterHooks() {
 
             s16 tempXOffset =
                 R_COMPASS_OFFSET_X + (CVarGetInteger(CVAR_ENHANCEMENT("MirroredWorld"), 0) ? mirrorOffset : 0);
-            if (CVarGetInteger(CVAR_COSMETIC("HUD.Minimap.PosType"), 0) != ORIGINAL_LOCATION) {
-                if (CVarGetInteger(CVAR_COSMETIC("HUD.Minimap.PosType"), 0) == ANCHOR_LEFT) {
-                    if (CVarGetInteger(CVAR_COSMETIC("HUD.Minimap.UseMargins"), 0) != 0) {
-                        xMarginsMinimap = leftMinimapMargin;
-                    };
-                    Matrix_Translate(
-                        OTRGetDimensionFromLeftEdge((tempXOffset + (xMarginsMinimap * 10) + tempX +
-                                                     (CVarGetInteger(CVAR_COSMETIC("HUD.Minimap.PosX"), 0) * 10)) /
-                                                    10.0f),
-                        (R_COMPASS_OFFSET_Y + ((yMarginsMinimap * 10) * -1) - tempZ +
-                         ((CVarGetInteger(CVAR_COSMETIC("HUD.Minimap.PosY"), 0) * 10) * -1)) /
-                            10.0f,
-                        0.0f, MTXMODE_NEW);
-                } else if (CVarGetInteger(CVAR_COSMETIC("HUD.Minimap.PosType"), 0) == ANCHOR_RIGHT) {
-                    if (CVarGetInteger(CVAR_COSMETIC("HUD.Minimap.UseMargins"), 0) != 0) {
-                        xMarginsMinimap = rightMinimapMargin;
-                    };
-                    Matrix_Translate(
-                        OTRGetDimensionFromRightEdge((tempXOffset + (xMarginsMinimap * 10) + tempX +
-                                                      (CVarGetInteger(CVAR_COSMETIC("HUD.Minimap.PosX"), 0) * 10)) /
-                                                     10.0f),
-                        (R_COMPASS_OFFSET_Y + ((yMarginsMinimap * 10) * -1) - tempZ +
-                         ((CVarGetInteger(CVAR_COSMETIC("HUD.Minimap.PosY"), 0) * 10) * -1)) /
-                            10.0f,
-                        0.0f, MTXMODE_NEW);
-                } else if (CVarGetInteger(CVAR_COSMETIC("HUD.Minimap.PosType"), 0) == ANCHOR_NONE) {
-                    Matrix_Translate(
-                        (tempXOffset + tempX + (CVarGetInteger(CVAR_COSMETIC("HUD.Minimap.PosX"), 0) * 10) / 10.0f),
-                        (R_COMPASS_OFFSET_Y + ((yMarginsMinimap * 10) * -1) - tempZ +
-                         ((CVarGetInteger(CVAR_COSMETIC("HUD.Minimap.PosY"), 0) * 10) * -1)) /
-                            10.0f,
-                        0.0f, MTXMODE_NEW);
-                }
-            } else {
-                Matrix_Translate(OTRGetDimensionFromRightEdge((tempXOffset + (xMarginsMinimap * 10) + tempX) / 10.0f),
-                                 (R_COMPASS_OFFSET_Y + ((yMarginsMinimap * 10) * -1) - tempZ) / 10.0f, 0.0f,
-                                 MTXMODE_NEW);
-            }
+            Matrix_Translate(OTRGetDimensionFromRightEdge((tempXOffset + tempX) / 10.0f) + shiftX,
+                             (R_COMPASS_OFFSET_Y - tempZ) / 10.0f - shiftY, 0.0f, MTXMODE_NEW);
             Matrix_Scale(compassIcon.scale, compassIcon.scale, compassIcon.scale, MTXMODE_APPLY);
             Matrix_RotateX(-1.6f, MTXMODE_APPLY);
             s16 rotation = ((0x7FFF - compassIcon.rot.y) / 0x400) *

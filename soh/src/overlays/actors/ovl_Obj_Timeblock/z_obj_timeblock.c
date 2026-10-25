@@ -6,6 +6,7 @@
 
 #include "z_obj_timeblock.h"
 #include "objects/object_timeblock/object_timeblock.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include <libultraship/bridge/consolevariablebridge.h>
 
@@ -350,13 +351,9 @@ void ObjTimeblock_Draw(Actor* thisx, PlayState* play) {
 
         Gfx_SetupDL_25Opa(play->state.gfxCtx);
         gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-        if (CVarGetInteger(CVAR_COSMETIC("World.BlockOfTime.Changed"), 0)) {
-            Color_RGB8 color = CVarGetColor24(CVAR_COSMETIC("World.BlockOfTime.Value"), *primColor);
-            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, color.r, color.g, color.b, 255);
-        } else {
-            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, primColor->r, primColor->g, primColor->b, 255);
-        }
-
+        Color_RGBA8 blockColor = { primColor->r, primColor->g, primColor->b, 255 };
+        GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_BLOCK_OF_TIME, &blockColor);
+        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, blockColor.r, blockColor.g, blockColor.b, 255);
         gSPDisplayList(POLY_OPA_DISP++, gSongOfTimeBlockDL);
 
         CLOSE_DISPS(play->state.gfxCtx);

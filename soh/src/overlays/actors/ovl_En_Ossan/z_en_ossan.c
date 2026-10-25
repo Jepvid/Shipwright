@@ -1940,14 +1940,10 @@ void EnOssan_UpdateItemSelectedProperty(EnOssan* this) {
 }
 
 void EnOssan_UpdateCursorAnim(EnOssan* this) {
-    Color_RGB8 aButtonColor = { 0, 80, 255 };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.AButton.Changed"), 0)) {
-        aButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.AButton.Value"), aButtonColor);
-    } else if (CVarGetInteger(CVAR_COSMETIC("DefaultColorScheme"), COLORSCHEME_N64) == COLORSCHEME_GAMECUBE) {
-        aButtonColor = (Color_RGB8){ 0, 255, 80 };
-    }
+    Color_RGBA8 cursorColor = { 0, 255, 80, 255 };
     f32 t;
 
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_SHOP_CURSOR, &cursorColor);
     t = this->cursorAnimTween;
     if (this->cursorAnimState == 0) {
         t += 0.05f;
@@ -1962,9 +1958,9 @@ void EnOssan_UpdateCursorAnim(EnOssan* this) {
             this->cursorAnimState = 0;
         }
     }
-    this->cursorColorR = ColChanMix(aButtonColor.r, 0.0f, t);
-    this->cursorColorG = ColChanMix(aButtonColor.g, 80.0f, t);
-    this->cursorColorB = ColChanMix(aButtonColor.b, 0.0f, t);
+    this->cursorColorR = ColChanMix(cursorColor.r, 0.0f, t);
+    this->cursorColorG = ColChanMix(cursorColor.g, 80.0f, t);
+    this->cursorColorB = ColChanMix(cursorColor.b, 0.0f, t);
     this->cursorColorA = ColChanMix(255, 0.0f, t);
     this->cursorAnimTween = t;
 }

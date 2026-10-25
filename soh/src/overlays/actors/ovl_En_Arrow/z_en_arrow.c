@@ -8,6 +8,7 @@
 #include "objects/gameplay_keep/gameplay_keep.h"
 #include "objects/object_gi_nuts/object_gi_nuts.h"
 
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include <libultraship/bridge/consolevariablebridge.h>
 
@@ -87,57 +88,6 @@ void EnArrow_Init(Actor* thisx, PlayState* play) {
     };
     EnArrow* this = (EnArrow*)thisx;
 
-    if (CVarGetInteger(CVAR_COSMETIC("Arrows.NormalPrimary.Changed"), 0)) {
-        blureNormal.altEnvColor =
-            CVarGetColor(CVAR_COSMETIC("Arrows.NormalPrimary.Value"), (Color_RGBA8){ 0, 150, 0, 0 });
-    } else {
-        blureNormal.altEnvColor = (Color_RGBA8){ 0, 150, 0, 0 };
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("Arrows.NormalSecondary.Changed"), 0)) {
-        blureNormal.altPrimColor =
-            CVarGetColor(CVAR_COSMETIC("Arrows.NormalSecondary.Value"), (Color_RGBA8){ 255, 255, 170, 255 });
-    } else {
-        blureNormal.altPrimColor = (Color_RGBA8){ 255, 255, 170, 255 };
-    }
-
-    if (CVarGetInteger(CVAR_COSMETIC("Arrows.FirePrimary.Changed"), 0)) {
-        blureFire.altEnvColor =
-            CVarGetColor(CVAR_COSMETIC("Arrows.FirePrimary.Value"), (Color_RGBA8){ 255, 200, 0, 0 });
-    } else {
-        blureFire.altEnvColor = (Color_RGBA8){ 255, 200, 0, 0 };
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("Arrows.FireSecondary.Changed"), 0)) {
-        blureFire.altPrimColor =
-            CVarGetColor(CVAR_COSMETIC("Arrows.FireSecondary.Value"), (Color_RGBA8){ 255, 0, 0, 255 });
-    } else {
-        blureFire.altPrimColor = (Color_RGBA8){ 255, 0, 0, 255 };
-    }
-
-    if (CVarGetInteger(CVAR_COSMETIC("Arrows.IcePrimary.Changed"), 0)) {
-        blureIce.altEnvColor = CVarGetColor(CVAR_COSMETIC("Arrows.IcePrimary.Value"), (Color_RGBA8){ 0, 0, 255, 255 });
-    } else {
-        blureIce.altEnvColor = (Color_RGBA8){ 0, 0, 255, 255 };
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("Arrows.IceSecondary.Changed"), 0)) {
-        blureIce.altPrimColor =
-            CVarGetColor(CVAR_COSMETIC("Arrows.IceSecondary.Value"), (Color_RGBA8){ 170, 255, 255, 0 });
-    } else {
-        blureIce.altPrimColor = (Color_RGBA8){ 170, 255, 255, 0 };
-    }
-
-    if (CVarGetInteger(CVAR_COSMETIC("Arrows.LightPrimary.Changed"), 0)) {
-        blureLight.altEnvColor =
-            CVarGetColor(CVAR_COSMETIC("Arrows.LightPrimary.Value"), (Color_RGBA8){ 255, 255, 0, 255 });
-    } else {
-        blureLight.altEnvColor = (Color_RGBA8){ 255, 255, 0, 255 };
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("Arrows.LightSecondary.Changed"), 0)) {
-        blureLight.altPrimColor =
-            CVarGetColor(CVAR_COSMETIC("Arrows.LightSecondary.Value"), (Color_RGBA8){ 255, 255, 170, 0 });
-    } else {
-        blureLight.altPrimColor = (Color_RGBA8){ 255, 255, 170, 0 };
-    }
-
     Actor_ProcessInitChain(&this->actor, sInitChain);
 
     if (this->actor.params == ARROW_CS_NUT) {
@@ -158,18 +108,26 @@ void EnArrow_Init(Actor* thisx, PlayState* play) {
                 blureNormal.elemDuration = 16;
             }
 
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_ARROW_NORMAL_TRAIL_PRIM, &blureNormal.altPrimColor);
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_ARROW_NORMAL_TRAIL_ENV, &blureNormal.altEnvColor);
             Effect_Add(play, &this->effectIndex, EFFECT_BLURE2, 0, 0, &blureNormal);
 
         } else if (this->actor.params == ARROW_FIRE) {
 
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_ARROW_FIRE_TRAIL_PRIM, &blureFire.altPrimColor);
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_ARROW_FIRE_TRAIL_ENV, &blureFire.altEnvColor);
             Effect_Add(play, &this->effectIndex, EFFECT_BLURE2, 0, 0, &blureFire);
 
         } else if (this->actor.params == ARROW_ICE) {
 
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_ARROW_ICE_TRAIL_PRIM, &blureIce.altPrimColor);
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_ARROW_ICE_TRAIL_ENV, &blureIce.altEnvColor);
             Effect_Add(play, &this->effectIndex, EFFECT_BLURE2, 0, 0, &blureIce);
 
         } else if (this->actor.params == ARROW_LIGHT) {
 
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_ARROW_LIGHT_TRAIL_PRIM, &blureLight.altPrimColor);
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_ARROW_LIGHT_TRAIL_ENV, &blureLight.altEnvColor);
             Effect_Add(play, &this->effectIndex, EFFECT_BLURE2, 0, 0, &blureLight);
         }
 

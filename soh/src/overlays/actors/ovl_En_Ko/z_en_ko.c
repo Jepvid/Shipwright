@@ -10,6 +10,7 @@
 #include "objects/object_km1/object_km1.h"
 #include "objects/object_kw1/object_kw1.h"
 #include "vt.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include <libultraship/bridge/consolevariablebridge.h>
 
@@ -1368,11 +1369,8 @@ void EnKo_Draw(Actor* thisx, PlayState* play) {
     EnKo* this = (EnKo*)thisx;
     Color_RGBA8 tunicColor = sModelInfo[ENKO_TYPE].tunicColor;
     Color_RGBA8 bootsColor = sModelInfo[ENKO_TYPE].bootsColor;
-
-    if (CVarGetInteger(CVAR_COSMETIC("NPC.Kokiri.Changed"), 0)) {
-        tunicColor = CVarGetColor(CVAR_COSMETIC("NPC.Kokiri.Value"), sModelInfo[ENKO_TYPE].tunicColor);
-        bootsColor = CVarGetColor(CVAR_COSMETIC("NPC.Kokiri.Value"), sModelInfo[ENKO_TYPE].bootsColor);
-    }
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_KOKIRI_TUNIC, &tunicColor);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_KOKIRI_BOOTS, &bootsColor);
 
     this->actor.shape.shadowAlpha = this->modelAlpha;
 

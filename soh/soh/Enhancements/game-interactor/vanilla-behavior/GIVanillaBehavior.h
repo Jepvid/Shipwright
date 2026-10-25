@@ -46,8 +46,17 @@ typedef enum {
     // true
     // ```
     // #### `args`
-    // - `*Color_RGB8`
+    // - `*Color_RGBA8`
     VB_APPLY_MAGIC_METER_FILL_COLOR,
+
+    // #### `result`
+    // ```c
+    // true
+    // ```
+    // #### `args`
+    // - `u8` (ocarina button)
+    // - `*Color_RGBA8`
+    VB_APPLY_PAUSE_OCARINA_NOTE_COLOR,
 
     // #### `result`
     // ```c
@@ -3258,6 +3267,14 @@ typedef enum {
 
     // #### `result`
     // ```c
+    // i == 9
+    // ```
+    // #### `args`
+    // - `s32` (heart index)
+    VB_START_HEART_ROW,
+
+    // #### `result`
+    // ```c
     // ABS(wallPoly->normal.y) < 600
     // ```
     // #### `args`
@@ -3716,7 +3733,7 @@ typedef enum {
     // ```
     // #### `args`
     // - `*Player`
-    // - `*Color_RGB8`
+    // - `*Color_RGBA8`
     VB_APPLY_TUNIC_COLOR,
 
     // #### `result`

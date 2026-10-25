@@ -19,6 +19,10 @@
 extern "C" {
 #include "z64.h"
 #include "z64save.h"
+#include "variables.h"
+#include "message_data_fmt.h"
+#include "message_data_textbox_types.h"
+#include "overlays/actors/ovl_En_Elf/z_en_elf.h"
 #include "macros.h"
 #include "soh/cvar_prefixes.h"
 #include "objects/object_link_boy/object_link_boy.h"
@@ -35,6 +39,7 @@ extern "C" {
 #include "objects/object_gi_boomerang/object_gi_boomerang.h"
 #include "objects/object_gi_liquid/object_gi_liquid.h"
 #include "objects/object_gi_hearts/object_gi_hearts.h"
+#include "objects/object_gi_heart/object_gi_heart.h"
 #include "objects/gameplay_keep/gameplay_keep.h"
 #include "objects/object_gi_sword_1/object_gi_sword_1.h"
 #include "objects/object_gi_longsword/object_gi_longsword.h"
@@ -47,6 +52,7 @@ extern "C" {
 #include "overlays/ovl_Boss_Ganon2/ovl_Boss_Ganon2.h"
 #include "objects/object_gjyo_objects/object_gjyo_objects.h"
 #include "textures/nintendo_rogo_static/nintendo_rogo_static.h"
+#include "textures/icon_item_static/icon_item_static.h"
 #include "objects/object_gi_rabit_mask/object_gi_rabit_mask.h"
 #include "overlays/ovl_Magic_Wind/ovl_Magic_Wind.h"
 
@@ -57,6 +63,10 @@ void ResourceMgr_PatchGfxCopyCommandByName(const char* path, const char* patchNa
                                            int sourceIndex);
 void ResourceMgr_UnpatchGfxByName(const char* path, const char* patchName);
 u8 Randomizer_GetSettingValue(RandomizerSettingKey randoSettingKey);
+float OTRGetDimensionFromLeftEdge(float v);
+float OTRGetDimensionFromRightEdge(float v);
+int16_t OTRGetRectDimensionFromLeftEdge(float v);
+int16_t OTRGetRectDimensionFromRightEdge(float v);
 }
 
 static WidgetInfo goronNeck;
@@ -489,7 +499,763 @@ void ResetPositionAll() {
             CVarSetInteger(cvarPosType.c_str(), 0);
             CVarSetInteger(cvarNameMargins.c_str(), false); // Turn margin off to everythings as that original position.
         }
+        CVarClear(CVAR_COSMETIC("HUD.Hearts.LineLength"));
     }
+}
+
+enum HudEdge { HUD_EDGE_LEFT, HUD_EDGE_RIGHT, HUD_EDGE_NONE };
+enum HudYMargin { HUD_Y_MARGIN_TOP, HUD_Y_MARGIN_BOTTOM, HUD_Y_MARGIN_NONE };
+
+struct HudElementInfo {
+    const char* cvar;
+    int16_t originX = 0; // vanilla position the editor position replaces
+    int16_t originY = 0;
+    HudEdge edge = HUD_EDGE_RIGHT; // screen edge the vanilla position is anchored to
+    HudYMargin yMargin = HUD_Y_MARGIN_TOP;
+    bool truncOrigin = false;     // src truncates the vanilla edge position instead of rounding it outwards
+    bool dynamicOrigin = false;   // vanilla position changes at runtime, src only passes the element origin
+    int16_t placementOffsetX = 0; // added to the editor position
+    int16_t placementOffsetY = 0;
+    int16_t noAnchorOffsetX = 0;      // added to the editor position without anchor
+    int16_t leftAnchorOffsetX = 0;    // added to the editor position anchored left
+    const char* marginCvar = nullptr; // UseMargins prefix when it differs from cvar
+};
+
+static const HudElementInfo hudElements[HUD_ELEMENT_MAX] = {
+    { .cvar = CVAR_COSMETIC("HUD.BButton"), .originX = B_BUTTON_X, .originY = B_BUTTON_Y },
+    { .cvar = CVAR_COSMETIC("HUD.CLeftButton"), .originX = C_LEFT_BUTTON_X, .originY = C_LEFT_BUTTON_Y },
+    { .cvar = CVAR_COSMETIC("HUD.CDownButton"), .originX = C_DOWN_BUTTON_X, .originY = C_DOWN_BUTTON_Y },
+    { .cvar = CVAR_COSMETIC("HUD.CRightButton"), .originX = C_RIGHT_BUTTON_X, .originY = C_RIGHT_BUTTON_Y },
+    { .cvar = CVAR_COSMETIC("HUD.Dpad"), .originX = DPAD_X, .originY = DPAD_Y },
+    { .cvar = CVAR_COSMETIC("HUD.CUpButton"), .originX = C_UP_BUTTON_X, .originY = C_UP_BUTTON_Y },
+    { .cvar = CVAR_COSMETIC("HUD.StartButton"),
+      .originX = 132,
+      .originY = 17,
+      .placementOffsetX = -10,
+      .placementOffsetY = -10 },
+    { .cvar = CVAR_COSMETIC("HUD.Rupees"),
+      .originX = 26,
+      .originY = 206,
+      .edge = HUD_EDGE_LEFT,
+      .yMargin = HUD_Y_MARGIN_BOTTOM },
+    { .cvar = CVAR_COSMETIC("HUD.AButton"), .originX = A_BUTTON_X, .originY = A_BUTTON_Y, .truncOrigin = true },
+    { .cvar = CVAR_COSMETIC("HUD.MagicBar"), .originX = 18, .originY = 34, .edge = HUD_EDGE_LEFT },
+    { .cvar = CVAR_COSMETIC("HUD.HeartsCount"),
+      .edge = HUD_EDGE_LEFT,
+      .truncOrigin = true,
+      .placementOffsetX = 70,
+      .placementOffsetY = 10,
+      .marginCvar = CVAR_COSMETIC("HUD.Hearts") },
+    { .cvar = CVAR_COSMETIC("HUD.Minimap"), .yMargin = HUD_Y_MARGIN_BOTTOM },
+    { .cvar = CVAR_COSMETIC("HUD.SmallKey"),
+      .originX = 26,
+      .originY = 190,
+      .edge = HUD_EDGE_LEFT,
+      .yMargin = HUD_Y_MARGIN_BOTTOM },
+    { .cvar = CVAR_COSMETIC("HUD.Carrots"),
+      .edge = HUD_EDGE_NONE,
+      .yMargin = HUD_Y_MARGIN_NONE,
+      .dynamicOrigin = true },
+    { .cvar = CVAR_COSMETIC("HUD.ArcheryScore"),
+      .yMargin = HUD_Y_MARGIN_NONE,
+      .dynamicOrigin = true,
+      .noAnchorOffsetX = 204 },
+    { .cvar = CVAR_COSMETIC("HUD.Timers"),
+      .edge = HUD_EDGE_LEFT,
+      .yMargin = HUD_Y_MARGIN_NONE,
+      .dynamicOrigin = true,
+      .noAnchorOffsetX = 204 },
+    { .cvar = CVAR_COSMETIC("HUD.TitleCard.Map"),
+      .edge = HUD_EDGE_NONE,
+      .yMargin = HUD_Y_MARGIN_NONE,
+      .dynamicOrigin = true,
+      .leftAnchorOffsetX = -11 },
+    { .cvar = CVAR_COSMETIC("HUD.TitleCard.Boss"),
+      .edge = HUD_EDGE_NONE,
+      .yMargin = HUD_Y_MARGIN_NONE,
+      .dynamicOrigin = true,
+      .leftAnchorOffsetX = -11 },
+    { .cvar = CVAR_COSMETIC("HUD.IGT"),
+      .originX = 24,
+      .originY = 73,
+      .edge = HUD_EDGE_LEFT,
+      .yMargin = HUD_Y_MARGIN_NONE,
+      .noAnchorOffsetX = 204 },
+};
+
+// Rows of hearts below the first one
+static int16_t HudElement_ExtraHeartRows() {
+    int32_t lineLength = CVarGetInteger(CVAR_COSMETIC("HUD.Hearts.LineLength"), 10);
+    return lineLength == 0 ? 0 : (gSaveContext.healthCapacity - 1) / (FULL_HEART_HEALTH * lineLength);
+}
+
+// TODO: scale is passed through but unused until the scale slider is re-enabled and made consistent
+// Moves a HUD element part from its vanilla position along with its element's editor placement
+void HudElement_ApplyPosition(int32_t element, int16_t* x, int16_t* y, float* scale) {
+    const HudElementInfo& info = hudElements[element];
+    std::string cvar = info.cvar;
+    std::string marginCvar = info.marginCvar != nullptr ? info.marginCvar : info.cvar;
+    int32_t posType = CVarGetInteger((cvar + ".PosType").c_str(), ORIGINAL_LOCATION);
+    bool useMargins = CVarGetInteger((marginCvar + ".UseMargins").c_str(), 0) != 0;
+    int16_t leftMargin = useMargins ? CVarGetInteger(CVAR_COSMETIC("HUD.Margin.L"), 0) : 0;
+    int16_t rightMargin = useMargins ? CVarGetInteger(CVAR_COSMETIC("HUD.Margin.R"), 0) : 0;
+    int16_t yMargin = 0;
+    if (useMargins && info.yMargin == HUD_Y_MARGIN_TOP) {
+        yMargin = -CVarGetInteger(CVAR_COSMETIC("HUD.Margin.T"), 0);
+    } else if (useMargins && info.yMargin == HUD_Y_MARGIN_BOTTOM) {
+        yMargin = CVarGetInteger(CVAR_COSMETIC("HUD.Margin.B"), 0);
+    }
+
+    int16_t vanillaX = info.originX;
+    int16_t vanillaY = info.originY;
+    int16_t placementOffsetX = info.placementOffsetX;
+    int16_t placementOffsetY = info.placementOffsetY;
+    if (element == HUD_ELEMENT_MINIMAP) {
+        // Editor position offsets the minimap from its vanilla spot, except X without anchor which is absolute
+        bool overworld = gPlayState != nullptr && gPlayState->sceneNum >= SCENE_HYRULE_FIELD &&
+                         gPlayState->sceneNum <= SCENE_OUTSIDE_GANONS_CASTLE;
+        vanillaX = overworld ? R_OW_MINIMAP_X : R_DGN_MINIMAP_X;
+        vanillaY = overworld ? R_OW_MINIMAP_Y : R_DGN_MINIMAP_Y;
+        placementOffsetX = posType == ANCHOR_NONE ? 0 : vanillaX;
+        placementOffsetY = vanillaY;
+    }
+
+    int16_t originX = vanillaX;
+    if (info.edge == HUD_EDGE_LEFT) {
+        originX = info.truncOrigin ? (int16_t)OTRGetDimensionFromLeftEdge(vanillaX)
+                                   : (int16_t)OTRGetRectDimensionFromLeftEdge(vanillaX);
+    } else if (info.edge == HUD_EDGE_RIGHT) {
+        originX = info.truncOrigin ? (int16_t)OTRGetDimensionFromRightEdge(vanillaX)
+                                   : (int16_t)OTRGetRectDimensionFromRightEdge(vanillaX);
+    }
+    int16_t partX = info.dynamicOrigin ? 0 : *x - originX;
+    int16_t partY = info.dynamicOrigin ? 0 : *y - vanillaY;
+    if (posType == ANCHOR_NONE) {
+        placementOffsetX += info.noAnchorOffsetX;
+    } else if (posType == ANCHOR_LEFT) {
+        placementOffsetX += info.leftAnchorOffsetX;
+    }
+    int16_t posX = CVarGetInteger((cvar + ".PosX").c_str(), 0) + placementOffsetX;
+    int16_t posY = CVarGetInteger((cvar + ".PosY").c_str(), 0) + placementOffsetY;
+
+    if (element == HUD_ELEMENT_MAGIC_BAR) {
+        // Magic bar follows the heart rows, except when placed freely
+        int16_t rows = HudElement_ExtraHeartRows();
+        int16_t rowDrop = R_MAGIC_BAR_LARGE_Y - R_MAGIC_BAR_SMALL_Y + 2;
+        if (posType == ORIGINAL_LOCATION) {
+            *y = (rows > 0 ? R_MAGIC_BAR_LARGE_Y + rowDrop * (rows - 1) : R_MAGIC_BAR_SMALL_Y) + yMargin;
+            *x += leftMargin;
+            return;
+        }
+        if (posType == ANCHOR_TO_LIFE_METER) {
+            int16_t heartsX = (int16_t)OTRGetDimensionFromLeftEdge(0.0f);
+            int16_t heartsY = 0;
+            HudElement_ApplyPosition(HUD_ELEMENT_HEARTS, &heartsX, &heartsY, nullptr);
+            *x = posX + heartsX + info.originX - 1 + partX;
+            *y = R_MAGIC_BAR_SMALL_Y - 2 + rowDrop * rows + posY + heartsY;
+            return;
+        }
+        partY = 0;
+    }
+
+    if (posType == ORIGINAL_LOCATION) {
+        if (info.edge == HUD_EDGE_LEFT) {
+            *x += leftMargin;
+        } else if (info.edge == HUD_EDGE_RIGHT) {
+            *x += rightMargin;
+        }
+        *y += yMargin;
+        return;
+    }
+
+    *y = posY + yMargin + partY;
+    switch (posType) {
+        case ANCHOR_LEFT:
+            *x = (int16_t)OTRGetDimensionFromLeftEdge((float)(posX + leftMargin)) + partX;
+            break;
+        case ANCHOR_RIGHT:
+            *x = (int16_t)OTRGetDimensionFromRightEdge((float)(posX + rightMargin)) + partX;
+            break;
+        case ANCHOR_NONE:
+            *x = posX + partX;
+            break;
+        case HIDDEN:
+            *x = -9999;
+            break;
+    }
+}
+
+struct CosmeticColorInfo {
+    const char* option;       // cosmeticOptions key
+    int32_t parent = -1;      // color used when this one is unchanged
+    bool n64Scheme = false;   // N64 color scheme replaces the vanilla color
+    Color_RGB8 n64Color = {}; // color used by the N64 color scheme
+    float customScale = 1.0f; // custom color multiplier
+    int16_t customOffset = 0; // added to custom color channels
+    bool flash = false;       // vanilla color flashes between vanillaColor and vanillaFlashColor
+    Color_RGB8 vanillaColor = {};
+    Color_RGB8 vanillaFlashColor = {};
+    Color_RGB8 n64FlashColor = {};
+    float customFlashScale = 1.0f;   // custom color multiplier for the flash color
+    bool customKeepsVanilla = false; // custom color only replaces the flash color
+    bool persistent = false;         // stored color, unchanged writes vanillaColor back
+};
+
+static const CosmeticColorInfo cosmeticColors[COSMETIC_COLOR_MAX] = {
+    { .option = "HUD.BButton", .n64Scheme = true, .n64Color = { 0, 150, 0 } },
+    { .option = "HUD.CButtons" },
+    { .option = "HUD.CUpButton", .parent = COSMETIC_COLOR_HUD_C_BUTTONS },
+    { .option = "HUD.CDownButton", .parent = COSMETIC_COLOR_HUD_C_BUTTONS },
+    { .option = "HUD.CLeftButton", .parent = COSMETIC_COLOR_HUD_C_BUTTONS },
+    { .option = "HUD.CRightButton", .parent = COSMETIC_COLOR_HUD_C_BUTTONS },
+    { .option = "HUD.StartButton", .n64Scheme = true, .n64Color = { 200, 0, 0 } },
+    { .option = "HUD.AButton", .n64Scheme = true, .n64Color = { 90, 90, 255 } },
+    { .option = "HUD.Dpad" },
+    { .option = "HUD.KeyCount" },
+    { .option = "HUD.AButton", .n64Scheme = true, .n64Color = { 100, 100, 255 } },
+    // Pause cursor sets: white, C, A
+    { .option = nullptr },
+    { .option = "HUD.CButtons" },
+    { .option = "HUD.AButton", .n64Scheme = true, .n64Color = { 0, 50, 255 } },
+    // Pause cursor flash targets, four per cursor set
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = "HUD.CButtons" },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = "HUD.CButtons" },
+    { .option = "HUD.AButton", .n64Scheme = true, .n64Color = { 0, 50, 255 } },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = "HUD.AButton", .n64Scheme = true, .n64Color = { 0, 50, 255 } },
+    { .option = "HUD.AButton", .n64Scheme = true, .n64Color = { 0, 100, 255 } },
+    { .option = "HUD.CButtons" },
+    // Pause menu song notes: A, C-Down, C-Right, C-Left, C-Up
+    { .option = "HUD.AButton", .n64Scheme = true, .n64Color = { 80, 150, 255 } },
+    { .option = "HUD.CDownButton", .parent = COSMETIC_COLOR_HUD_C_BUTTONS },
+    { .option = "HUD.CRightButton", .parent = COSMETIC_COLOR_HUD_C_BUTTONS },
+    { .option = "HUD.CLeftButton", .parent = COSMETIC_COLOR_HUD_C_BUTTONS },
+    { .option = "HUD.CUpButton", .parent = COSMETIC_COLOR_HUD_C_BUTTONS },
+    // Pause page background colors A-D: item, equip, dungeon map, quest, world map, save
+    { .option = "Kaleido.ItemSelA" },
+    { .option = "Kaleido.ItemSelB" },
+    { .option = "Kaleido.ItemSelC" },
+    { .option = "Kaleido.ItemSelD" },
+    { .option = "Kaleido.EquipSelA" },
+    { .option = "Kaleido.EquipSelB" },
+    { .option = "Kaleido.EquipSelC" },
+    { .option = "Kaleido.EquipSelD" },
+    { .option = "Kaleido.MapSelDunA" },
+    { .option = "Kaleido.MapSelDunB" },
+    { .option = "Kaleido.MapSelDunC" },
+    { .option = "Kaleido.MapSelDunD" },
+    { .option = "Kaleido.QuestStatusA" },
+    { .option = "Kaleido.QuestStatusB" },
+    { .option = "Kaleido.QuestStatusC" },
+    { .option = "Kaleido.QuestStatusD" },
+    { .option = "Kaleido.MapSelectA" },
+    { .option = "Kaleido.MapSelectB" },
+    { .option = "Kaleido.MapSelectC" },
+    { .option = "Kaleido.MapSelectD" },
+    { .option = "Kaleido.SaveA" },
+    { .option = "Kaleido.SaveB" },
+    { .option = "Kaleido.SaveC" },
+    { .option = "Kaleido.SaveD" },
+    { .option = "Kaleido.NamePanel" },
+    // Text box icon prim and env
+    { .option = "HUD.AButton",
+      .n64Scheme = true,
+      .n64Color = { 0, 80, 200 },
+      .customScale = 0.75f,
+      .flash = true,
+      .vanillaColor = { 0, 200, 80 },
+      .vanillaFlashColor = { 50, 255, 130 },
+      .n64FlashColor = { 50, 130, 255 } },
+    { .option = "HUD.AButton",
+      .n64Scheme = true,
+      .flash = true,
+      .vanillaFlashColor = { 0, 255, 130 },
+      .n64FlashColor = { 0, 130, 255 },
+      .customKeepsVanilla = true },
+    // Text box ocarina note prims: A, C-Down, C-Right, C-Left, C-Up
+    { .option = "HUD.AButton",
+      .n64Scheme = true,
+      .n64Color = { 80, 150, 255 },
+      .flash = true,
+      .vanillaColor = { 80, 255, 150 },
+      .vanillaFlashColor = { 100, 255, 200 },
+      .n64FlashColor = { 100, 200, 255 } },
+    { .option = "HUD.CDownButton",
+      .parent = COSMETIC_COLOR_HUD_C_BUTTONS,
+      .flash = true,
+      .vanillaColor = { 255, 255, 50 },
+      .vanillaFlashColor = { 255, 255, 180 } },
+    { .option = "HUD.CRightButton",
+      .parent = COSMETIC_COLOR_HUD_C_BUTTONS,
+      .flash = true,
+      .vanillaColor = { 255, 255, 50 },
+      .vanillaFlashColor = { 255, 255, 180 } },
+    { .option = "HUD.CLeftButton",
+      .parent = COSMETIC_COLOR_HUD_C_BUTTONS,
+      .flash = true,
+      .vanillaColor = { 255, 255, 50 },
+      .vanillaFlashColor = { 255, 255, 180 } },
+    { .option = "HUD.CUpButton",
+      .parent = COSMETIC_COLOR_HUD_C_BUTTONS,
+      .flash = true,
+      .vanillaColor = { 255, 255, 50 },
+      .vanillaFlashColor = { 255, 255, 180 } },
+    // Text box ocarina note envs: A, C-Down, C-Right, C-Left, C-Up
+    { .option = "HUD.AButton",
+      .n64Scheme = true,
+      .n64Color = { 10, 10, 10 },
+      .flash = true,
+      .vanillaColor = { 10, 10, 10 },
+      .vanillaFlashColor = { 50, 255, 50 },
+      .n64FlashColor = { 50, 50, 255 },
+      .customKeepsVanilla = true },
+    { .option = "HUD.CDownButton",
+      .parent = COSMETIC_COLOR_HUD_C_BUTTONS,
+      .flash = true,
+      .vanillaColor = { 10, 10, 10 },
+      .vanillaFlashColor = { 110, 110, 50 },
+      .customFlashScale = 95.0f / 255.0f,
+      .customKeepsVanilla = true },
+    { .option = "HUD.CRightButton",
+      .parent = COSMETIC_COLOR_HUD_C_BUTTONS,
+      .flash = true,
+      .vanillaColor = { 10, 10, 10 },
+      .vanillaFlashColor = { 110, 110, 50 },
+      .customFlashScale = 95.0f / 255.0f,
+      .customKeepsVanilla = true },
+    { .option = "HUD.CLeftButton",
+      .parent = COSMETIC_COLOR_HUD_C_BUTTONS,
+      .flash = true,
+      .vanillaColor = { 10, 10, 10 },
+      .vanillaFlashColor = { 110, 110, 50 },
+      .customFlashScale = 95.0f / 255.0f,
+      .customKeepsVanilla = true },
+    { .option = "HUD.CUpButton",
+      .parent = COSMETIC_COLOR_HUD_C_BUTTONS,
+      .flash = true,
+      .vanillaColor = { 10, 10, 10 },
+      .vanillaFlashColor = { 110, 110, 50 },
+      .customFlashScale = 95.0f / 255.0f,
+      .customKeepsVanilla = true },
+    { .option = "HUD.AButton", .n64Scheme = true, .n64Color = { 0, 80, 255 } },
+    { .option = "Consumable.Hearts" },
+    { .option = "Consumable.HeartBorder" },
+    { .option = "Consumable.DDHeartBorder" },
+    { .option = "Consumable.DDHearts" },
+    // File select heart prims and envs: normal, double defense
+    { .option = "Consumable.Hearts" },
+    { .option = "Consumable.DDHearts" },
+    { .option = "Consumable.HeartBorder" },
+    { .option = "Consumable.DDHeartBorder" },
+    // File select window, highlight, controls text, options cursor prim and env
+    { .option = "Title.FileChoose" },
+    { .option = "Title.FileChoose", .customOffset = 100 },
+    { .option = "Title.FileChoose", .customOffset = 100 },
+    { .option = "Title.FileChoose",
+      .customOffset = 100,
+      .flash = true,
+      .vanillaColor = { 255, 255, 255 },
+      .vanillaFlashColor = { 0, 255, 255 },
+      .customKeepsVanilla = true },
+    { .option = "Title.FileChoose",
+      .customOffset = 50,
+      .flash = true,
+      .vanillaFlashColor = { 0, 150, 150 },
+      .customKeepsVanilla = true },
+    { .option = "Consumable.Magic" },
+    { .option = "Consumable.MagicActive" },
+    // Magic border while idle, and while the meter is consuming or flashing
+    { .option = "Consumable.MagicBorder",
+      .flash = true,
+      .vanillaColor = { 255, 255, 255 },
+      .vanillaFlashColor = { 150, 150, 150 },
+      .customFlashScale = 0.5f },
+    { .option = "Consumable.MagicBorderActive",
+      .flash = true,
+      .vanillaColor = { 255, 255, 255 },
+      .vanillaFlashColor = { 150, 150, 150 },
+      .customFlashScale = 0.5f },
+    // HUD rupee icon: green, then per wallet with the dynamic wallet icon
+    { .option = "Consumable.GreenRupee" },
+    { .option = "Consumable.BlueRupee" },
+    { .option = "Consumable.RedRupee" },
+    { .option = "Consumable.PurpleRupee" },
+    // Rupees by texture: green, blue, red, pink (gold), orange (purple), silver
+    { .option = "Consumable.GreenRupee" },
+    { .option = "Consumable.BlueRupee" },
+    { .option = "Consumable.RedRupee" },
+    { .option = "Consumable.GoldRupee" },
+    { .option = "Consumable.PurpleRupee" },
+    { .option = "Consumable.SilverRupee" },
+    { .option = "HUD.Minimap" },
+    { .option = "HUD.Minimap" },
+    { .option = "HUD.MinimapPosition" },
+    { .option = "HUD.MinimapEntrance" },
+    // Title cards fade in from black to white
+    { .option = "HUD.TitleCard.Map",
+      .flash = true,
+      .vanillaFlashColor = { 255, 255, 255 },
+      .customKeepsVanilla = true },
+    { .option = "HUD.TitleCard.Boss",
+      .flash = true,
+      .vanillaFlashColor = { 255, 255, 255 },
+      .customKeepsVanilla = true },
+    { .option = "HUD.EnemyHealthBar" },
+    { .option = "HUD.EnemyHealthBorder" },
+    // TODO: trails map Primary to env and Secondary to prim, unlike the arrow body; decide which to keep
+    // Arrow trails prim and env: normal
+    { .option = "Arrows.NormalSecondary", .vanillaColor = { 255, 255, 170 }, .persistent = true },
+    { .option = "Arrows.NormalPrimary", .vanillaColor = { 0, 150, 0 }, .persistent = true },
+    // Fire arrow prim, env, screen flash, trail prim and trail env
+    { .option = "Arrows.FirePrimary" },
+    { .option = "Arrows.FireSecondary" },
+    { .option = "Arrows.FireSecondary", .customScale = 1.0f / 6.0f },
+    { .option = "Arrows.FireSecondary", .vanillaColor = { 255, 200, 0 }, .persistent = true },
+    { .option = "Arrows.FirePrimary", .vanillaColor = { 255, 0, 0 }, .persistent = true },
+    // Ice arrow prim, env, screen flash, trail prim and trail env
+    { .option = "Arrows.IcePrimary" },
+    { .option = "Arrows.IceSecondary" },
+    { .option = "Arrows.IceSecondary", .customScale = 1.0f / 6.0f },
+    { .option = "Arrows.IceSecondary", .vanillaColor = { 170, 255, 255 }, .persistent = true },
+    { .option = "Arrows.IcePrimary", .vanillaColor = { 0, 100, 255 }, .persistent = true },
+    // Light arrow prim, env, screen flash, trail prim and trail env
+    { .option = "Arrows.LightPrimary" },
+    { .option = "Arrows.LightSecondary" },
+    { .option = "Arrows.LightSecondary", .customScale = 1.0f / 6.0f },
+    { .option = "Arrows.LightSecondary", .vanillaColor = { 255, 255, 170 }, .persistent = true },
+    { .option = "Arrows.LightPrimary", .vanillaColor = { 255, 255, 0 }, .persistent = true },
+    // Din's fire prim and env, Nayru's love diamond and orb prim and env
+    { .option = "Magic.DinsPrimary" },
+    { .option = "Magic.DinsSecondary" },
+    { .option = "Magic.NayrusPrimary" },
+    { .option = "Magic.NayrusSecondary" },
+    { .option = "Magic.NayrusPrimary" },
+    { .option = "Magic.NayrusSecondary" },
+    // Farore's wind particle prim and env, warp point prim and env
+    { .option = "Magic.FaroresPrimary", .vanillaColor = { 255, 255, 255 }, .persistent = true },
+    { .option = "Magic.FaroresSecondary", .vanillaColor = { 100, 200, 0 }, .persistent = true },
+    { .option = "Magic.FaroresPrimary" },
+    { .option = "Magic.FaroresSecondary" },
+    // Spin attack level 2 and 1 prim, spin charge level 2 and 1 prim and env
+    { .option = "SpinAttack.Level2Primary" },
+    { .option = "SpinAttack.Level1Primary" },
+    { .option = "SpinAttack.Level2Primary" },
+    { .option = "SpinAttack.Level2Secondary" },
+    { .option = "SpinAttack.Level1Primary" },
+    { .option = "SpinAttack.Level1Secondary" },
+    // Trails: boomerang, bombchu, kokiri sword, master sword, biggoron sword, stick, hammer
+    { .option = "Trails.Boomerang", .vanillaColor = { 255, 255, 100 }, .persistent = true },
+    { .option = "Trails.Bombchu", .vanillaColor = { 250, 0, 0 }, .persistent = true },
+    { .option = "Trails.KokiriSword", .vanillaColor = { 255, 255, 255 }, .persistent = true },
+    { .option = "Trails.MasterSword", .vanillaColor = { 255, 255, 255 }, .persistent = true },
+    { .option = "Trails.BiggoronSword", .vanillaColor = { 255, 255, 255 }, .persistent = true },
+    { .option = "Trails.Stick", .vanillaColor = { 255, 255, 255 }, .persistent = true },
+    { .option = "Trails.Hammer", .vanillaColor = { 255, 255, 255 }, .persistent = true },
+    // Bombchu body blink, from black to the custom color
+    { .option = "Equipment.ChuBody",
+      .customScale = 0.0f,
+      .flash = true,
+      .vanillaColor = { 9, 9, 35 },
+      .vanillaFlashColor = { 218, 43, 0 } },
+    // Navi inner and outer per actor category: switch, bg, player, explosive, npc, enemy, prop, item action, misc,
+    // boss, door, chest, unused
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = "Navi.IdlePrimary", .vanillaColor = { 255, 255, 255 }, .persistent = true },
+    { .option = nullptr },
+    { .option = "Navi.NPCPrimary", .vanillaColor = { 150, 150, 255 }, .persistent = true },
+    { .option = "Navi.EnemyPrimary", .vanillaColor = { 255, 255, 0 }, .persistent = true },
+    { .option = "Navi.PropsPrimary", .vanillaColor = { 0, 255, 0 }, .persistent = true },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = "Navi.EnemyPrimary", .vanillaColor = { 255, 255, 0 }, .persistent = true },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = "Navi.IdleSecondary", .vanillaColor = { 0, 0, 255 }, .persistent = true },
+    { .option = nullptr },
+    { .option = "Navi.NPCSecondary", .vanillaColor = { 150, 150, 255 }, .persistent = true },
+    { .option = "Navi.EnemySecondary", .vanillaColor = { 200, 155, 0 }, .persistent = true },
+    { .option = "Navi.PropsSecondary", .vanillaColor = { 0, 255, 0 }, .persistent = true },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = "Navi.EnemySecondary", .vanillaColor = { 200, 155, 0 }, .persistent = true },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = nullptr },
+    // Ivan prim and env
+    { .option = "Ivan.IdlePrimary" },
+    { .option = "Ivan.IdleSecondary" },
+    // Link tunics: kokiri, goron, zora; gauntlets: silver, golden
+    { .option = "Link.KokiriTunic" },
+    { .option = "Link.GoronTunic" },
+    { .option = "Link.ZoraTunic" },
+    { .option = "Gloves.SilverGauntlets" },
+    { .option = "Gloves.GoldenGauntlets" },
+    // Keese auras: fire prim and env, ice prim and env
+    { .option = "NPC.FireKeesePrimary", .vanillaColor = { 255, 255, 100 }, .persistent = true },
+    { .option = "NPC.FireKeeseSecondary", .vanillaColor = { 255, 50, 0 }, .persistent = true },
+    { .option = "NPC.IceKeesePrimary", .vanillaColor = { 100, 200, 255 }, .persistent = true },
+    { .option = "NPC.IceKeeseSecondary", .vanillaColor = { 0, 0, 255 }, .persistent = true },
+    // Dogs: white, brown
+    { .option = "NPC.Dog1" },
+    { .option = "NPC.Dog2" },
+    // Kokiri tunic and boots, iron knuckle armor, gossip stone
+    { .option = "NPC.Kokiri" },
+    { .option = "NPC.Kokiri" },
+    { .option = "NPC.IronKnuckles" },
+    { .option = "World.GossipStone" },
+    // Moon prim and env, block of time, red ice
+    { .option = "World.Moon" },
+    { .option = "World.Moon", .customScale = 0.5f },
+    { .option = "World.BlockOfTime" },
+    { .option = "World.RedIce" },
+};
+
+// Custom color of a color entry or its first changed parent
+static bool CosmeticColor_GetCustom(int32_t option, Color_RGBA8* custom, bool* supportsAlpha) {
+    for (int32_t i = option; i >= 0; i = cosmeticColors[i].parent) {
+        const CosmeticOption& cosmeticOption = cosmeticOptions.at(cosmeticColors[i].option);
+        if (CVarGetInteger(cosmeticOption.changedCvar, 0)) {
+            *custom = CVarGetColor(cosmeticOption.valuesCvar, cosmeticOption.defaultColor);
+            *supportsAlpha = cosmeticOption.supportsAlpha;
+            return true;
+        }
+    }
+    return false;
+}
+
+static Color_RGB8 CosmeticColor_Scale(Color_RGBA8 color, float scale, int16_t offset) {
+    return { (uint8_t)MIN(color.r * scale + offset, 255), (uint8_t)MIN(color.g * scale + offset, 255),
+             (uint8_t)MIN(color.b * scale + offset, 255) };
+}
+
+// Replaces a vanilla color with its cosmetics editor color
+void CosmeticColor_Apply(int32_t option, Color_RGBA8* color) {
+    if (option == COSMETIC_COLOR_HUD_RUPEE_ICON && CVarGetInteger(CVAR_ENHANCEMENT("DynamicWalletIcon"), 0)) {
+        option += CLAMP(CUR_UPG_VALUE(UPG_WALLET), 0, 3);
+    }
+    uint16_t magicState = gSaveContext.magicState;
+    if (option == COSMETIC_COLOR_MAGIC_BORDER &&
+        (magicState == MAGIC_STATE_CONSUME || magicState == MAGIC_STATE_METER_FLASH_1 ||
+         magicState == MAGIC_STATE_METER_FLASH_2 || magicState == MAGIC_STATE_METER_FLASH_3)) {
+        option = COSMETIC_COLOR_MAGIC_BORDER_ACTIVE;
+    }
+    const CosmeticColorInfo& info = cosmeticColors[option];
+    if (info.option == nullptr) {
+        return;
+    }
+
+    Color_RGBA8 custom;
+    bool supportsAlpha = false;
+    bool changed = CosmeticColor_GetCustom(option, &custom, &supportsAlpha);
+    bool n64 =
+        info.n64Scheme && CVarGetInteger(CVAR_COSMETIC("DefaultColorScheme"), COLORSCHEME_N64) == COLORSCHEME_N64;
+    if (!changed && !n64) {
+        if (info.persistent) {
+            color->r = info.vanillaColor.r;
+            color->g = info.vanillaColor.g;
+            color->b = info.vanillaColor.b;
+        }
+        return;
+    }
+
+    Color_RGB8 base = n64 ? info.n64Color : info.vanillaColor;
+    Color_RGB8 flash = info.n64FlashColor;
+    if (changed) {
+        base = info.customKeepsVanilla ? info.vanillaColor
+                                       : CosmeticColor_Scale(custom, info.customScale, info.customOffset);
+        flash = CosmeticColor_Scale(custom, info.customFlashScale, info.customOffset);
+    }
+
+    Color_RGB8 result = base;
+    if (info.flash) {
+        // Flash progress of the vanilla color, read from its most changing channel
+        int16_t from[3] = { info.vanillaColor.r, info.vanillaColor.g, info.vanillaColor.b };
+        int16_t to[3] = { info.vanillaFlashColor.r, info.vanillaFlashColor.g, info.vanillaFlashColor.b };
+        int16_t in[3] = { color->r, color->g, color->b };
+        int32_t channel = 0;
+        for (int32_t i = 1; i < 3; i++) {
+            if (ABS(to[i] - from[i]) > ABS(to[channel] - from[channel])) {
+                channel = i;
+            }
+        }
+        float t = CLAMP((float)(in[channel] - from[channel]) / (to[channel] - from[channel]), 0.0f, 1.0f);
+        result.r = (uint8_t)(base.r + (flash.r - base.r) * t);
+        result.g = (uint8_t)(base.g + (flash.g - base.g) * t);
+        result.b = (uint8_t)(base.b + (flash.b - base.b) * t);
+    }
+
+    color->r = result.r;
+    color->g = result.g;
+    color->b = result.b;
+    if (changed && supportsAlpha) {
+        color->a = custom.a;
+    }
+}
+
+// Tints the next drawn display list with its cosmetics editor color
+void CosmeticColor_ApplyTint(int32_t option, Gfx** gfx, bool enable) {
+    Color_RGBA8 custom;
+    bool supportsAlpha = false;
+    if (!CosmeticColor_GetCustom(option, &custom, &supportsAlpha)) {
+        return;
+    }
+
+    Gfx* g = *gfx;
+    if (enable) {
+        gDPSetGrayscaleColor(g++, custom.r, custom.g, custom.b, 255);
+        gSPGrayscale(g++, true);
+    } else {
+        gSPGrayscale(g++, false);
+    }
+    *gfx = g;
+}
+
+// Keeps Navi's resting color matched to the targeting colors, which follow the cosmetics editor every frame
+void Navi_FollowTargetColors(void* actor) {
+    EnElf* navi = (EnElf*)actor;
+    TargetContext* targetCtx = &gPlayState->actorCtx.targetCtx;
+    if (!(navi->fairyFlags & 4) || targetCtx->unk_40 != 0.0f || navi->unk_29C != 0.0f) {
+        return;
+    }
+    navi->innerColor = targetCtx->naviInner;
+    navi->outerColor = targetCtx->naviOuter;
+}
+
+// Keeps the lock-on reticle colors matched to the cosmetics editor colors of the targeted actor
+void Navi_FollowReticleColors() {
+    TargetContext* targetCtx = &gPlayState->actorCtx.targetCtx;
+    if (targetCtx->targetedActor == NULL) {
+        return;
+    }
+    for (int32_t i = 0; i < ARRAY_COUNT(targetCtx->arr_50); i++) {
+        Color_RGB8* reticle = &targetCtx->arr_50[i].color;
+        Color_RGBA8 color = { reticle->r, reticle->g, reticle->b, 255 };
+        CosmeticColor_Apply(COSMETIC_COLOR_NAVI_INNER_CATEGORY(targetCtx->targetedActor->category), &color);
+        reticle->r = color.r;
+        reticle->g = color.g;
+        reticle->b = color.b;
+    }
+}
+
+// TODO: trailType plumbing from #1473 (z64effect.h and its init sites) is still in src
+// Applies the cosmetics editor trail colors and duration to a trail effect
+void EffectBlure_ApplyTrailCosmetics(void* effect) {
+    EffectBlure* blure = (EffectBlure*)effect;
+    int32_t option;
+    switch (blure->trailType) {
+        case TRAIL_TYPE_BOOMERANG:
+            option = COSMETIC_COLOR_TRAIL_BOOMERANG;
+            break;
+        case TRAIL_TYPE_BOMBCHU:
+            option = COSMETIC_COLOR_TRAIL_BOMBCHU;
+            break;
+        case TRAIL_TYPE_KOKIRI_SWORD:
+            option = COSMETIC_COLOR_TRAIL_KOKIRI_SWORD;
+            break;
+        case TRAIL_TYPE_MASTER_SWORD:
+            option = COSMETIC_COLOR_TRAIL_MASTER_SWORD;
+            break;
+        case TRAIL_TYPE_BIGGORON_SWORD:
+            option = COSMETIC_COLOR_TRAIL_BIGGORON_SWORD;
+            break;
+        case TRAIL_TYPE_STICK:
+            option = COSMETIC_COLOR_TRAIL_STICK;
+            break;
+        case TRAIL_TYPE_HAMMER:
+            option = COSMETIC_COLOR_TRAIL_HAMMER;
+            break;
+        default:
+            return;
+    }
+
+    Color_RGBA8 color = blure->p1StartColor;
+    CosmeticColor_Apply(option, &color);
+    // Bombchu trails fade out from start to end
+    bool bombchu = blure->trailType == TRAIL_TYPE_BOMBCHU;
+    Color_RGBA8* parts[] = { &blure->p1StartColor, &blure->p2StartColor, &blure->p1EndColor, &blure->p2EndColor };
+    float scales[] = { 1.0f, 0.8f, 0.6f, 0.4f };
+    for (int32_t i = 0; i < 4; i++) {
+        float scale = bombchu ? scales[i] : 1.0f;
+        parts[i]->r = (uint8_t)(color.r * scale);
+        parts[i]->g = (uint8_t)(color.g * scale);
+        parts[i]->b = (uint8_t)(color.b * scale);
+    }
+
+    if (!bombchu && blure->trailType != TRAIL_TYPE_BOOMERANG &&
+        CVarGetInteger(CVAR_COSMETIC("Trails.Duration.Changed"), 0)) {
+        blure->elemDuration = CVarGetInteger(CVAR_COSMETIC("Trails.Duration.Value"), 4);
+    }
+}
+
+// TODO: sWindowContentColors lost its static in src for this; decide on per-site hooks instead
+extern "C" s16 sWindowContentColors[2][3];
+
+// Applies the cosmetics editor window colors to the file select screen
+void FileChoose_ApplyWindowColors(void* gameState) {
+    FileChooseContext* fileChoose = (FileChooseContext*)gameState;
+    Color_RGBA8 window = { 100, 150, 255, 255 };
+    Color_RGBA8 highlight = { 155, 255, 255, 255 };
+    CosmeticColor_Apply(COSMETIC_COLOR_FILE_SELECT_WINDOW, &window);
+    CosmeticColor_Apply(COSMETIC_COLOR_FILE_SELECT_HIGHLIGHT, &highlight);
+    fileChoose->windowColor[0] = sWindowContentColors[0][0] = window.r;
+    fileChoose->windowColor[1] = sWindowContentColors[0][1] = window.g;
+    fileChoose->windowColor[2] = sWindowContentColors[0][2] = window.b;
+    fileChoose->highlightColor[0] = highlight.r;
+    fileChoose->highlightColor[1] = highlight.g;
+    fileChoose->highlightColor[2] = highlight.b;
+}
+
+// Cosmetics editor option of a message text color and text box type
+static const char* MessageTextColor_GetOption(uint16_t colorParameter, uint8_t textBoxType) {
+    bool wooden = textBoxType == TEXTBOX_TYPE_WOODEN;
+    switch (colorParameter) {
+        case MSGCOL_RED:
+            return wooden ? "Message.Red.Wooden" : "Message.Red.Normal";
+        case MSGCOL_ADJUSTABLE:
+            return wooden ? "Message.Adjustable.Wooden" : "Message.Adjustable.Normal";
+        case MSGCOL_BLUE:
+            return wooden ? "Message.Blue.Wooden" : "Message.Blue.Normal";
+        case MSGCOL_LIGHTBLUE:
+            if (wooden) {
+                return "Message.LightBlue.Wooden";
+            }
+            // TODO: option key has a doubled "LightBlue." prefix; renaming it needs a config migration
+            return textBoxType == TEXTBOX_TYPE_NONE_NO_SHADOW ? "Message.LightBlue.LightBlue.NoneNoShadow"
+                                                              : "Message.LightBlue.Normal";
+        case MSGCOL_PURPLE:
+            return wooden ? "Message.Purple.Wooden" : "Message.Purple.Normal";
+        case MSGCOL_YELLOW:
+            return wooden ? "Message.Yellow.Wooden" : "Message.Yellow.Normal";
+        case MSGCOL_BLACK:
+            return "Message.Black";
+        default:
+            return textBoxType == TEXTBOX_TYPE_NONE_NO_SHADOW ? "Message.Default.NoneNoShadow"
+                                                              : "Message.Default.Normal";
+    }
+}
+
+// Replaces a vanilla message text color with its cosmetics editor color
+void MessageTextColor_Apply(void* messageContext, uint16_t colorParameter) {
+    MessageContext* msgCtx = (MessageContext*)messageContext;
+    const CosmeticOption& option = cosmeticOptions.at(MessageTextColor_GetOption(colorParameter, msgCtx->textBoxType));
+    if (!CVarGetInteger(option.changedCvar, 0)) {
+        return;
+    }
+    Color_RGBA8 color = CVarGetColor(option.valuesCvar, option.defaultColor);
+    msgCtx->textColorR = color.r;
+    msgCtx->textColorG = color.g;
+    msgCtx->textColorB = color.b;
 }
 
 int hue = 0;
@@ -544,6 +1310,23 @@ void CosmeticsUpdateTick() {
     5. GFX Command: The GFX command you want to insert
 */
 void ApplyOrResetCustomGfxPatches(bool manualChange) {
+    static CosmeticOption& hudAButton = cosmeticOptions.at("HUD.AButton");
+    if (manualChange || CVarGetInteger(hudAButton.rainbowCvar, 0)) {
+        Color_RGBA8 color = { 0, 255, 100, 255 };
+        CosmeticColor_Apply(COSMETIC_COLOR_PAUSE_A_BUTTON_ICON, &color);
+        ResourceMgr_PatchGfxByName(gAButtonIconDL, "HUD_AButtonIcon", 3,
+                                   gsDPSetPrimColor(0, 0, color.r, color.g, color.b, 255));
+    }
+
+    // TODO: vanilla gCButtonIconsDL is one quad, so the info panel C icons lost their per-direction colors
+    static CosmeticOption& hudCButtons = cosmeticOptions.at("HUD.CButtons");
+    if (manualChange || CVarGetInteger(hudCButtons.rainbowCvar, 0)) {
+        Color_RGBA8 color = { 255, 150, 0, 255 };
+        CosmeticColor_Apply(COSMETIC_COLOR_PAUSE_C_BUTTON_ICONS, &color);
+        ResourceMgr_PatchGfxByName(gCButtonIconsDL, "HUD_CButtonIcons", 3,
+                                   gsDPSetPrimColor(0, 0, color.r, color.g, color.b, 255));
+    }
+
     static CosmeticOption& magicFaroresPrimary = cosmeticOptions.at("Magic.FaroresPrimary");
     if (manualChange || CVarGetInteger(magicFaroresPrimary.rainbowCvar, 0)) {
         Color_RGBA8 color = CVarGetColor(magicFaroresPrimary.valuesCvar, magicFaroresPrimary.defaultColor);
@@ -1342,14 +2125,11 @@ void ApplyOrResetCustomGfxPatches(bool manualChange) {
     static CosmeticOption& consumableHearts = cosmeticOptions.at("Consumable.Hearts");
     if (manualChange || CVarGetInteger(consumableHearts.rainbowCvar, 0)) {
         Color_RGBA8 color = CVarGetColor(consumableHearts.valuesCvar, consumableHearts.defaultColor);
-        /*
-        PATCH_GFX(gGiRecoveryHeartDL,                             "Consumable_Hearts1", consumableHearts.changedCvar, 4,
-        gsDPSetGrayscaleColor(color.r, color.g, color.b, 255)); PATCH_GFX(gGiRecoveryHeartDL, "Consumable_Hearts2",
-        consumableHearts.changedCvar,        26, gsSPGrayscale(true)); PATCH_GFX(gGiRecoveryHeartDL,
-        "Consumable_Hearts3",       consumableHearts.changedCvar,        72, gsSPGrayscale(false));
-        PATCH_GFX(gGiRecoveryHeartDL,                             "Consumable_Hearts4", consumableHearts.changedCvar,
-        74, gsSPEndDisplayList());
-        */
+        PATCH_GFX(gGiRecoveryHeartDL, "Consumable_Hearts1", consumableHearts.changedCvar, 2, gsSPGrayscale(true));
+        PATCH_GFX(gGiRecoveryHeartDL, "Consumable_Hearts2", consumableHearts.changedCvar, 13,
+                  gsDPSetGrayscaleColor(color.r, color.g, color.b, 255));
+        PATCH_GFX(gGiRecoveryHeartDL, "Consumable_Hearts3", consumableHearts.changedCvar, 36,
+                  gsSPBranchListOTRFilePath(gEndGrayscaleAndEndDlistDL));
         PATCH_GFX(gGiHeartPieceDL, "Consumable_Hearts5", consumableHearts.changedCvar, 2,
                   gsDPSetPrimColor(0, 0, color.r, color.g, color.b, 255));
         PATCH_GFX(gGiHeartPieceDL, "Consumable_Hearts6", consumableHearts.changedCvar, 6,
@@ -1475,13 +2255,6 @@ void ApplyOrResetCustomGfxPatches(bool manualChange) {
             player->actor.scale.z = scale;
         }
     }
-}
-
-extern "C" Color_RGBA8 CosmeticsEditor_GetDefaultValue(const char* id) {
-    return Color_RGBA8{ (uint8_t)(cosmeticOptions[id].defaultColor.r * 255.0f),
-                        (uint8_t)(cosmeticOptions[id].defaultColor.g * 255.0f),
-                        (uint8_t)(cosmeticOptions[id].defaultColor.b * 255.0f),
-                        (uint8_t)(cosmeticOptions[id].defaultColor.a * 255.0f) };
 }
 
 void Table_InitHeader(bool has_header = true) {
@@ -1675,7 +2448,7 @@ void Draw_Placements() {
                 UIWidgets::IntSliderOptions()
                     .Min(0)
                     .Max(20)
-                    .DefaultValue(0)
+                    .DefaultValue(10)
                     .Size(ImVec2(300.0f, 0.0f))
                     .Color(THEME_COLOR)
                     .Tooltip("This will set the length of a row of hearts. Set to 0 for unlimited length."));
@@ -2265,12 +3038,14 @@ void CosmeticsEditorWindow::ApplyDungeonKeyColors() {
 }
 
 void CosmeticsEditorWindow::DrawElement() {
-    UIWidgets::CVarCombobox("Color Scheme", CVAR_COSMETIC("DefaultColorScheme"), colorSchemes,
-                            UIWidgets::ComboboxOptions()
-                                .DefaultIndex(COLORSCHEME_N64)
-                                .Color(THEME_COLOR)
-                                .LabelPosition(UIWidgets::LabelPositions::Near)
-                                .ComponentAlignment(UIWidgets::ComponentAlignments::Right));
+    if (UIWidgets::CVarCombobox("Color Scheme", CVAR_COSMETIC("DefaultColorScheme"), colorSchemes,
+                                UIWidgets::ComboboxOptions()
+                                    .DefaultIndex(COLORSCHEME_N64)
+                                    .Color(THEME_COLOR)
+                                    .LabelPosition(UIWidgets::LabelPositions::Near)
+                                    .ComponentAlignment(UIWidgets::ComponentAlignments::Right))) {
+        ApplyOrResetCustomGfxPatches();
+    }
     UIWidgets::CVarCheckbox("Sync Rainbow colors", CVAR_COSMETIC("RainbowSync"),
                             UIWidgets::CheckboxOptions().Color(THEME_COLOR));
     UIWidgets::CVarSliderFloat("Rainbow Speed", CVAR_COSMETIC("RainbowSpeed"),
@@ -2589,6 +3364,20 @@ void RegisterCosmeticHooks() {
 
     COND_HOOK(OnGameFrameUpdate, true, CosmeticsUpdateTick);
     COND_HOOK(OnAssetAltChange, true, []() { ApplyOrResetCustomGfxPatches(true); });
+    // TODO: enemy health bar PosType/PosX/PosY and Width are still read in z_parameter.c
+    COND_HOOK(OnHudElementPosition, true, HudElement_ApplyPosition);
+    COND_HOOK(OnCosmeticColor, true, CosmeticColor_Apply);
+    COND_HOOK(OnCosmeticTint, true, CosmeticColor_ApplyTint);
+    COND_HOOK(OnMessageTextColor, true, MessageTextColor_Apply);
+    COND_HOOK(OnFileChooseMain, true, FileChoose_ApplyWindowColors);
+    COND_HOOK(OnEffectBlureUpdate, true, EffectBlure_ApplyTrailCosmetics);
+    COND_ID_HOOK(OnActorUpdate, ACTOR_EN_ELF, true, Navi_FollowTargetColors);
+    COND_HOOK(OnPlayerUpdate, true, Navi_FollowReticleColors);
+    COND_VB_SHOULD(VB_START_HEART_ROW, true, {
+        int32_t heartIndex = va_arg(args, int32_t);
+        int32_t lineLength = CVarGetInteger(CVAR_COSMETIC("HUD.Hearts.LineLength"), 10);
+        *should = lineLength != 0 && (heartIndex + 1) % lineLength == 0;
+    });
 }
 
 void RegisterCosmeticWidgets() {

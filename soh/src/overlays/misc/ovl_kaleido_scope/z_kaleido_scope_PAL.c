@@ -1098,10 +1098,10 @@ static void* sCursorTexs[] = {
     gPauseMenuCursorBottomRightTex,
 };
 
-static Color_RGB8 sCursorColors[3] = {
+static s16 sCursorColors[][3] = {
     { 255, 255, 255 },
     { 255, 255, 0 },
-    { 0, 50, 255 },
+    { 0, 255, 50 },
 };
 
 const Color_RGB8 Cursor_ABTN_ori = { 0, 255, 50 };
@@ -1346,29 +1346,23 @@ void KaleidoScope_DrawCursor(PlayState* play, u16 pageIndex) {
 
     temp = pauseCtx->unk_1E4;
 
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.AButton.Changed"), 0)) {
-        sCursorColors[2] = CVarGetColor24(CVAR_COSMETIC("HUD.AButton.Value"), sCursorColors[2]);
-    } else if (CVarGetInteger(CVAR_COSMETIC("DefaultColorScheme"), COLORSCHEME_N64) == COLORSCHEME_GAMECUBE) {
-        sCursorColors[2] = (Color_RGB8){ 0, 255, 50 };
-    }
-
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CButtons.Changed"), 0)) {
-        sCursorColors[1] = CVarGetColor24(CVAR_COSMETIC("HUD.CButtons.Value"), sCursorColors[1]);
-    }
-
     if ((((pauseCtx->unk_1E4 == 0) || (temp == 8)) && (pauseCtx->state == 6)) ||
         ((pauseCtx->pageIndex == PAUSE_QUEST) && ((temp < 3) || (temp == 5) || (temp == 8)))) {
 
         if (pauseCtx->pageIndex == pageIndex) {
             s16 i;
             s16 j;
+            Color_RGBA8 cursorColor = { sCursorColors[pauseCtx->cursorColorSet >> 2][0],
+                                        sCursorColors[pauseCtx->cursorColorSet >> 2][1],
+                                        sCursorColors[pauseCtx->cursorColorSet >> 2][2], 255 };
+
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_PAUSE_CURSOR_SET(pauseCtx->cursorColorSet >> 2),
+                                                  &cursorColor);
 
             gDPPipeSync(POLY_OPA_DISP++);
             gDPSetCombineLERP(POLY_OPA_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0,
                               PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0);
-            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sCursorColors[pauseCtx->cursorColorSet >> 2].r,
-                            sCursorColors[pauseCtx->cursorColorSet >> 2].g,
-                            sCursorColors[pauseCtx->cursorColorSet >> 2].b, 255);
+            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cursorColor.r, cursorColor.g, cursorColor.b, 255);
             gDPSetEnvColor(POLY_OPA_DISP++, D_8082AB8C, D_8082AB90, D_8082AB94, 255);
             gSPVertex(POLY_OPA_DISP++, pauseCtx->cursorVtx, 16, 0);
 
@@ -1422,26 +1416,10 @@ Gfx* KaleidoScope_DrawPageSections(Gfx* gfx, Vtx* vertices, void** textures) {
 }
 
 void KaleidoScope_DrawPages(PlayState* play, GraphicsContext* gfxCtx) {
-    static Color_RGB8 D_8082ACF4[12] = {
+    static s16 D_8082ACF4[][3] = {
         { 0, 0, 0 }, { 0, 0, 0 },     { 0, 0, 0 },    { 0, 0, 0 }, { 255, 255, 0 }, { 0, 0, 0 },
-        { 0, 0, 0 }, { 255, 255, 0 }, { 0, 50, 255 }, { 0, 0, 0 }, { 0, 0, 0 },     { 0, 50, 255 },
+        { 0, 0, 0 }, { 255, 255, 0 }, { 0, 255, 50 }, { 0, 0, 0 }, { 0, 0, 0 },     { 0, 255, 50 },
     };
-    Color_RGB8 aButtonColor = { 100, 100, 255 };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.AButton.Changed"), 0)) {
-        aButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.AButton.Value"), aButtonColor);
-        D_8082ACF4[8] = CVarGetColor24(CVAR_COSMETIC("HUD.AButton.Value"), D_8082ACF4[8]);
-        D_8082ACF4[11] = CVarGetColor24(CVAR_COSMETIC("HUD.AButton.Value"), D_8082ACF4[11]);
-    } else if (CVarGetInteger(CVAR_COSMETIC("DefaultColorScheme"), COLORSCHEME_N64) == COLORSCHEME_GAMECUBE) {
-        aButtonColor = (Color_RGB8){ 100, 255, 100 };
-        D_8082ACF4[8] = (Color_RGB8){ 0, 255, 50 };
-        D_8082ACF4[11] = (Color_RGB8){ 0, 255, 50 };
-    }
-
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CButtons.Changed"), 0)) {
-        D_8082ACF4[4] = CVarGetColor24(CVAR_COSMETIC("HUD.CButtons.Value"), D_8082ACF4[4]);
-        D_8082ACF4[7] = CVarGetColor24(CVAR_COSMETIC("HUD.CButtons.Value"), D_8082ACF4[7]);
-    }
-
     static s16 D_8082AD3C = 20;
     static s16 D_8082AD40 = 0;
     static s16 D_8082AD44 = 0;
@@ -1453,26 +1431,35 @@ void KaleidoScope_DrawPages(PlayState* play, GraphicsContext* gfxCtx) {
     s16 stepR;
     s16 stepG;
     s16 stepB;
+    Color_RGBA8 aButtonColor = { 100, 255, 100, 255 };
+
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_PAUSE_PROMPT_CURSOR, &aButtonColor);
 
     FrameInterpolation_RecordOpenChild(NULL, pauseCtx->state + pauseCtx->pageIndex * 100);
     OPEN_DISPS(gfxCtx);
 
     if ((pauseCtx->state < 8) || (pauseCtx->state > 0x11)) {
         if (pauseCtx->state != 7) {
-            stepR = ABS(D_8082AB8C - D_8082ACF4[pauseCtx->cursorColorSet + D_8082AD40].r) / D_8082AD3C;
-            stepG = ABS(D_8082AB90 - D_8082ACF4[pauseCtx->cursorColorSet + D_8082AD40].g) / D_8082AD3C;
-            stepB = ABS(D_8082AB94 - D_8082ACF4[pauseCtx->cursorColorSet + D_8082AD40].b) / D_8082AD3C;
-            if (D_8082AB8C >= D_8082ACF4[pauseCtx->cursorColorSet + D_8082AD40].r) {
+            Color_RGBA8 cursorTarget = { D_8082ACF4[pauseCtx->cursorColorSet + D_8082AD40][0],
+                                         D_8082ACF4[pauseCtx->cursorColorSet + D_8082AD40][1],
+                                         D_8082ACF4[pauseCtx->cursorColorSet + D_8082AD40][2], 255 };
+
+            GameInteractor_ExecuteOnCosmeticColor(
+                COSMETIC_COLOR_PAUSE_CURSOR_FLASH_INDEX(pauseCtx->cursorColorSet + D_8082AD40), &cursorTarget);
+            stepR = ABS(D_8082AB8C - cursorTarget.r) / D_8082AD3C;
+            stepG = ABS(D_8082AB90 - cursorTarget.g) / D_8082AD3C;
+            stepB = ABS(D_8082AB94 - cursorTarget.b) / D_8082AD3C;
+            if (D_8082AB8C >= cursorTarget.r) {
                 D_8082AB8C -= stepR;
             } else {
                 D_8082AB8C += stepR;
             }
-            if (D_8082AB90 >= D_8082ACF4[pauseCtx->cursorColorSet + D_8082AD40].g) {
+            if (D_8082AB90 >= cursorTarget.g) {
                 D_8082AB90 -= stepG;
             } else {
                 D_8082AB90 += stepG;
             }
-            if (D_8082AB94 >= D_8082ACF4[pauseCtx->cursorColorSet + D_8082AD40].b) {
+            if (D_8082AB94 >= cursorTarget.b) {
                 D_8082AB94 -= stepB;
             } else {
                 D_8082AB94 += stepB;
@@ -1480,9 +1467,9 @@ void KaleidoScope_DrawPages(PlayState* play, GraphicsContext* gfxCtx) {
 
             D_8082AD3C--;
             if (D_8082AD3C == 0) {
-                D_8082AB8C = D_8082ACF4[pauseCtx->cursorColorSet + D_8082AD40].r;
-                D_8082AB90 = D_8082ACF4[pauseCtx->cursorColorSet + D_8082AD40].g;
-                D_8082AB94 = D_8082ACF4[pauseCtx->cursorColorSet + D_8082AD40].b;
+                D_8082AB8C = cursorTarget.r;
+                D_8082AB90 = cursorTarget.g;
+                D_8082AB94 = cursorTarget.b;
                 D_8082AD3C = ZREG(28 + D_8082AD40);
                 D_8082AD40++;
                 if (D_8082AD40 >= 4) {
@@ -1884,34 +1871,6 @@ void KaleidoScope_DrawPages(PlayState* play, GraphicsContext* gfxCtx) {
 }
 
 void KaleidoScope_DrawInfoPanel(PlayState* play) {
-    Color_RGB8 aButtonColor = { 0, 100, 255 };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.AButton.Changed"), 0)) {
-        aButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.AButton.Value"), aButtonColor);
-    } else if (CVarGetInteger(CVAR_COSMETIC("DefaultColorScheme"), COLORSCHEME_N64) == COLORSCHEME_GAMECUBE) {
-        aButtonColor = (Color_RGB8){ 0, 255, 100 };
-    }
-
-    Color_RGB8 cButtonsColor = { 255, 160, 0 };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CButtons.Changed"), 0)) {
-        cButtonsColor = CVarGetColor24(CVAR_COSMETIC("HUD.CButtons.Value"), cButtonsColor);
-    }
-    Color_RGB8 cUpButtonColor = cButtonsColor;
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CUpButton.Changed"), 0)) {
-        cUpButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.CUpButton.Value"), cUpButtonColor);
-    }
-    Color_RGB8 cDownButtonColor = cButtonsColor;
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CDownButton.Changed"), 0)) {
-        cDownButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.CDownButton.Value"), cDownButtonColor);
-    }
-    Color_RGB8 cLeftButtonColor = cButtonsColor;
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CLeftButton.Changed"), 0)) {
-        cLeftButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.CLeftButton.Value"), cLeftButtonColor);
-    }
-    Color_RGB8 cRightButtonColor = cButtonsColor;
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CRightButton.Changed"), 0)) {
-        cRightButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.CRightButton.Value"), cRightButtonColor);
-    }
-
     static const void* sToEquipTextures[4] = {
         gPauseToEquipENGTex,
         gPauseToEquipGERTex,
@@ -2107,8 +2066,8 @@ void KaleidoScope_DrawInfoPanel(PlayState* play) {
 
     gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
 
-    const Color_RGBA8 namePanelColor =
-        CVarGetColor(CVAR_COSMETIC("Kaleido.NamePanel.Value"), (Color_RGBA8){ 90, 100, 130, 255 });
+    Color_RGBA8 namePanelColor = { 90, 100, 130, 255 };
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_PAUSE_NAME_PANEL, &namePanelColor);
 
     gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, namePanelColor.r, namePanelColor.g, namePanelColor.b, namePanelColor.a);
     gSPVertex(POLY_OPA_DISP++, &pauseCtx->infoPanelVtx[0], 16, 0);
@@ -2254,12 +2213,8 @@ void KaleidoScope_DrawInfoPanel(PlayState* play) {
 
             pauseCtx->infoPanelVtx[21].v.tc[0] = pauseCtx->infoPanelVtx[23].v.tc[0] = D_8082ADE0[gSaveContext.language]
                                                                                       << 5;
-            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, aButtonColor.r, aButtonColor.g, aButtonColor.b, 255);
-            // gSPDisplayList(POLY_OPA_DISP++, gAButtonIconDL);//This is changed to load the texture only so we can prim
-            // color it.
-            gDPLoadTextureBlock(POLY_OPA_DISP++, gABtnSymbolTex, G_IM_FMT_IA, G_IM_SIZ_8b, 24, 16, 0,
-                                G_TX_NOMIRROR | G_TX_CLAMP, G_TX_NOMIRROR | G_TX_CLAMP, 4, 4, G_TX_NOLOD, G_TX_NOLOD);
-            gSP1Quadrangle(POLY_OPA_DISP++, 0, 2, 3, 1, 0);
+
+            gSPDisplayList(POLY_OPA_DISP++, gAButtonIconDL);
 
             gDPPipeSync(POLY_OPA_DISP++);
             gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, 255, 255, 255, 255);
@@ -2309,47 +2264,8 @@ void KaleidoScope_DrawInfoPanel(PlayState* play) {
                 pauseCtx->infoPanelVtx[21].v.tc[0] = pauseCtx->infoPanelVtx[23].v.tc[0] =
                     D_8082ADD8[gSaveContext.language] << 5;
 
-                s16 PosX; // General Pos of C button icon
-                if (gSaveContext.language == LANGUAGE_ENG || gSaveContext.language == LANGUAGE_JPN) {
-                    PosX = 112;
-                } else if (gSaveContext.language == LANGUAGE_GER) {
-                    PosX = 175;
-                } else { // French
-                    PosX = 98;
-                }
-                s16 PosY = 200 - pauseCtx->infoPanelOffsetY; // General Pos of C button icon
-                s16 icon_w = 46;                             // Original texture size
-                s16 icon_h = 16;
-                s32 icon_x_offset;
-                s16 icon_w_crop = 17.0f;             // Left
-                int height = icon_h * 1.0f;          // Adjust Height with scale
-                int width = icon_w * 1.0f;           // Adjust Width with scale
-                int width_crop = icon_w_crop * 1.0f; // Adjust Width with scale
-                int height_factor = (1 << 10) * icon_h / height;
-                int width_factor = (1 << 10) * icon_w / width;
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cButtonsColor.r, cButtonsColor.g, cButtonsColor.b, 255);
-                for (s16 i = 0; i < 3; i++) {
-                    if (i == 0) {
-                        icon_x_offset = width_crop * 3 - 3;
-                        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cRightButtonColor.r, cRightButtonColor.g,
-                                        cRightButtonColor.b, 255);
-                    } else if (i == 1) {
-                        icon_x_offset = width_crop * 2 - 3;
-                        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cDownButtonColor.r, cDownButtonColor.g,
-                                        cDownButtonColor.b, 255);
-                    } else if (i == 2) {
-                        icon_x_offset = width_crop;
-                        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cLeftButtonColor.r, cLeftButtonColor.g,
-                                        cLeftButtonColor.b, 255);
-                    }
-                    gDPLoadTextureBlock(POLY_OPA_DISP++, gCBtnSymbolsTex, G_IM_FMT_IA, G_IM_SIZ_8b, icon_w, icon_h, 0,
-                                        G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK,
-                                        G_TX_NOLOD, G_TX_NOLOD);
-                    // gSPScisTextureRectangle(POLY_OPA_DISP++,PosX << 2, PosY << 2, (PosX + icon_x_offset) << 2, (PosY
-                    // + height) << 2, G_TX_RENDERTILE, 0, 0, width_factor, height_factor);
-                    gSPWideTextureRectangle(POLY_OPA_DISP++, PosX << 2, PosY << 2, (PosX + icon_x_offset) << 2,
-                                            (PosY + height) << 2, G_TX_WRAP, 0, 0, width_factor, height_factor);
-                }
+                gSPDisplayList(POLY_OPA_DISP++, gCButtonIconsDL);
+
                 gDPPipeSync(POLY_OPA_DISP++);
                 gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, 255, 255, 255, 255);
                 POLY_OPA_DISP = KaleidoScope_QuadTextureIA8(POLY_OPA_DISP, sToEquipTextures[gSaveContext.language],
@@ -2380,12 +2296,7 @@ void KaleidoScope_DrawInfoPanel(PlayState* play) {
                     pauseCtx->infoPanelVtx[21].v.tc[0] = pauseCtx->infoPanelVtx[23].v.tc[0] =
                         D_8082ADE8[gSaveContext.language] << 5;
 
-                    gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, aButtonColor.r, aButtonColor.g, aButtonColor.b, 255);
-                    // gSPDisplayList(POLY_OPA_DISP++, gAButtonIconDL);
-                    gDPLoadTextureBlock(POLY_OPA_DISP++, gABtnSymbolTex, G_IM_FMT_IA, G_IM_SIZ_8b, 24, 16, 0,
-                                        G_TX_NOMIRROR | G_TX_CLAMP, G_TX_NOMIRROR | G_TX_CLAMP, 4, 4, G_TX_NOLOD,
-                                        G_TX_NOLOD);
-                    gSP1Quadrangle(POLY_OPA_DISP++, 0, 2, 3, 1, 0);
+                    gSPDisplayList(POLY_OPA_DISP++, gAButtonIconDL);
 
                     gDPPipeSync(POLY_OPA_DISP++);
                     gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, 255, 255, 255, 255);
@@ -2416,12 +2327,7 @@ void KaleidoScope_DrawInfoPanel(PlayState* play) {
                     return;
                 }
 
-                // gSPDisplayList(POLY_OPA_DISP++, gAButtonIconDL);
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, aButtonColor.r, aButtonColor.g, aButtonColor.b, 255);
-                gDPLoadTextureBlock(POLY_OPA_DISP++, gABtnSymbolTex, G_IM_FMT_IA, G_IM_SIZ_8b, 24, 16, 0,
-                                    G_TX_NOMIRROR | G_TX_CLAMP, G_TX_NOMIRROR | G_TX_CLAMP, 4, 4, G_TX_NOLOD,
-                                    G_TX_NOLOD);
-                gSP1Quadrangle(POLY_OPA_DISP++, 0, 2, 3, 1, 0);
+                gSPDisplayList(POLY_OPA_DISP++, gAButtonIconDL);
 
                 gDPPipeSync(POLY_OPA_DISP++);
                 gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, 255, 255, 255, 255);
@@ -2571,15 +2477,15 @@ void KaleidoScope_SetView(PauseContext* pauseCtx, f32 x, f32 y, f32 z) {
     func_800AAA50(&pauseCtx->view, 127);
 }
 
-static u8 sPageVtxColorR[][4] = {
+static u8 D_8082AE48[][4] = {
     { 10, 70, 70, 10 },   { 10, 90, 90, 10 },   { 80, 140, 140, 80 },
     { 80, 120, 120, 80 }, { 80, 140, 140, 80 }, { 50, 110, 110, 50 },
 };
-static u8 sPageVtxColorG[][4] = {
+static u8 D_8082AE60[][4] = {
     { 50, 100, 100, 50 }, { 50, 100, 100, 50 }, { 40, 60, 60, 40 },
     { 80, 120, 120, 80 }, { 40, 60, 60, 40 },   { 50, 110, 110, 50 },
 };
-static u8 sPageVtxColorB[][4] = {
+static u8 D_8082AE78[][4] = {
     { 80, 130, 130, 80 }, { 40, 60, 60, 40 }, { 30, 60, 60, 30 },
     { 50, 70, 70, 50 },   { 30, 60, 60, 30 }, { 50, 110, 110, 50 },
 };
@@ -2707,87 +2613,10 @@ static s16 D_8082B0E4[] = {
     0x0019, 0x000D, 0x0001, 0x0001, 0x000D, 0x0015, 0x000F, 0x000D, 0x000C, 0x0001, 0x0000,
 };
 
-static const char* gPageVtxColorCvars[][4] = {
-    {
-        CVAR_COSMETIC("Kaleido.ItemSelA.Value"),
-        CVAR_COSMETIC("Kaleido.ItemSelB.Value"),
-        CVAR_COSMETIC("Kaleido.ItemSelC.Value"),
-        CVAR_COSMETIC("Kaleido.ItemSelD.Value"),
-    },
-    {
-        CVAR_COSMETIC("Kaleido.EquipSelA.Value"),
-        CVAR_COSMETIC("Kaleido.EquipSelB.Value"),
-        CVAR_COSMETIC("Kaleido.EquipSelC.Value"),
-        CVAR_COSMETIC("Kaleido.EquipSelD.Value"),
-    },
-    {
-        CVAR_COSMETIC("Kaleido.MapSelDunA.Value"),
-        CVAR_COSMETIC("Kaleido.MapSelDunB.Value"),
-        CVAR_COSMETIC("Kaleido.MapSelDunC.Value"),
-        CVAR_COSMETIC("Kaleido.MapSelDunD.Value"),
-    },
-    {
-        CVAR_COSMETIC("Kaleido.QuestStatusA.Value"),
-        CVAR_COSMETIC("Kaleido.QuestStatusB.Value"),
-        CVAR_COSMETIC("Kaleido.QuestStatusC.Value"),
-        CVAR_COSMETIC("Kaleido.QuestStatusD.Value"),
-    },
-    {
-        CVAR_COSMETIC("Kaleido.MapSelectA.Value"),
-        CVAR_COSMETIC("Kaleido.MapSelectB.Value"),
-        CVAR_COSMETIC("Kaleido.MapSelectC.Value"),
-        CVAR_COSMETIC("Kaleido.MapSelectD.Value"),
-    },
-    {
-        CVAR_COSMETIC("Kaleido.SaveA.Value"),
-        CVAR_COSMETIC("Kaleido.SaveB.Value"),
-        CVAR_COSMETIC("Kaleido.SaveC.Value"),
-        CVAR_COSMETIC("Kaleido.SaveD.Value"),
-    },
-};
-
-s16 func_80823A0C(PlayState* play, Vtx* vtx, s16 pageIndex, s16 arg3) {
+s16 func_80823A0C(PlayState* play, Vtx* vtx, s16 arg2, s16 arg3) {
     static s16 D_8082B110 = 0;
     static s16 D_8082B114 = 1;
     static s16 D_8082B118 = 0;
-    static const Color_RGBA8 pageColors[][4] = {
-        {
-            { 10, 50, 80, 255 },
-            { 70, 100, 130, 255 },
-            { 70, 100, 130, 255 },
-            { 10, 50, 80, 255 },
-        },
-        {
-            { 10, 50, 40, 255 },
-            { 90, 100, 60, 255 },
-            { 90, 100, 60, 255 },
-            { 10, 50, 40, 255 },
-        },
-        {
-            { 80, 40, 30, 255 },
-            { 140, 60, 60, 255 },
-            { 140, 60, 60, 255 },
-            { 80, 40, 30, 255 },
-        },
-        {
-            { 80, 80, 50, 255 },
-            { 120, 120, 70, 255 },
-            { 120, 120, 70, 255 },
-            { 80, 80, 50, 255 },
-        },
-        {
-            { 80, 40, 30, 255 },
-            { 140, 60, 60, 255 },
-            { 140, 60, 60, 255 },
-            { 80, 40, 30, 255 },
-        },
-        {
-            { 50, 50, 50, 255 },
-            { 110, 110, 110, 255 },
-            { 110, 110, 110, 255 },
-            { 50, 50, 50, 255 },
-        },
-    };
     PauseContext* pauseCtx = &play->pauseCtx;
     s16* ptr1;
     s16* ptr2;
@@ -2797,127 +2626,116 @@ s16 func_80823A0C(PlayState* play, Vtx* vtx, s16 pageIndex, s16 arg3) {
     s16 phi_t0;
     s16 phi_a1;
     s16 phi_a2;
-    s16 colorIndex; // Also used for other things.
-    s16 vtxIndex;
+    s16 phi_t3;
+    s16 phi_t1;
 
     phi_t0 = -200;
 
-    for (vtxIndex = 0, colorIndex = 0; colorIndex < 3; colorIndex++) {
+    for (phi_t1 = 0, phi_t3 = 0; phi_t3 < 3; phi_t3++) {
         phi_t0 += 80;
 
-        for (phi_a1 = 80, phi_a2 = 0; phi_a2 < 5; phi_a2++, vtxIndex += 4, phi_a1 -= 32) {
-            vtx[vtxIndex + 0].v.ob[0] = vtx[vtxIndex + 2].v.ob[0] = phi_t0;
+        for (phi_a1 = 80, phi_a2 = 0; phi_a2 < 5; phi_a2++, phi_t1 += 4, phi_a1 -= 32) {
+            vtx[phi_t1 + 0].v.ob[0] = vtx[phi_t1 + 2].v.ob[0] = phi_t0;
 
-            vtx[vtxIndex + 1].v.ob[0] = vtx[vtxIndex + 3].v.ob[0] = vtx[vtxIndex + 0].v.ob[0] + 80;
+            vtx[phi_t1 + 1].v.ob[0] = vtx[phi_t1 + 3].v.ob[0] = vtx[phi_t1 + 0].v.ob[0] + 80;
 
-            vtx[vtxIndex + 0].v.ob[1] = vtx[vtxIndex + 1].v.ob[1] = phi_a1 + pauseCtx->offsetY;
+            vtx[phi_t1 + 0].v.ob[1] = vtx[phi_t1 + 1].v.ob[1] = phi_a1 + pauseCtx->offsetY;
 
-            vtx[vtxIndex + 2].v.ob[1] = vtx[vtxIndex + 3].v.ob[1] = vtx[vtxIndex + 0].v.ob[1] - 32;
+            vtx[phi_t1 + 2].v.ob[1] = vtx[phi_t1 + 3].v.ob[1] = vtx[phi_t1 + 0].v.ob[1] - 32;
 
-            vtx[vtxIndex + 0].v.ob[2] = vtx[vtxIndex + 1].v.ob[2] = vtx[vtxIndex + 2].v.ob[2] =
-                vtx[vtxIndex + 3].v.ob[2] = 0;
+            vtx[phi_t1 + 0].v.ob[2] = vtx[phi_t1 + 1].v.ob[2] = vtx[phi_t1 + 2].v.ob[2] = vtx[phi_t1 + 3].v.ob[2] = 0;
 
-            vtx[vtxIndex + 0].v.flag = 0;
-            vtx[vtxIndex + 1].v.flag = 0;
-            vtx[vtxIndex + 2].v.flag = 0;
-            vtx[vtxIndex + 3].v.flag = 0;
+            vtx[phi_t1 + 0].v.flag = 0;
+            vtx[phi_t1 + 1].v.flag = 0;
+            vtx[phi_t1 + 2].v.flag = 0;
+            vtx[phi_t1 + 3].v.flag = 0;
 
-            vtx[vtxIndex + 0].v.tc[0] = vtx[vtxIndex + 0].v.tc[1] = vtx[vtxIndex + 1].v.tc[1] =
-                vtx[vtxIndex + 2].v.tc[0] = 0;
+            vtx[phi_t1 + 0].v.tc[0] = vtx[phi_t1 + 0].v.tc[1] = vtx[phi_t1 + 1].v.tc[1] = vtx[phi_t1 + 2].v.tc[0] = 0;
 
-            vtx[vtxIndex + 1].v.tc[0] = vtx[vtxIndex + 3].v.tc[0] = 0xA00;
+            vtx[phi_t1 + 1].v.tc[0] = vtx[phi_t1 + 3].v.tc[0] = 0xA00;
 
-            vtx[vtxIndex + 2].v.tc[1] = vtx[vtxIndex + 3].v.tc[1] = 0x400;
+            vtx[phi_t1 + 2].v.tc[1] = vtx[phi_t1 + 3].v.tc[1] = 0x400;
 
-            // Color in the pages. Pages are drawn in groups. Each group is faded to the next. There are 4 total colors,
-            // 1/4 and 2/3 are the same creating a mirrored color set.
-            //  TODO, go from 0,1,2,3 to 0,1,1,0 to only use two colors instead of 4.
-            Color_RGBA8 color =
-                CVarGetColor(gPageVtxColorCvars[pageIndex][colorIndex], pageColors[pageIndex][colorIndex]);
-            Color_RGBA8 colorb =
-                CVarGetColor(gPageVtxColorCvars[pageIndex][colorIndex + 1], pageColors[pageIndex][colorIndex + 1]);
-            vtx[vtxIndex + 0].v.cn[0] = vtx[vtxIndex + 2].v.cn[0] =
-                color.r; // sPageVtxColorR[pageIndex][colorIndex + 0];
+            Color_RGBA8 pageColor0 = { D_8082AE48[arg2][phi_t3 + 0], D_8082AE60[arg2][phi_t3 + 0],
+                                       D_8082AE78[arg2][phi_t3 + 0], 255 };
+            Color_RGBA8 pageColor1 = { D_8082AE48[arg2][phi_t3 + 1], D_8082AE60[arg2][phi_t3 + 1],
+                                       D_8082AE78[arg2][phi_t3 + 1], 255 };
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_PAUSE_PAGE_VTX(arg2, phi_t3 + 0), &pageColor0);
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_PAUSE_PAGE_VTX(arg2, phi_t3 + 1), &pageColor1);
 
-            vtx[vtxIndex + 0].v.cn[1] = vtx[vtxIndex + 2].v.cn[1] =
-                color.g; // sPageVtxColorG[pageIndex][colorIndex + 0];
+            vtx[phi_t1 + 0].v.cn[0] = vtx[phi_t1 + 2].v.cn[0] = pageColor0.r;
 
-            vtx[vtxIndex + 0].v.cn[2] = vtx[vtxIndex + 2].v.cn[2] =
-                color.b; // sPageVtxColorB[pageIndex][colorIndex + 0];
+            vtx[phi_t1 + 0].v.cn[1] = vtx[phi_t1 + 2].v.cn[1] = pageColor0.g;
 
-            vtx[vtxIndex + 1].v.cn[0] = vtx[vtxIndex + 3].v.cn[0] =
-                colorb.r; // sPageVtxColorR[pageIndex][colorIndex + 1];
+            vtx[phi_t1 + 0].v.cn[2] = vtx[phi_t1 + 2].v.cn[2] = pageColor0.b;
 
-            vtx[vtxIndex + 1].v.cn[1] = vtx[vtxIndex + 3].v.cn[1] =
-                colorb.g; // sPageVtxColorG[pageIndex][colorIndex + 1];
+            vtx[phi_t1 + 1].v.cn[0] = vtx[phi_t1 + 3].v.cn[0] = pageColor1.r;
 
-            vtx[vtxIndex + 1].v.cn[2] = vtx[vtxIndex + 3].v.cn[2] =
-                colorb.b; // sPageVtxColorB[pageIndex][colorIndex + 1];
+            vtx[phi_t1 + 1].v.cn[1] = vtx[phi_t1 + 3].v.cn[1] = pageColor1.g;
 
-            vtx[vtxIndex + 0].v.cn[3] = vtx[vtxIndex + 2].v.cn[3] = vtx[vtxIndex + 1].v.cn[3] =
-                vtx[vtxIndex + 3].v.cn[3] = pauseCtx->alpha;
+            vtx[phi_t1 + 1].v.cn[2] = vtx[phi_t1 + 3].v.cn[2] = pageColor1.b;
+
+            vtx[phi_t1 + 0].v.cn[3] = vtx[phi_t1 + 2].v.cn[3] = vtx[phi_t1 + 1].v.cn[3] = vtx[phi_t1 + 3].v.cn[3] =
+                pauseCtx->alpha;
         }
     }
 
-    phi_s2 = vtxIndex;
+    phi_s2 = phi_t1;
 
     if (arg3 != 0) {
-        ptr1 = D_8082B000[pageIndex];
-        ptr2 = D_8082B018[pageIndex];
-        ptr3 = D_8082B030[pageIndex];
-        ptr4 = D_8082B048[pageIndex];
+        ptr1 = D_8082B000[arg2];
+        ptr2 = D_8082B018[arg2];
+        ptr3 = D_8082B030[arg2];
+        ptr4 = D_8082B048[arg2];
 
-        for (colorIndex = 0; colorIndex < arg3; colorIndex++, vtxIndex += 4) {
-            vtx[vtxIndex + 2].v.ob[0] = vtx[vtxIndex + 0].v.ob[0] = ptr1[colorIndex];
+        for (phi_t3 = 0; phi_t3 < arg3; phi_t3++, phi_t1 += 4) {
+            vtx[phi_t1 + 2].v.ob[0] = vtx[phi_t1 + 0].v.ob[0] = ptr1[phi_t3];
 
-            vtx[vtxIndex + 1].v.ob[0] = vtx[vtxIndex + 3].v.ob[0] = vtx[vtxIndex + 0].v.ob[0] + ptr2[colorIndex];
+            vtx[phi_t1 + 1].v.ob[0] = vtx[phi_t1 + 3].v.ob[0] = vtx[phi_t1 + 0].v.ob[0] + ptr2[phi_t3];
 
             if (!((pauseCtx->state >= 8) && (pauseCtx->state <= 0x11))) {
-                vtx[vtxIndex + 0].v.ob[1] = vtx[vtxIndex + 1].v.ob[1] = ptr3[colorIndex] + pauseCtx->offsetY;
+                vtx[phi_t1 + 0].v.ob[1] = vtx[phi_t1 + 1].v.ob[1] = ptr3[phi_t3] + pauseCtx->offsetY;
             } else {
-                vtx[vtxIndex + 0].v.ob[1] = vtx[vtxIndex + 1].v.ob[1] = YREG(60 + colorIndex) + pauseCtx->offsetY;
+                vtx[phi_t1 + 0].v.ob[1] = vtx[phi_t1 + 1].v.ob[1] = YREG(60 + phi_t3) + pauseCtx->offsetY;
             }
 
-            vtx[vtxIndex + 2].v.ob[1] = vtx[vtxIndex + 3].v.ob[1] = vtx[vtxIndex + 0].v.ob[1] - ptr4[colorIndex];
+            vtx[phi_t1 + 2].v.ob[1] = vtx[phi_t1 + 3].v.ob[1] = vtx[phi_t1 + 0].v.ob[1] - ptr4[phi_t3];
 
-            vtx[vtxIndex + 0].v.ob[2] = vtx[vtxIndex + 1].v.ob[2] = vtx[vtxIndex + 2].v.ob[2] =
-                vtx[vtxIndex + 3].v.ob[2] = 0;
+            vtx[phi_t1 + 0].v.ob[2] = vtx[phi_t1 + 1].v.ob[2] = vtx[phi_t1 + 2].v.ob[2] = vtx[phi_t1 + 3].v.ob[2] = 0;
 
-            vtx[vtxIndex + 0].v.flag = vtx[vtxIndex + 1].v.flag = vtx[vtxIndex + 2].v.flag = vtx[vtxIndex + 3].v.flag =
-                0;
+            vtx[phi_t1 + 0].v.flag = vtx[phi_t1 + 1].v.flag = vtx[phi_t1 + 2].v.flag = vtx[phi_t1 + 3].v.flag = 0;
 
-            vtx[vtxIndex + 0].v.tc[0] = vtx[vtxIndex + 0].v.tc[1] = vtx[vtxIndex + 1].v.tc[1] =
-                vtx[vtxIndex + 2].v.tc[0] = 0;
+            vtx[phi_t1 + 0].v.tc[0] = vtx[phi_t1 + 0].v.tc[1] = vtx[phi_t1 + 1].v.tc[1] = vtx[phi_t1 + 2].v.tc[0] = 0;
 
-            vtx[vtxIndex + 1].v.tc[0] = vtx[vtxIndex + 3].v.tc[0] = ptr2[colorIndex] << 5;
+            vtx[phi_t1 + 1].v.tc[0] = vtx[phi_t1 + 3].v.tc[0] = ptr2[phi_t3] << 5;
 
-            vtx[vtxIndex + 2].v.tc[1] = vtx[vtxIndex + 3].v.tc[1] = ptr4[colorIndex] << 5;
+            vtx[phi_t1 + 2].v.tc[1] = vtx[phi_t1 + 3].v.tc[1] = ptr4[phi_t3] << 5;
 
-            vtx[vtxIndex + 0].v.cn[0] = vtx[vtxIndex + 2].v.cn[0] = vtx[vtxIndex + 0].v.cn[1] =
-                vtx[vtxIndex + 2].v.cn[1] = vtx[vtxIndex + 0].v.cn[2] = vtx[vtxIndex + 2].v.cn[2] =
-                    vtx[vtxIndex + 1].v.cn[0] = vtx[vtxIndex + 3].v.cn[0] = vtx[vtxIndex + 1].v.cn[1] =
-                        vtx[vtxIndex + 3].v.cn[1] = vtx[vtxIndex + 1].v.cn[2] = vtx[vtxIndex + 3].v.cn[2] = 255;
+            vtx[phi_t1 + 0].v.cn[0] = vtx[phi_t1 + 2].v.cn[0] = vtx[phi_t1 + 0].v.cn[1] = vtx[phi_t1 + 2].v.cn[1] =
+                vtx[phi_t1 + 0].v.cn[2] = vtx[phi_t1 + 2].v.cn[2] = vtx[phi_t1 + 1].v.cn[0] = vtx[phi_t1 + 3].v.cn[0] =
+                    vtx[phi_t1 + 1].v.cn[1] = vtx[phi_t1 + 3].v.cn[1] = vtx[phi_t1 + 1].v.cn[2] =
+                        vtx[phi_t1 + 3].v.cn[2] = 255;
 
-            vtx[vtxIndex + 0].v.cn[3] = vtx[vtxIndex + 2].v.cn[3] = vtx[vtxIndex + 1].v.cn[3] =
-                vtx[vtxIndex + 3].v.cn[3] = pauseCtx->alpha;
+            vtx[phi_t1 + 0].v.cn[3] = vtx[phi_t1 + 2].v.cn[3] = vtx[phi_t1 + 1].v.cn[3] = vtx[phi_t1 + 3].v.cn[3] =
+                pauseCtx->alpha;
         }
 
-        if (pageIndex == 4) {
-            vtxIndex -= 12;
+        if (arg2 == 4) {
+            phi_t1 -= 12;
 
-            colorIndex = gSaveContext.worldMapArea;
+            phi_t3 = gSaveContext.worldMapArea;
 
-            vtx[vtxIndex + 0].v.ob[0] = vtx[vtxIndex + 2].v.ob[0] = D_8082B060[colorIndex];
+            vtx[phi_t1 + 0].v.ob[0] = vtx[phi_t1 + 2].v.ob[0] = D_8082B060[phi_t3];
 
-            if (colorIndex) {}
+            if (phi_t3) {}
 
-            vtx[vtxIndex + 1].v.ob[0] = vtx[vtxIndex + 3].v.ob[0] = vtx[vtxIndex + 0].v.ob[0] + D_8082B08C[colorIndex];
+            vtx[phi_t1 + 1].v.ob[0] = vtx[phi_t1 + 3].v.ob[0] = vtx[phi_t1 + 0].v.ob[0] + D_8082B08C[phi_t3];
 
-            vtx[vtxIndex + 0].v.ob[1] = vtx[vtxIndex + 1].v.ob[1] = D_8082B0B8[colorIndex] + pauseCtx->offsetY;
+            vtx[phi_t1 + 0].v.ob[1] = vtx[phi_t1 + 1].v.ob[1] = D_8082B0B8[phi_t3] + pauseCtx->offsetY;
 
-            vtx[vtxIndex + 2].v.ob[1] = vtx[vtxIndex + 3].v.ob[1] = vtx[vtxIndex + 0].v.ob[1] - D_8082B0E4[colorIndex];
+            vtx[phi_t1 + 2].v.ob[1] = vtx[phi_t1 + 3].v.ob[1] = vtx[phi_t1 + 0].v.ob[1] - D_8082B0E4[phi_t3];
 
-            vtxIndex += 12;
+            phi_t1 += 12;
 
             if (pauseCtx->tradeQuestLocation != 0xFF) {
                 if (D_8082B114 == 0) {
@@ -2937,14 +2755,14 @@ s16 func_80823A0C(PlayState* play, Vtx* vtx, s16 pageIndex, s16 arg3) {
                     D_8082B114--;
                 }
 
-                colorIndex = phi_s2 + (pauseCtx->tradeQuestLocation * 4) + 64;
+                phi_t3 = phi_s2 + (pauseCtx->tradeQuestLocation * 4) + 64;
                 phi_a2 = phi_s2 + 116;
 
-                vtx[phi_a2 + 0].v.ob[0] = vtx[phi_a2 + 2].v.ob[0] = vtx[colorIndex + 0].v.ob[0];
+                vtx[phi_a2 + 0].v.ob[0] = vtx[phi_a2 + 2].v.ob[0] = vtx[phi_t3 + 0].v.ob[0];
 
                 vtx[phi_a2 + 1].v.ob[0] = vtx[phi_a2 + 3].v.ob[0] = vtx[phi_a2 + 0].v.ob[0] + 8;
 
-                vtx[phi_a2 + 0].v.ob[1] = vtx[phi_a2 + 1].v.ob[1] = vtx[colorIndex + 0].v.ob[1] - D_8082B110 + 10;
+                vtx[phi_a2 + 0].v.ob[1] = vtx[phi_a2 + 1].v.ob[1] = vtx[phi_t3 + 0].v.ob[1] - D_8082B110 + 10;
 
                 vtx[phi_a2 + 0].v.ob[2] = vtx[phi_a2 + 1].v.ob[2] = vtx[phi_a2 + 2].v.ob[2] = vtx[phi_a2 + 3].v.ob[2] =
                     0;
@@ -2953,7 +2771,7 @@ s16 func_80823A0C(PlayState* play, Vtx* vtx, s16 pageIndex, s16 arg3) {
 
                 vtx[phi_a2 + 0].v.flag = vtx[phi_a2 + 1].v.flag = vtx[phi_a2 + 2].v.flag = vtx[phi_a2 + 3].v.flag = 0;
 
-                vtx[vtxIndex].v.tc[0] = vtx[vtxIndex].v.tc[1] = vtx[phi_a2 + 1].v.tc[1] = vtx[phi_a2 + 2].v.tc[0] = 0;
+                vtx[phi_t1].v.tc[0] = vtx[phi_t1].v.tc[1] = vtx[phi_a2 + 1].v.tc[1] = vtx[phi_a2 + 2].v.tc[0] = 0;
 
                 vtx[phi_a2 + 1].v.tc[0] = vtx[phi_a2 + 3].v.tc[0] = 0x100;
 
@@ -2970,7 +2788,7 @@ s16 func_80823A0C(PlayState* play, Vtx* vtx, s16 pageIndex, s16 arg3) {
         }
     }
 
-    return vtxIndex;
+    return phi_t1;
 }
 
 static s16 D_8082B11C[] = { 0, 4, 8, 12, 24, 32, 56 };

@@ -35,13 +35,6 @@ typedef enum {
 #include <map>
 #include <ship/window/gui/GuiWindow.h>
 #include "soh/SohGui/UIWidgets.hpp"
-extern "C" {
-#endif //__cplusplus
-
-Color_RGBA8 CosmeticsEditor_GetDefaultValue(const char* id);
-
-#ifdef __cplusplus
-}
 
 #define COSMETIC_OPTION(id, label, group, defaultColor, supportsAlpha, supportsRainbow, advancedOption)               \
     {                                                                                                                 \

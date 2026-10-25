@@ -70,6 +70,10 @@ void GameInteractor_ExecuteOnPresentTitleCard();
 void GameInteractor_ExecuteOnInterfaceUpdate();
 void GameInteractor_ExecuteOnKaleidoscopeUpdate(int16_t inDungeonScene);
 void GameInteractor_ExecuteOnMinimapDrawCompassIcons();
+void GameInteractor_ExecuteOnHudElementPosition(int32_t element, int16_t* x, int16_t* y, float* scale);
+void GameInteractor_ExecuteOnCosmeticColor(int32_t option, Color_RGBA8* color);
+void GameInteractor_ExecuteOnCosmeticTint(int32_t option, Gfx** gfx, bool enable);
+void GameInteractor_ExecuteOnEffectBlureUpdate(void* effect);
 
 // MARK: - Main Menu
 void GameInteractor_ExecuteOnPresentFileSelect();
@@ -99,6 +103,7 @@ void GameInteractor_ExecuteOnKaleidoUpdate();
 
 // MARK: - Messages
 void GameInteractor_ExecuteOnOpenText(uint16_t* textId, bool* loadFromMessageTable);
+void GameInteractor_ExecuteOnMessageTextColor(void* msgCtx, uint16_t colorParameter);
 
 // Mark: - Audio
 void GameInteractor_ExecuteOnSeqPlayerInit(int32_t playerIdx, int32_t seqId);

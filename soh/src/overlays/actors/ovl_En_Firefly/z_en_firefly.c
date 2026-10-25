@@ -7,6 +7,7 @@
 #include "z_en_firefly.h"
 #include "objects/object_firefly/object_firefly.h"
 #include "overlays/actors/ovl_Obj_Syokudai/z_obj_syokudai.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include <libultraship/bridge/consolevariablebridge.h>
 
@@ -742,10 +743,6 @@ void EnFirefly_PostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s* 
     static Color_RGBA8 fireAuraEnvColor = { 255, 50, 0, 0 };
     static Color_RGBA8 iceAuraPrimColor = { 100, 200, 255, 255 };
     static Color_RGBA8 iceAuraEnvColor = { 0, 0, 255, 0 };
-    Color_RGBA8 customFireAuraPrimColor = CVarGetColor(CVAR_COSMETIC("NPC.FireKeesePrimary.Value"), fireAuraPrimColor);
-    Color_RGBA8 customFireAuraEnvColor = CVarGetColor(CVAR_COSMETIC("NPC.FireKeeseSecondary.Value"), fireAuraEnvColor);
-    Color_RGBA8 customIceAuraPrimColor = CVarGetColor(CVAR_COSMETIC("NPC.IceKeesePrimary.Value"), iceAuraPrimColor);
-    Color_RGBA8 customIceAuraEnvColor = CVarGetColor(CVAR_COSMETIC("NPC.IceKeeseSecondary.Value"), iceAuraEnvColor);
     static Vec3f effVelocity = { 0.0f, 0.5f, 0.0f };
     static Vec3f effAccel = { 0.0f, 0.5f, 0.0f };
     static Vec3f limbSrc = { 0.0f, 0.0f, 0.0f };
@@ -785,27 +782,15 @@ void EnFirefly_PostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s* 
                 }
 
                 if (this->auraType == KEESE_AURA_FIRE) {
-                    if (CVarGetInteger(CVAR_COSMETIC("NPC.FireKeesePrimary.Changed"), 0)) {
-                        effPrimColor = &customFireAuraPrimColor;
-                    } else {
-                        effPrimColor = &fireAuraPrimColor;
-                    }
-                    if (CVarGetInteger(CVAR_COSMETIC("NPC.FireKeeseSecondary.Changed"), 0)) {
-                        effEnvColor = &customFireAuraEnvColor;
-                    } else {
-                        effEnvColor = &fireAuraEnvColor;
-                    }
+                    effPrimColor = &fireAuraPrimColor;
+                    effEnvColor = &fireAuraEnvColor;
+                    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_KEESE_FIRE_PRIM, effPrimColor);
+                    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_KEESE_FIRE_ENV, effEnvColor);
                 } else {
-                    if (CVarGetInteger(CVAR_COSMETIC("NPC.IceKeesePrimary.Changed"), 0)) {
-                        effPrimColor = &customIceAuraPrimColor;
-                    } else {
-                        effPrimColor = &iceAuraPrimColor;
-                    }
-                    if (CVarGetInteger(CVAR_COSMETIC("NPC.IceKeeseSecondary.Changed"), 0)) {
-                        effEnvColor = &customIceAuraEnvColor;
-                    } else {
-                        effEnvColor = &iceAuraEnvColor;
-                    }
+                    effPrimColor = &iceAuraPrimColor;
+                    effEnvColor = &iceAuraEnvColor;
+                    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_KEESE_ICE_PRIM, effPrimColor);
+                    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_KEESE_ICE_ENV, effEnvColor);
                 }
 
                 func_8002843C(play, &effPos, &effVelocity, &effAccel, effPrimColor, effEnvColor, 250, effScaleStep,

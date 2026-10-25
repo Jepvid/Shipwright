@@ -7,7 +7,6 @@
 #include "textures/parameter_static/parameter_static.h"
 #include "textures/message_static/message_static.h"
 #include "textures/message_texture_static/message_texture_static.h"
-#include "soh/Enhancements/cosmetics/CosmeticsEditor.h"
 #include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
@@ -86,15 +85,18 @@ s16 gOcarinaSongItemMap[] = {
 s32 sCharTexSize;
 s32 sCharTexScale;
 
-Color_RGB8 sOcarinaNoteABtnEnv;
-Color_RGB8 sOcarinaNoteCBtnEnv;
-Color_RGB8 sOcarinaNoteABtnPrim;
-Color_RGB8 sOcarinaNoteCBtnPrim;
-
-Color_RGB8 sOcarinaNoteCUpBtnPrim;
-Color_RGB8 sOcarinaNoteCLeftBtnPrim;
-Color_RGB8 sOcarinaNoteCRightBtnPrim;
-Color_RGB8 sOcarinaNoteCDownBtnPrim;
+s16 sOcarinaNoteAPrimR;
+s16 sOcarinaNoteAPrimB;
+s16 sOcarinaNoteAPrimG;
+s16 sOcarinaNoteAEnvR;
+s16 sOcarinaNoteAEnvB;
+s16 sOcarinaNoteAEnvG;
+s16 sOcarinaNoteCPrimR;
+s16 sOcarinaNoteCPrimB;
+s16 sOcarinaNoteCPrimG;
+s16 sOcarinaNoteCEnvR;
+s16 sOcarinaNoteCEnvB;
+s16 sOcarinaNoteCEnvG;
 
 void Message_ResetOcarinaNoteState(void) {
     R_OCARINA_NOTES_YPOS(0) = 189;
@@ -106,35 +108,18 @@ void Message_ResetOcarinaNoteState(void) {
     sOcarinaNotesAlphaValues[0] = sOcarinaNotesAlphaValues[1] = sOcarinaNotesAlphaValues[2] =
         sOcarinaNotesAlphaValues[3] = sOcarinaNotesAlphaValues[4] = sOcarinaNotesAlphaValues[5] =
             sOcarinaNotesAlphaValues[6] = sOcarinaNotesAlphaValues[7] = sOcarinaNotesAlphaValues[8] = 0;
-    sOcarinaNoteABtnPrim = (Color_RGB8){ 80, 150, 255 };
-    sOcarinaNoteABtnEnv = (Color_RGB8){ 10, 10, 10 };
-    sOcarinaNoteCBtnPrim = (Color_RGB8){ 255, 255, 50 };
-    sOcarinaNoteCBtnEnv = (Color_RGB8){ 10, 10, 10 };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.AButton.Changed"), 0)) {
-        sOcarinaNoteABtnPrim = CVarGetColor24(CVAR_COSMETIC("HUD.AButton.Value"), sOcarinaNoteABtnPrim);
-    } else if (CVarGetInteger(CVAR_COSMETIC("DefaultColorScheme"), COLORSCHEME_N64) == COLORSCHEME_GAMECUBE) {
-        sOcarinaNoteABtnPrim = (Color_RGB8){ 80, 255, 150 };
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CButtons.Changed"), 0)) {
-        sOcarinaNoteCBtnPrim = CVarGetColor24(CVAR_COSMETIC("HUD.CButtons.Value"), sOcarinaNoteCBtnPrim);
-    }
-
-    sOcarinaNoteCUpBtnPrim = sOcarinaNoteCBtnPrim;
-    sOcarinaNoteCDownBtnPrim = sOcarinaNoteCBtnPrim;
-    sOcarinaNoteCLeftBtnPrim = sOcarinaNoteCBtnPrim;
-    sOcarinaNoteCRightBtnPrim = sOcarinaNoteCBtnPrim;
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CUpButton.Changed"), 0)) {
-        sOcarinaNoteCUpBtnPrim = CVarGetColor24(CVAR_COSMETIC("HUD.CUpButton.Value"), sOcarinaNoteCUpBtnPrim);
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CDownButton.Changed"), 0)) {
-        sOcarinaNoteCDownBtnPrim = CVarGetColor24(CVAR_COSMETIC("HUD.CDownButton.Value"), sOcarinaNoteCDownBtnPrim);
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CLeftButton.Changed"), 0)) {
-        sOcarinaNoteCLeftBtnPrim = CVarGetColor24(CVAR_COSMETIC("HUD.CLeftButton.Value"), sOcarinaNoteCLeftBtnPrim);
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CRightButton.Changed"), 0)) {
-        sOcarinaNoteCRightBtnPrim = CVarGetColor24(CVAR_COSMETIC("HUD.CRightButton.Value"), sOcarinaNoteCRightBtnPrim);
-    }
+    sOcarinaNoteAPrimR = 80;
+    sOcarinaNoteAPrimG = 255;
+    sOcarinaNoteAPrimB = 150;
+    sOcarinaNoteAEnvR = 10;
+    sOcarinaNoteAEnvG = 10;
+    sOcarinaNoteAEnvB = 10;
+    sOcarinaNoteCPrimR = 255;
+    sOcarinaNoteCPrimG = 255;
+    sOcarinaNoteCPrimB = 50;
+    sOcarinaNoteCEnvR = 10;
+    sOcarinaNoteCEnvG = 10;
+    sOcarinaNoteCEnvB = 10;
 }
 
 void Message_UpdateOcarinaGame(PlayState* play) {
@@ -415,81 +400,6 @@ void Message_FindCreditsMessage(PlayState* play, u16 textId) {
     }
 }
 
-#pragma region[SoH] Cosmetics
-
-#define MESSAGE_COSMETICS_HANDLE_COLOR(id)                                                                       \
-    if (CVarGetInteger(CVAR_COSMETIC("Message." id ".Changed"), 0)) {                                            \
-        Color_RGBA8 color =                                                                                      \
-            CVarGetColor(CVAR_COSMETIC("Message." id ".Value"), CosmeticsEditor_GetDefaultValue("Message." id)); \
-        msgCtx->textColorR = color.r;                                                                            \
-        msgCtx->textColorG = color.g;                                                                            \
-        msgCtx->textColorB = color.b;                                                                            \
-    }
-
-void Cosmetics_MaybeSetTextColor(MessageContext* msgCtx, u16 colorParameter) {
-    switch (colorParameter) {
-        case MSGCOL_RED:
-            if (msgCtx->textBoxType == TEXTBOX_TYPE_WOODEN) {
-                MESSAGE_COSMETICS_HANDLE_COLOR("Red.Wooden")
-            } else {
-                MESSAGE_COSMETICS_HANDLE_COLOR("Red.Normal")
-            }
-            break;
-        case MSGCOL_ADJUSTABLE:
-            if (msgCtx->textBoxType == TEXTBOX_TYPE_WOODEN) {
-                MESSAGE_COSMETICS_HANDLE_COLOR("Adjustable.Wooden")
-            } else {
-                MESSAGE_COSMETICS_HANDLE_COLOR("Adjustable.Normal")
-            }
-            break;
-        case MSGCOL_BLUE:
-            if (msgCtx->textBoxType == TEXTBOX_TYPE_WOODEN) {
-                MESSAGE_COSMETICS_HANDLE_COLOR("Blue.Wooden")
-            } else {
-                MESSAGE_COSMETICS_HANDLE_COLOR("Blue.Normal")
-            }
-            break;
-        case MSGCOL_LIGHTBLUE:
-            if (msgCtx->textBoxType == TEXTBOX_TYPE_WOODEN) {
-                MESSAGE_COSMETICS_HANDLE_COLOR("LightBlue.Wooden")
-            } else if (msgCtx->textBoxType == TEXTBOX_TYPE_NONE_NO_SHADOW) {
-                MESSAGE_COSMETICS_HANDLE_COLOR("LightBlue.NoneNoShadow")
-            } else {
-                MESSAGE_COSMETICS_HANDLE_COLOR("LightBlue.Normal")
-            }
-            break;
-        case MSGCOL_PURPLE:
-            if (msgCtx->textBoxType == TEXTBOX_TYPE_WOODEN) {
-                MESSAGE_COSMETICS_HANDLE_COLOR("Purple.Wooden")
-            } else {
-                MESSAGE_COSMETICS_HANDLE_COLOR("Purple.Normal")
-            }
-            break;
-        case MSGCOL_YELLOW:
-            if (msgCtx->textBoxType == TEXTBOX_TYPE_WOODEN) {
-                MESSAGE_COSMETICS_HANDLE_COLOR("Yellow.Wooden")
-            } else {
-                MESSAGE_COSMETICS_HANDLE_COLOR("Yellow.Normal")
-            }
-            break;
-        case MSGCOL_BLACK:
-            MESSAGE_COSMETICS_HANDLE_COLOR("Black")
-            break;
-        case MSGCOL_DEFAULT:
-        default:
-            if (msgCtx->textBoxType == TEXTBOX_TYPE_NONE_NO_SHADOW) {
-                MESSAGE_COSMETICS_HANDLE_COLOR("Default.NoneNoShadow")
-            } else {
-                MESSAGE_COSMETICS_HANDLE_COLOR("Default.Normal")
-            }
-            break;
-    }
-}
-
-#undef MESSAGE_COSMETICS_HANDLE_COLOR
-
-#pragma endregion
-
 void Message_SetTextColor(MessageContext* msgCtx, u16 colorParameter) {
     switch (colorParameter) {
         case MSGCOL_RED:
@@ -574,40 +484,35 @@ void Message_SetTextColor(MessageContext* msgCtx, u16 colorParameter) {
             }
             break;
     }
-    Cosmetics_MaybeSetTextColor(msgCtx, colorParameter);
+    GameInteractor_ExecuteOnMessageTextColor(msgCtx, colorParameter);
 }
 
 void Message_DrawTextboxIcon(PlayState* play, Gfx** p, s16 x, s16 y) {
-    // SoH [Cosmetics] The following Color_RGB8 were originally static
-    Color_RGB8 sIconPrimColors[2] = {
-        { 0, 80, 200 },
-        { 50, 130, 255 },
+    static s16 sIconPrimColors[][3] = {
+        { 0, 200, 80 },
+        { 50, 255, 130 },
     };
-    Color_RGB8 sIconEnvColors[2] = {
+    static s16 sIconEnvColors[][3] = {
         { 0, 0, 0 },
-        { 0, 130, 255 },
+        { 0, 255, 130 },
     };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.AButton.Changed"), 0)) {
-        Color_RGB8 color = CVarGetColor24(CVAR_COSMETIC("HUD.AButton.Value"), (Color_RGB8){ 50, 130, 255 });
-        sIconPrimColors[0].r = color.r - 50;
-        sIconPrimColors[0].g = color.g - 50;
-        sIconPrimColors[0].b = color.b - 50;
-        sIconPrimColors[1] = color;
-        sIconEnvColors[1] = color;
-    } else if (CVarGetInteger(CVAR_COSMETIC("DefaultColorScheme"), COLORSCHEME_N64) == COLORSCHEME_GAMECUBE) {
-        sIconPrimColors[0] = (Color_RGB8){ 0, 200, 80 };
-        sIconPrimColors[1] = (Color_RGB8){ 50, 255, 130 };
-        sIconEnvColors[1] = (Color_RGB8){ 50, 255, 130 };
-    }
-    static Color_RGB8 sIconPrim = { 0, 80, 200 };
+    static s16 sIconPrimR = 0;
+    static s16 sIconPrimG = 200;
+    static s16 sIconPrimB = 80;
     static s16 sIconFlashTimer = 12;
     static s16 sIconFlashColorIdx = 0;
-    static Color_RGB8 sIconEnv = { 0, 0, 0 };
+    static s16 sIconEnvR = 0;
+    static s16 sIconEnvG = 0;
+    static s16 sIconEnvB = 0;
     MessageContext* msgCtx = &play->msgCtx;
     Font* font = &msgCtx->font;
     Gfx* gfx = *p;
-    Color_RGB8 prim;
-    Color_RGB8 env;
+    s16 primR;
+    s16 primG;
+    s16 primB;
+    s16 envR;
+    s16 envG;
+    s16 envB;
     u8* iconTexture = font->iconBuf;
     gSPInvalidateTexCache(gfx++, iconTexture);
 
@@ -615,66 +520,76 @@ void Message_DrawTextboxIcon(PlayState* play, Gfx** p, s16 x, s16 y) {
         return;
     }
 
-    prim.r = (ABS(sIconPrim.r - sIconPrimColors[sIconFlashColorIdx].r)) / sIconFlashTimer;
-    prim.g = (ABS(sIconPrim.g - sIconPrimColors[sIconFlashColorIdx].g)) / sIconFlashTimer;
-    prim.b = (ABS(sIconPrim.b - sIconPrimColors[sIconFlashColorIdx].b)) / sIconFlashTimer;
+    primR = (ABS(sIconPrimR - sIconPrimColors[sIconFlashColorIdx][0])) / sIconFlashTimer;
+    primG = (ABS(sIconPrimG - sIconPrimColors[sIconFlashColorIdx][1])) / sIconFlashTimer;
+    primB = (ABS(sIconPrimB - sIconPrimColors[sIconFlashColorIdx][2])) / sIconFlashTimer;
 
-    if (sIconPrim.r >= sIconPrimColors[sIconFlashColorIdx].r) {
-        sIconPrim.r -= prim.r;
+    if (sIconPrimR >= sIconPrimColors[sIconFlashColorIdx][0]) {
+        sIconPrimR -= primR;
     } else {
-        sIconPrim.r += prim.r;
+        sIconPrimR += primR;
     }
 
-    if (sIconPrim.g >= sIconPrimColors[sIconFlashColorIdx].g) {
-        sIconPrim.g -= prim.g;
+    if (sIconPrimG >= sIconPrimColors[sIconFlashColorIdx][1]) {
+        sIconPrimG -= primG;
     } else {
-        sIconPrim.g += prim.g;
+        sIconPrimG += primG;
     }
 
-    if (sIconPrim.b >= sIconPrimColors[sIconFlashColorIdx].b) {
-        sIconPrim.b -= prim.b;
+    if (sIconPrimB >= sIconPrimColors[sIconFlashColorIdx][2]) {
+        sIconPrimB -= primB;
     } else {
-        sIconPrim.b += prim.b;
+        sIconPrimB += primB;
     }
 
-    env.r = (ABS(sIconEnv.r - sIconEnvColors[sIconFlashColorIdx].r)) / sIconFlashTimer;
-    env.g = (ABS(sIconEnv.g - sIconEnvColors[sIconFlashColorIdx].g)) / sIconFlashTimer;
-    env.b = (ABS(sIconEnv.b - sIconEnvColors[sIconFlashColorIdx].b)) / sIconFlashTimer;
+    envR = (ABS(sIconEnvR - sIconEnvColors[sIconFlashColorIdx][0])) / sIconFlashTimer;
+    envG = (ABS(sIconEnvG - sIconEnvColors[sIconFlashColorIdx][1])) / sIconFlashTimer;
+    envB = (ABS(sIconEnvB - sIconEnvColors[sIconFlashColorIdx][2])) / sIconFlashTimer;
 
-    if (sIconEnv.r >= sIconEnvColors[sIconFlashColorIdx].r) {
-        sIconEnv.r -= env.r;
+    if (sIconEnvR >= sIconEnvColors[sIconFlashColorIdx][0]) {
+        sIconEnvR -= envR;
     } else {
-        sIconEnv.r += env.r;
+        sIconEnvR += envR;
     }
 
-    if (sIconEnv.g >= sIconEnvColors[sIconFlashColorIdx].g) {
-        sIconEnv.g -= env.g;
+    if (sIconEnvG >= sIconEnvColors[sIconFlashColorIdx][1]) {
+        sIconEnvG -= envG;
     } else {
-        sIconEnv.g += env.g;
+        sIconEnvG += envG;
     }
 
-    if (sIconEnv.b >= sIconEnvColors[sIconFlashColorIdx].b) {
-        sIconEnv.b -= env.b;
+    if (sIconEnvB >= sIconEnvColors[sIconFlashColorIdx][2]) {
+        sIconEnvB -= envB;
     } else {
-        sIconEnv.b += env.b;
+        sIconEnvB += envB;
     }
 
     sIconFlashTimer--;
 
     if (sIconFlashTimer == 0) {
-        sIconPrim = sIconPrimColors[sIconFlashColorIdx];
-        sIconEnv = sIconEnvColors[sIconFlashColorIdx];
+        sIconPrimR = sIconPrimColors[sIconFlashColorIdx][0];
+        sIconPrimG = sIconPrimColors[sIconFlashColorIdx][1];
+        sIconPrimB = sIconPrimColors[sIconFlashColorIdx][2];
+        sIconEnvR = sIconEnvColors[sIconFlashColorIdx][0];
+        sIconEnvG = sIconEnvColors[sIconFlashColorIdx][1];
+        sIconEnvB = sIconEnvColors[sIconFlashColorIdx][2];
         sIconFlashTimer = 12;
         sIconFlashColorIdx ^= 1;
     }
+
+    Color_RGBA8 iconPrim = { sIconPrimR, sIconPrimG, sIconPrimB, 255 };
+    Color_RGBA8 iconEnv = { sIconEnvR, sIconEnvG, sIconEnvB, 255 };
+
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MESSAGE_ICON_PRIM, &iconPrim);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MESSAGE_ICON_ENV, &iconEnv);
 
     gDPPipeSync(gfx++);
 
     gDPSetCombineLERP(gfx++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0, PRIMITIVE,
                       ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0);
 
-    gDPSetPrimColor(gfx++, 0, 0, sIconPrim.r, sIconPrim.g, sIconPrim.b, 255);
-    gDPSetEnvColor(gfx++, sIconEnv.r, sIconEnv.g, sIconEnv.b, 255);
+    gDPSetPrimColor(gfx++, 0, 0, iconPrim.r, iconPrim.g, iconPrim.b, 255);
+    gDPSetEnvColor(gfx++, iconEnv.r, iconEnv.g, iconEnv.b, 255);
 
     gDPLoadTextureBlock_4b(gfx++, iconTexture, G_IM_FMT_I, FONT_CHAR_TEX_WIDTH, FONT_CHAR_TEX_HEIGHT, 0,
                            G_TX_NOMIRROR | G_TX_CLAMP, G_TX_NOMIRROR | G_TX_CLAMP, G_TX_NOMASK, G_TX_NOMASK, G_TX_NOLOD,
@@ -1302,7 +1217,7 @@ void Message_DrawText(PlayState* play, Gfx** gfxP) {
         msgCtx->textColorR = msgCtx->textColorG = msgCtx->textColorB = 255;
     }
 
-    Cosmetics_MaybeSetTextColor(msgCtx, MSGCOL_DEFAULT);
+    GameInteractor_ExecuteOnMessageTextColor(msgCtx, MSGCOL_DEFAULT);
 
     msgCtx->unk_E3D0 = 0;
     charTexIdx = 0;
@@ -3122,29 +3037,6 @@ void Message_SetView(View* view) {
     func_800AB2C4(view);
 }
 
-#define FLASH_NOTE_COLORS(target, source)                                             \
-    r = ABS(target.r - source[sOcarinaNoteFlashColorIdx].r) / sOcarinaNoteFlashTimer; \
-    g = ABS(target.g - source[sOcarinaNoteFlashColorIdx].g) / sOcarinaNoteFlashTimer; \
-    b = ABS(target.b - source[sOcarinaNoteFlashColorIdx].b) / sOcarinaNoteFlashTimer; \
-    if (target.r >= source[sOcarinaNoteFlashColorIdx].r) {                            \
-        target.r -= r;                                                                \
-    } else {                                                                          \
-        target.r += r;                                                                \
-    }                                                                                 \
-    if (target.g >= source[sOcarinaNoteFlashColorIdx].g) {                            \
-        target.g -= g;                                                                \
-    } else {                                                                          \
-        target.g += g;                                                                \
-    }                                                                                 \
-    if (target.b >= source[sOcarinaNoteFlashColorIdx].b) {                            \
-        target.b -= b;                                                                \
-    } else {                                                                          \
-        target.b += b;                                                                \
-    }
-
-/**
- * Draws the textbox in full and updates ocarina state
- */
 void Message_DrawMain(PlayState* play, Gfx** p) {
     static s16 sOcarinaEffectActorIds[] = {
         ACTOR_OCEFF_WIPE3, ACTOR_OCEFF_WIPE2, ACTOR_OCEFF_WIPE,  ACTOR_OCEFF_SPOT,
@@ -3156,113 +3048,22 @@ void Message_DrawMain(PlayState* play, Gfx** p) {
         gOcarinaBtnIconCLeftTex, gOcarinaBtnIconCUpTex,
     };
 
-    // SoH [Cosmetics] The following Color_RGB8 were originally static
-    Color_RGB8 sOcarinaNoteAPrimColors[2] = {
-        { 80, 150, 255 },
-        { 100, 200, 255 },
+    static s16 sOcarinaNoteAPrimColors[][3] = {
+        { 80, 255, 150 },
+        { 100, 255, 200 },
     };
-    Color_RGB8 sOcarinaNoteAEnvColors[2] = {
+    static s16 sOcarinaNoteAEnvColors[][3] = {
         { 10, 10, 10 },
-        { 50, 50, 255 },
+        { 50, 255, 50 },
     };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.AButton.Changed"), 0)) {
-        Color_RGB8 color = CVarGetColor24(CVAR_COSMETIC("HUD.AButton.Value"), (Color_RGB8){ 100, 200, 255 });
-        sOcarinaNoteAPrimColors[0].r = (color.r / 255.0f) * 95;
-        sOcarinaNoteAPrimColors[0].g = (color.g / 255.0f) * 95;
-        sOcarinaNoteAPrimColors[0].b = (color.b / 255.0f) * 95;
-        sOcarinaNoteAPrimColors[1] = color;
-        sOcarinaNoteAEnvColors[1] = color;
-    } else if (CVarGetInteger(CVAR_COSMETIC("DefaultColorScheme"), COLORSCHEME_N64) == COLORSCHEME_GAMECUBE) {
-        sOcarinaNoteAPrimColors[0] = (Color_RGB8){ 80, 255, 150 };
-        sOcarinaNoteAPrimColors[1] = (Color_RGB8){ 100, 255, 200 };
-        sOcarinaNoteAEnvColors[1] = (Color_RGB8){ 50, 255, 50 };
-    }
-
-    Color_RGB8 sOcarinaNoteCPrimColors[2] = {
+    static s16 sOcarinaNoteCPrimColors[][3] = {
         { 255, 255, 50 },
         { 255, 255, 180 },
     };
-    Color_RGB8 sOcarinaNoteCEnvColors[2] = {
+    static s16 sOcarinaNoteCEnvColors[][3] = {
         { 10, 10, 10 },
         { 110, 110, 50 },
     };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CButtons.Changed"), 0)) {
-        Color_RGB8 color = CVarGetColor24(CVAR_COSMETIC("HUD.CButtons.Value"), (Color_RGB8){ 100, 200, 255 });
-        sOcarinaNoteCPrimColors[0] = color;
-        sOcarinaNoteCPrimColors[1] = color;
-        sOcarinaNoteCEnvColors[1].r = (color.r / 255.0f) * 95;
-        sOcarinaNoteCEnvColors[1].g = (color.g / 255.0f) * 95;
-        sOcarinaNoteCEnvColors[1].b = (color.b / 255.0f) * 95;
-    }
-
-    Color_RGB8 sOcarinaNoteCUpPrimColors[2] = {
-        { 255, 255, 50 },
-        { 255, 255, 180 },
-    };
-    Color_RGB8 sOcarinaNoteCUpEnvColors[2] = {
-        { 10, 10, 10 },
-        { 110, 110, 50 },
-    };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CUpButton.Changed"), 0)) {
-        Color_RGB8 color = CVarGetColor24(CVAR_COSMETIC("HUD.CUpButton.Value"), (Color_RGB8){ 100, 200, 255 });
-        sOcarinaNoteCUpPrimColors[0] = color;
-        sOcarinaNoteCUpPrimColors[1] = color;
-        sOcarinaNoteCUpEnvColors[1].r = (color.r / 255.0f) * 95;
-        sOcarinaNoteCUpEnvColors[1].g = (color.g / 255.0f) * 95;
-        sOcarinaNoteCUpEnvColors[1].b = (color.b / 255.0f) * 95;
-    }
-
-    Color_RGB8 sOcarinaNoteCDownPrimColors[2] = {
-        { 255, 255, 50 },
-        { 255, 255, 180 },
-    };
-    Color_RGB8 sOcarinaNoteCDownEnvColors[2] = {
-        { 10, 10, 10 },
-        { 110, 110, 50 },
-    };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CDownButton.Changed"), 0)) {
-        Color_RGB8 color = CVarGetColor24(CVAR_COSMETIC("HUD.CDownButton.Value"), (Color_RGB8){ 100, 200, 255 });
-        sOcarinaNoteCDownPrimColors[0] = color;
-        sOcarinaNoteCDownPrimColors[1] = color;
-        sOcarinaNoteCDownEnvColors[1].r = (color.r / 255.0f) * 95;
-        sOcarinaNoteCDownEnvColors[1].g = (color.g / 255.0f) * 95;
-        sOcarinaNoteCDownEnvColors[1].b = (color.b / 255.0f) * 95;
-    }
-
-    Color_RGB8 sOcarinaNoteCLeftPrimColors[2] = {
-        { 255, 255, 50 },
-        { 255, 255, 180 },
-    };
-    Color_RGB8 sOcarinaNoteCLeftEnvColors[2] = {
-        { 10, 10, 10 },
-        { 110, 110, 50 },
-    };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CLeftButton.Changed"), 0)) {
-        Color_RGB8 color = CVarGetColor24(CVAR_COSMETIC("HUD.CLeftButton.Value"), (Color_RGB8){ 100, 200, 255 });
-        sOcarinaNoteCLeftPrimColors[0] = color;
-        sOcarinaNoteCLeftPrimColors[1] = color;
-        sOcarinaNoteCLeftEnvColors[1].r = (color.r / 255.0f) * 95;
-        sOcarinaNoteCLeftEnvColors[1].g = (color.g / 255.0f) * 95;
-        sOcarinaNoteCLeftEnvColors[1].b = (color.b / 255.0f) * 95;
-    }
-
-    Color_RGB8 sOcarinaNoteCRightPrimColors[2] = {
-        { 255, 255, 50 },
-        { 255, 255, 180 },
-    };
-    Color_RGB8 sOcarinaNoteCRightEnvColors[2] = {
-        { 10, 10, 10 },
-        { 110, 110, 50 },
-    };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.CRightButton.Changed"), 0)) {
-        Color_RGB8 color = CVarGetColor24(CVAR_COSMETIC("HUD.CRightButton.Value"), (Color_RGB8){ 100, 200, 255 });
-        sOcarinaNoteCRightPrimColors[0] = color;
-        sOcarinaNoteCRightPrimColors[1] = color;
-        sOcarinaNoteCRightEnvColors[1].r = (color.r / 255.0f) * 95;
-        sOcarinaNoteCRightEnvColors[1].g = (color.g / 255.0f) * 95;
-        sOcarinaNoteCRightEnvColors[1].b = (color.b / 255.0f) * 95;
-    }
-
     static s16 sOcarinaNoteFlashTimer = 12;
     static s16 sOcarinaNoteFlashColorIdx = 1;
     static s16 sOcarinaSongFanfares[] = {
@@ -3521,29 +3322,112 @@ void Message_DrawMain(PlayState* play, Gfx** p) {
             case MSGMODE_OCARINA_CORRECT_PLAYBACK:
             case MSGMODE_SONG_PLAYBACK_SUCCESS:
             case MSGMODE_SCARECROW_RECORDING_DONE:
-                FLASH_NOTE_COLORS(sOcarinaNoteABtnPrim, sOcarinaNoteAPrimColors)
-                FLASH_NOTE_COLORS(sOcarinaNoteABtnEnv, sOcarinaNoteAEnvColors)
-                FLASH_NOTE_COLORS(sOcarinaNoteCBtnPrim, sOcarinaNoteCPrimColors)
-                FLASH_NOTE_COLORS(sOcarinaNoteCBtnEnv, sOcarinaNoteCEnvColors)
-                FLASH_NOTE_COLORS(sOcarinaNoteCUpBtnPrim, sOcarinaNoteCUpPrimColors)
-                FLASH_NOTE_COLORS(sOcarinaNoteCBtnEnv, sOcarinaNoteCUpEnvColors)
-                FLASH_NOTE_COLORS(sOcarinaNoteCDownBtnPrim, sOcarinaNoteCDownPrimColors)
-                FLASH_NOTE_COLORS(sOcarinaNoteCBtnEnv, sOcarinaNoteCDownEnvColors)
-                FLASH_NOTE_COLORS(sOcarinaNoteCLeftBtnPrim, sOcarinaNoteCLeftPrimColors)
-                FLASH_NOTE_COLORS(sOcarinaNoteCBtnEnv, sOcarinaNoteCLeftEnvColors)
-                FLASH_NOTE_COLORS(sOcarinaNoteCRightBtnPrim, sOcarinaNoteCRightPrimColors)
-                FLASH_NOTE_COLORS(sOcarinaNoteCBtnEnv, sOcarinaNoteCRightEnvColors)
+                r = ABS(sOcarinaNoteAPrimR - sOcarinaNoteAPrimColors[sOcarinaNoteFlashColorIdx][0]) /
+                    sOcarinaNoteFlashTimer;
+                g = ABS(sOcarinaNoteAPrimG - sOcarinaNoteAPrimColors[sOcarinaNoteFlashColorIdx][1]) /
+                    sOcarinaNoteFlashTimer;
+                b = ABS(sOcarinaNoteAPrimB - sOcarinaNoteAPrimColors[sOcarinaNoteFlashColorIdx][2]) /
+                    sOcarinaNoteFlashTimer;
+
+                if (sOcarinaNoteAPrimR >= sOcarinaNoteAPrimColors[sOcarinaNoteFlashColorIdx][0]) {
+                    sOcarinaNoteAPrimR -= r;
+                } else {
+                    sOcarinaNoteAPrimR += r;
+                }
+                if (sOcarinaNoteAPrimG >= sOcarinaNoteAPrimColors[sOcarinaNoteFlashColorIdx][1]) {
+                    sOcarinaNoteAPrimG -= g;
+                } else {
+                    sOcarinaNoteAPrimG += g;
+                }
+                if (sOcarinaNoteAPrimB >= sOcarinaNoteAPrimColors[sOcarinaNoteFlashColorIdx][2]) {
+                    sOcarinaNoteAPrimB -= b;
+                } else {
+                    sOcarinaNoteAPrimB += b;
+                }
+
+                r = ABS(sOcarinaNoteAEnvR - sOcarinaNoteAEnvColors[sOcarinaNoteFlashColorIdx][0]) /
+                    sOcarinaNoteFlashTimer;
+                g = ABS(sOcarinaNoteAEnvG - sOcarinaNoteAEnvColors[sOcarinaNoteFlashColorIdx][1]) /
+                    sOcarinaNoteFlashTimer;
+                b = ABS(sOcarinaNoteAEnvB - sOcarinaNoteAEnvColors[sOcarinaNoteFlashColorIdx][2]) /
+                    sOcarinaNoteFlashTimer;
+
+                if (sOcarinaNoteCEnvR >= sOcarinaNoteAEnvColors[sOcarinaNoteFlashColorIdx][0]) {
+                    sOcarinaNoteAEnvR -= r;
+                } else {
+                    sOcarinaNoteAEnvR += r;
+                }
+                if (sOcarinaNoteCEnvG >= sOcarinaNoteAEnvColors[sOcarinaNoteFlashColorIdx][1]) {
+                    sOcarinaNoteAEnvG -= g;
+                } else {
+                    sOcarinaNoteAEnvG += g;
+                }
+                if (sOcarinaNoteCEnvB >= sOcarinaNoteAEnvColors[sOcarinaNoteFlashColorIdx][2]) {
+                    sOcarinaNoteAEnvB -= b;
+                } else {
+                    sOcarinaNoteAEnvB += b;
+                }
+
+                r = ABS(sOcarinaNoteCPrimR - sOcarinaNoteCPrimColors[sOcarinaNoteFlashColorIdx][0]) /
+                    sOcarinaNoteFlashTimer;
+                g = ABS(sOcarinaNoteCPrimG - sOcarinaNoteCPrimColors[sOcarinaNoteFlashColorIdx][1]) /
+                    sOcarinaNoteFlashTimer;
+                b = ABS(sOcarinaNoteCPrimB - sOcarinaNoteCPrimColors[sOcarinaNoteFlashColorIdx][2]) /
+                    sOcarinaNoteFlashTimer;
+
+                if (sOcarinaNoteCPrimR >= sOcarinaNoteCPrimColors[sOcarinaNoteFlashColorIdx][0]) {
+                    sOcarinaNoteCPrimR -= r;
+                } else {
+                    sOcarinaNoteCPrimR += r;
+                }
+                if (sOcarinaNoteCPrimG >= sOcarinaNoteCPrimColors[sOcarinaNoteFlashColorIdx][1]) {
+                    sOcarinaNoteCPrimG -= g;
+                } else {
+                    sOcarinaNoteCPrimG += g;
+                }
+                if (sOcarinaNoteCPrimB >= sOcarinaNoteCPrimColors[sOcarinaNoteFlashColorIdx][2]) {
+                    sOcarinaNoteCPrimB -= b;
+                } else {
+                    sOcarinaNoteCPrimB += b;
+                }
+
+                r = ABS(sOcarinaNoteCEnvR - sOcarinaNoteCEnvColors[sOcarinaNoteFlashColorIdx][0]) /
+                    sOcarinaNoteFlashTimer;
+                g = ABS(sOcarinaNoteCEnvG - sOcarinaNoteCEnvColors[sOcarinaNoteFlashColorIdx][1]) /
+                    sOcarinaNoteFlashTimer;
+                b = ABS(sOcarinaNoteCEnvB - sOcarinaNoteCEnvColors[sOcarinaNoteFlashColorIdx][2]) /
+                    sOcarinaNoteFlashTimer;
+
+                if (sOcarinaNoteCEnvR >= sOcarinaNoteCEnvColors[sOcarinaNoteFlashColorIdx][0]) {
+                    sOcarinaNoteCEnvR -= r;
+                } else {
+                    sOcarinaNoteCEnvR += r;
+                }
+                if (sOcarinaNoteCEnvG >= sOcarinaNoteCEnvColors[sOcarinaNoteFlashColorIdx][1]) {
+                    sOcarinaNoteCEnvG -= g;
+                } else {
+                    sOcarinaNoteCEnvG += g;
+                }
+                if (sOcarinaNoteCEnvB >= sOcarinaNoteCEnvColors[sOcarinaNoteFlashColorIdx][2]) {
+                    sOcarinaNoteCEnvB -= b;
+                } else {
+                    sOcarinaNoteCEnvB += b;
+                }
 
                 sOcarinaNoteFlashTimer--;
                 if (sOcarinaNoteFlashTimer == 0) {
-                    sOcarinaNoteABtnPrim = sOcarinaNoteAPrimColors[sOcarinaNoteFlashColorIdx];
-                    sOcarinaNoteABtnEnv = sOcarinaNoteAEnvColors[sOcarinaNoteFlashColorIdx];
-                    sOcarinaNoteCBtnPrim = sOcarinaNoteCPrimColors[sOcarinaNoteFlashColorIdx];
-                    sOcarinaNoteCBtnEnv = sOcarinaNoteCEnvColors[sOcarinaNoteFlashColorIdx];
-                    sOcarinaNoteCUpBtnPrim = sOcarinaNoteCUpPrimColors[sOcarinaNoteFlashColorIdx];
-                    sOcarinaNoteCDownBtnPrim = sOcarinaNoteCDownPrimColors[sOcarinaNoteFlashColorIdx];
-                    sOcarinaNoteCLeftBtnPrim = sOcarinaNoteCLeftPrimColors[sOcarinaNoteFlashColorIdx];
-                    sOcarinaNoteCRightBtnPrim = sOcarinaNoteCRightPrimColors[sOcarinaNoteFlashColorIdx];
+                    sOcarinaNoteAPrimR = sOcarinaNoteAPrimColors[sOcarinaNoteFlashColorIdx][0];
+                    sOcarinaNoteAPrimG = sOcarinaNoteAPrimColors[sOcarinaNoteFlashColorIdx][1];
+                    sOcarinaNoteAPrimB = sOcarinaNoteAPrimColors[sOcarinaNoteFlashColorIdx][2];
+                    sOcarinaNoteAEnvR = sOcarinaNoteAEnvColors[sOcarinaNoteFlashColorIdx][0];
+                    sOcarinaNoteAEnvG = sOcarinaNoteAEnvColors[sOcarinaNoteFlashColorIdx][1];
+                    sOcarinaNoteAEnvB = sOcarinaNoteAEnvColors[sOcarinaNoteFlashColorIdx][2];
+                    sOcarinaNoteCPrimR = sOcarinaNoteCPrimColors[sOcarinaNoteFlashColorIdx][0];
+                    sOcarinaNoteCPrimG = sOcarinaNoteCPrimColors[sOcarinaNoteFlashColorIdx][1];
+                    sOcarinaNoteCPrimB = sOcarinaNoteCPrimColors[sOcarinaNoteFlashColorIdx][2];
+                    sOcarinaNoteCEnvR = sOcarinaNoteCEnvColors[sOcarinaNoteFlashColorIdx][0];
+                    sOcarinaNoteCEnvG = sOcarinaNoteCEnvColors[sOcarinaNoteFlashColorIdx][1];
+                    sOcarinaNoteCEnvB = sOcarinaNoteCEnvColors[sOcarinaNoteFlashColorIdx][2];
                     sOcarinaNoteFlashTimer = 3;
                     sOcarinaNoteFlashColorIdx ^= 1;
                 }
@@ -4251,26 +4135,19 @@ void Message_DrawMain(PlayState* play, Gfx** p) {
                     // Since I don't know what exactly these Env vars are used for, I elected keep their usage
                     // consistent with the note played, rather than having AEnv be used for whatever note A happens to
                     // play at the moment and CEnv for everything else, even with custom controls enabled.
+                    Color_RGBA8 notePrim = { sOcarinaNoteCPrimR, sOcarinaNoteCPrimG, sOcarinaNoteCPrimB, 255 };
+                    Color_RGBA8 noteEnv = { sOcarinaNoteCEnvR, sOcarinaNoteCEnvG, sOcarinaNoteCEnvB, 255 };
+
                     if (sOcarinaButtonIndexBuf[i] == OCARINA_BTN_A) {
-                        gDPSetPrimColor(gfx++, 0, 0, sOcarinaNoteABtnPrim.r, sOcarinaNoteABtnPrim.g,
-                                        sOcarinaNoteABtnPrim.b, sOcarinaNotesAlphaValues[i]);
-                        gDPSetEnvColor(gfx++, sOcarinaNoteABtnEnv.r, sOcarinaNoteABtnEnv.g, sOcarinaNoteABtnEnv.b, 0);
-                    } else {
-                        if (sOcarinaButtonIndexBuf[i] == OCARINA_BTN_C_UP) {
-                            gDPSetPrimColor(gfx++, 0, 0, sOcarinaNoteCUpBtnPrim.r, sOcarinaNoteCUpBtnPrim.g,
-                                            sOcarinaNoteCUpBtnPrim.b, sOcarinaNotesAlphaValues[i]);
-                        } else if (sOcarinaButtonIndexBuf[i] == OCARINA_BTN_C_LEFT) {
-                            gDPSetPrimColor(gfx++, 0, 0, sOcarinaNoteCLeftBtnPrim.r, sOcarinaNoteCLeftBtnPrim.g,
-                                            sOcarinaNoteCLeftBtnPrim.b, sOcarinaNotesAlphaValues[i]);
-                        } else if (sOcarinaButtonIndexBuf[i] == OCARINA_BTN_C_RIGHT) {
-                            gDPSetPrimColor(gfx++, 0, 0, sOcarinaNoteCRightBtnPrim.r, sOcarinaNoteCRightBtnPrim.g,
-                                            sOcarinaNoteCRightBtnPrim.b, sOcarinaNotesAlphaValues[i]);
-                        } else if (sOcarinaButtonIndexBuf[i] == OCARINA_BTN_C_DOWN) {
-                            gDPSetPrimColor(gfx++, 0, 0, sOcarinaNoteCDownBtnPrim.r, sOcarinaNoteCDownBtnPrim.g,
-                                            sOcarinaNoteCDownBtnPrim.b, sOcarinaNotesAlphaValues[i]);
-                        }
-                        gDPSetEnvColor(gfx++, sOcarinaNoteCBtnEnv.r, sOcarinaNoteCBtnEnv.g, sOcarinaNoteCBtnEnv.b, 0);
+                        notePrim = (Color_RGBA8){ sOcarinaNoteAPrimR, sOcarinaNoteAPrimG, sOcarinaNoteAPrimB, 255 };
+                        noteEnv = (Color_RGBA8){ sOcarinaNoteAEnvR, sOcarinaNoteAEnvG, sOcarinaNoteAEnvB, 255 };
                     }
+                    GameInteractor_ExecuteOnCosmeticColor(
+                        COSMETIC_COLOR_MESSAGE_OCARINA_NOTE_PRIM_BUTTON(sOcarinaButtonIndexBuf[i]), &notePrim);
+                    GameInteractor_ExecuteOnCosmeticColor(
+                        COSMETIC_COLOR_MESSAGE_OCARINA_NOTE_ENV_BUTTON(sOcarinaButtonIndexBuf[i]), &noteEnv);
+                    gDPSetPrimColor(gfx++, 0, 0, notePrim.r, notePrim.g, notePrim.b, sOcarinaNotesAlphaValues[i]);
+                    gDPSetEnvColor(gfx++, noteEnv.r, noteEnv.g, noteEnv.b, 0);
 
                     gDPLoadTextureBlock(gfx++, sOcarinaNoteTextures[sOcarinaButtonIndexBuf[i]], G_IM_FMT_IA,
                                         G_IM_SIZ_8b, 16, 16, 0, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP,
