@@ -620,10 +620,11 @@ void HudElement_ApplyPosition(int32_t element, int16_t* x, int16_t* y, float* sc
 
     int16_t originX = vanillaX;
     if (info.edge == HUD_EDGE_LEFT) {
-        originX = info.truncOrigin ? OTRGetDimensionFromLeftEdge(vanillaX) : OTRGetRectDimensionFromLeftEdge(vanillaX);
+        originX = info.truncOrigin ? (int16_t)OTRGetDimensionFromLeftEdge(vanillaX)
+                                   : (int16_t)OTRGetRectDimensionFromLeftEdge(vanillaX);
     } else if (info.edge == HUD_EDGE_RIGHT) {
-        originX =
-            info.truncOrigin ? OTRGetDimensionFromRightEdge(vanillaX) : OTRGetRectDimensionFromRightEdge(vanillaX);
+        originX = info.truncOrigin ? (int16_t)OTRGetDimensionFromRightEdge(vanillaX)
+                                   : (int16_t)OTRGetRectDimensionFromRightEdge(vanillaX);
     }
     int16_t partX = info.dynamicOrigin ? 0 : *x - originX;
     int16_t partY = info.dynamicOrigin ? 0 : *y - vanillaY;
@@ -645,7 +646,7 @@ void HudElement_ApplyPosition(int32_t element, int16_t* x, int16_t* y, float* sc
             return;
         }
         if (posType == ANCHOR_TO_LIFE_METER) {
-            int16_t heartsX = OTRGetDimensionFromLeftEdge(0.0f);
+            int16_t heartsX = (int16_t)OTRGetDimensionFromLeftEdge(0.0f);
             int16_t heartsY = 0;
             HudElement_ApplyPosition(HUD_ELEMENT_HEARTS, &heartsX, &heartsY, nullptr);
             *x = posX + heartsX + info.originX - 1 + partX;
@@ -668,10 +669,10 @@ void HudElement_ApplyPosition(int32_t element, int16_t* x, int16_t* y, float* sc
     *y = posY + yMargin + partY;
     switch (posType) {
         case ANCHOR_LEFT:
-            *x = OTRGetDimensionFromLeftEdge(posX + leftMargin) + partX;
+            *x = (int16_t)OTRGetDimensionFromLeftEdge((float)(posX + leftMargin)) + partX;
             break;
         case ANCHOR_RIGHT:
-            *x = OTRGetDimensionFromRightEdge(posX + rightMargin) + partX;
+            *x = (int16_t)OTRGetDimensionFromRightEdge((float)(posX + rightMargin)) + partX;
             break;
         case ANCHOR_NONE:
             *x = posX + partX;
@@ -1032,9 +1033,9 @@ void CosmeticColor_Apply(int32_t option, Color_RGBA8* color) {
             }
         }
         float t = CLAMP((float)(in[channel] - from[channel]) / (to[channel] - from[channel]), 0.0f, 1.0f);
-        result.r = base.r + (flash.r - base.r) * t;
-        result.g = base.g + (flash.g - base.g) * t;
-        result.b = base.b + (flash.b - base.b) * t;
+        result.r = (uint8_t)(base.r + (flash.r - base.r) * t);
+        result.g = (uint8_t)(base.g + (flash.g - base.g) * t);
+        result.b = (uint8_t)(base.b + (flash.b - base.b) * t);
     }
 
     color->r = result.r;
@@ -1102,9 +1103,9 @@ void EffectBlure_ApplyTrailCosmetics(void* effect) {
     float scales[] = { 1.0f, 0.8f, 0.6f, 0.4f };
     for (int32_t i = 0; i < 4; i++) {
         float scale = bombchu ? scales[i] : 1.0f;
-        parts[i]->r = color.r * scale;
-        parts[i]->g = color.g * scale;
-        parts[i]->b = color.b * scale;
+        parts[i]->r = (uint8_t)(color.r * scale);
+        parts[i]->g = (uint8_t)(color.g * scale);
+        parts[i]->b = (uint8_t)(color.b * scale);
     }
 
     if (!bombchu && blure->trailType != TRAIL_TYPE_BOOMERANG &&
