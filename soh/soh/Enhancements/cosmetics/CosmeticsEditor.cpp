@@ -994,6 +994,12 @@ static const CosmeticColorInfo cosmeticColors[COSMETIC_COLOR_MAX] = {
     // Ivan prim and env
     { .option = "Ivan.IdlePrimary" },
     { .option = "Ivan.IdleSecondary" },
+    // Link tunics: kokiri, goron, zora; gauntlets: silver, golden
+    { .option = "Link.KokiriTunic" },
+    { .option = "Link.GoronTunic" },
+    { .option = "Link.ZoraTunic" },
+    { .option = "Gloves.SilverGauntlets" },
+    { .option = "Gloves.GoldenGauntlets" },
 };
 
 // Custom color of a color entry or its first changed parent
