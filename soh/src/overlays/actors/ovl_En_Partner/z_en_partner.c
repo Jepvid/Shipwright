@@ -13,6 +13,8 @@
 #include <overlays/actors/ovl_Obj_Switch/z_obj_switch.h>
 #include <overlays/effects/ovl_Effect_Ss_HitMark/z_eff_ss_hitmark.h>
 #include "soh/OTRGlobals.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include <assets/objects/object_efc_tw/object_efc_tw.h>
 
 #define FLAGS                                                                                                   \
@@ -199,6 +201,8 @@ void EnPartner_SpawnSparkles(EnPartner* this, PlayState* play, s32 sparkleLife) 
     envColor.g = this->outerColor.g;
     envColor.b = this->outerColor.b;
 
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_IVAN_PRIM, &primColor);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_IVAN_ENV, &envColor);
     EffectSsKiraKira_SpawnDispersed(play, &sparklePos, &sparkleVelocity, &sparkleAccel, &primColor, &envColor, 1500,
                                     sparkleLife);
 }
@@ -915,28 +919,6 @@ void EnPartner_Update(Actor* thisx, PlayState* play) {
         CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);
     }
 
-    if (CVarGetInteger(CVAR_COSMETIC("Ivan.IdlePrimary.Changed"), 0)) {
-        Color_RGB8 ivanColor1 = CVarGetColor24(CVAR_COSMETIC("Ivan.IdlePrimary.Value"), (Color_RGB8){ 255, 255, 255 });
-        this->innerColor.r = ivanColor1.r;
-        this->innerColor.g = ivanColor1.g;
-        this->innerColor.b = ivanColor1.b;
-    } else {
-        this->innerColor.r = 255;
-        this->innerColor.g = 255;
-        this->innerColor.b = 255;
-    }
-
-    if (CVarGetInteger(CVAR_COSMETIC("Ivan.IdleSecondary.Changed"), 0)) {
-        Color_RGB8 ivanColor2 = CVarGetColor24(CVAR_COSMETIC("Ivan.IdleSecondary.Value"), (Color_RGB8){ 0, 255, 0 });
-        this->outerColor.r = ivanColor2.r;
-        this->outerColor.g = ivanColor2.g;
-        this->outerColor.b = ivanColor2.b;
-    } else {
-        this->outerColor.r = 0;
-        this->outerColor.g = 255;
-        this->outerColor.b = 0;
-    }
-
     SkelAnime_Update(&this->skelAnime);
 
     EnPartner_UpdateLights(this, play);
@@ -1041,14 +1023,16 @@ void EnPartner_Draw(Actor* thisx, PlayState* play) {
 
     gSPSegment(POLY_XLU_DISP++, 0x08, dListHead);
     gDPPipeSync(dListHead++);
-    gDPSetPrimColor(dListHead++, 0, 0x01, (u8)this->innerColor.r, (u8)this->innerColor.g, (u8)this->innerColor.b,
-                    (u8)(this->innerColor.a * alphaScale));
+    Color_RGBA8 primColor = { (u8)this->innerColor.r, (u8)this->innerColor.g, (u8)this->innerColor.b, 255 };
+    Color_RGBA8 envColor = { (u8)this->outerColor.r, (u8)this->outerColor.g, (u8)this->outerColor.b, 255 };
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_IVAN_PRIM, &primColor);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_IVAN_ENV, &envColor);
+    gDPSetPrimColor(dListHead++, 0, 0x01, primColor.r, primColor.g, primColor.b, (u8)(this->innerColor.a * alphaScale));
 
     gDPSetRenderMode(dListHead++, G_RM_PASS, G_RM_ZB_CLD_SURF2);
 
     gSPEndDisplayList(dListHead++);
-    gDPSetEnvColor(POLY_XLU_DISP++, (u8)this->outerColor.r, (u8)this->outerColor.g, (u8)this->outerColor.b,
-                   (u8)(envAlpha * alphaScale));
+    gDPSetEnvColor(POLY_XLU_DISP++, envColor.r, envColor.g, envColor.b, (u8)(envAlpha * alphaScale));
     POLY_XLU_DISP =
         SkelAnime_DrawSkeleton2(play, &this->skelAnime, EnPartner_OverrideLimbDraw, NULL, this, POLY_XLU_DISP);
 

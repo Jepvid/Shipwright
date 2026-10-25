@@ -22,6 +22,7 @@ extern "C" {
 #include "variables.h"
 #include "message_data_fmt.h"
 #include "message_data_textbox_types.h"
+#include "overlays/actors/ovl_En_Elf/z_en_elf.h"
 #include "macros.h"
 #include "soh/cvar_prefixes.h"
 #include "objects/object_link_boy/object_link_boy.h"
@@ -962,6 +963,37 @@ static const CosmeticColorInfo cosmeticColors[COSMETIC_COLOR_MAX] = {
       .flash = true,
       .vanillaColor = { 9, 9, 35 },
       .vanillaFlashColor = { 218, 43, 0 } },
+    // Navi inner and outer per actor category: switch, bg, player, explosive, npc, enemy, prop, item action, misc,
+    // boss, door, chest, unused
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = "Navi.IdlePrimary", .vanillaColor = { 255, 255, 255 }, .persistent = true },
+    { .option = nullptr },
+    { .option = "Navi.NPCPrimary", .vanillaColor = { 150, 150, 255 }, .persistent = true },
+    { .option = "Navi.EnemyPrimary", .vanillaColor = { 255, 255, 0 }, .persistent = true },
+    { .option = "Navi.PropsPrimary", .vanillaColor = { 0, 255, 0 }, .persistent = true },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = "Navi.EnemyPrimary", .vanillaColor = { 255, 255, 0 }, .persistent = true },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = "Navi.IdleSecondary", .vanillaColor = { 0, 0, 255 }, .persistent = true },
+    { .option = nullptr },
+    { .option = "Navi.NPCSecondary", .vanillaColor = { 150, 150, 255 }, .persistent = true },
+    { .option = "Navi.EnemySecondary", .vanillaColor = { 200, 155, 0 }, .persistent = true },
+    { .option = "Navi.PropsSecondary", .vanillaColor = { 0, 255, 0 }, .persistent = true },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = "Navi.EnemySecondary", .vanillaColor = { 200, 155, 0 }, .persistent = true },
+    { .option = nullptr },
+    { .option = nullptr },
+    { .option = nullptr },
+    // Ivan prim and env
+    { .option = "Ivan.IdlePrimary" },
+    { .option = "Ivan.IdleSecondary" },
 };
 
 // Custom color of a color entry or its first changed parent
@@ -1062,6 +1094,33 @@ void CosmeticColor_ApplyTint(int32_t option, Gfx** gfx, bool enable) {
         gSPGrayscale(g++, false);
     }
     *gfx = g;
+}
+
+// Keeps Navi's resting color matched to the targeting colors, which follow the cosmetics editor every frame
+void Navi_FollowTargetColors(void* actor) {
+    EnElf* navi = (EnElf*)actor;
+    TargetContext* targetCtx = &gPlayState->actorCtx.targetCtx;
+    if (!(navi->fairyFlags & 4) || targetCtx->unk_40 != 0.0f || navi->unk_29C != 0.0f) {
+        return;
+    }
+    navi->innerColor = targetCtx->naviInner;
+    navi->outerColor = targetCtx->naviOuter;
+}
+
+// Keeps the lock-on reticle colors matched to the cosmetics editor colors of the targeted actor
+void Navi_FollowReticleColors() {
+    TargetContext* targetCtx = &gPlayState->actorCtx.targetCtx;
+    if (targetCtx->targetedActor == NULL) {
+        return;
+    }
+    for (int32_t i = 0; i < ARRAY_COUNT(targetCtx->arr_50); i++) {
+        Color_RGB8* reticle = &targetCtx->arr_50[i].color;
+        Color_RGBA8 color = { reticle->r, reticle->g, reticle->b, 255 };
+        CosmeticColor_Apply(COSMETIC_COLOR_NAVI_INNER_CATEGORY(targetCtx->targetedActor->category), &color);
+        reticle->r = color.r;
+        reticle->g = color.g;
+        reticle->b = color.b;
+    }
 }
 
 // TODO: trailType plumbing from #1473 (z64effect.h and its init sites) is still in src
@@ -3287,6 +3346,8 @@ void RegisterCosmeticHooks() {
     COND_HOOK(OnMessageTextColor, true, MessageTextColor_Apply);
     COND_HOOK(OnFileChooseMain, true, FileChoose_ApplyWindowColors);
     COND_HOOK(OnEffectBlureUpdate, true, EffectBlure_ApplyTrailCosmetics);
+    COND_ID_HOOK(OnActorUpdate, ACTOR_EN_ELF, true, Navi_FollowTargetColors);
+    COND_HOOK(OnPlayerUpdate, true, Navi_FollowReticleColors);
     COND_VB_SHOULD(VB_START_HEART_ROW, true, {
         int32_t heartIndex = va_arg(args, int32_t);
         int32_t lineLength = CVarGetInteger(CVAR_COSMETIC("HUD.Hearts.LineLength"), 10);
