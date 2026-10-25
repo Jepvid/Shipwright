@@ -110,12 +110,9 @@ void KaleidoScope_DrawAButton(PlayState* play, Vtx* vtx, int16_t xTranslate, int
 
     Matrix_Translate(xTranslate, yTranslate, 0, MTXMODE_APPLY);
     gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    Color_RGB8 aButtonColor = { 0, 100, 255 };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.AButton.Changed"), 0)) {
-        aButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.AButton.Value"), aButtonColor);
-    } else if (CVarGetInteger(CVAR_COSMETIC("DefaultColorScheme"), COLORSCHEME_N64) == COLORSCHEME_GAMECUBE) {
-        aButtonColor = (Color_RGB8){ 0, 255, 100 };
-    }
+    Color_RGBA8 aButtonColor = { 0, 255, 100, 255 };
+
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_PAUSE_A_BUTTON_ICON, &aButtonColor);
 
     gSPVertex(POLY_OPA_DISP++, vtx, 4, 0);
     gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, aButtonColor.r, aButtonColor.g, aButtonColor.b, pauseCtx->alpha);

@@ -210,12 +210,9 @@ void KaleidoScope_DrawItemCycleExtras(PlayState* play, u8 slot, u8 canCycle, u8 
         // Render A button indicator when hovered and not cycling
         if (!isCycling && sSlotCycleActiveAnimTimer[slot] == 0 && pauseCtx->cursorSlot[PAUSE_ITEM] == slot &&
             pauseCtx->cursorSpecialPos == 0) {
-            Color_RGB8 aButtonColor = { 0, 100, 255 };
-            if (CVarGetInteger(CVAR_COSMETIC("HUD.AButton.Changed"), 0)) {
-                aButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.AButton.Value"), aButtonColor);
-            } else if (CVarGetInteger(CVAR_COSMETIC("DefaultColorScheme"), COLORSCHEME_N64) == COLORSCHEME_GAMECUBE) {
-                aButtonColor = (Color_RGB8){ 0, 255, 100 };
-            }
+            Color_RGBA8 aButtonColor = { 0, 255, 100, 255 };
+
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_PAUSE_A_BUTTON_ICON, &aButtonColor);
 
             gSPVertex(POLY_OPA_DISP++, sCycleAButtonVtx, 4, 0);
             gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, aButtonColor.r, aButtonColor.g, aButtonColor.b, pauseCtx->alpha);
@@ -873,20 +870,12 @@ void KaleidoScope_UpdateItemEquip(PlayState* play) {
     u16 offsetX;
     u16 offsetY;
 
-    static s16 sCButtonHudX[] = { C_LEFT_BUTTON_X, C_DOWN_BUTTON_X, C_RIGHT_BUTTON_X, DPAD_UP_X,
-                                  DPAD_DOWN_X,     DPAD_LEFT_X,     DPAD_RIGHT_X };
-    static s16 sCButtonHudY[] = { C_LEFT_BUTTON_Y, C_DOWN_BUTTON_Y, C_RIGHT_BUTTON_Y, DPAD_UP_Y,
-                                  DPAD_DOWN_Y,     DPAD_LEFT_Y,     DPAD_RIGHT_Y };
-    s16 i;
+    s16 shiftX = 0;
+    s16 shiftY = 0;
 
-    for (i = 0; i < ARRAY_COUNT(sCButtonPosX); i++) {
-        s16 posX = OTRGetRectDimensionFromRightEdge(sCButtonHudX[i]);
-        s16 posY = sCButtonHudY[i];
-
-        GameInteractor_ExecuteOnHudElementPosition(HUD_ELEMENT_ITEM_BUTTON(i + 1), &posX, &posY, NULL);
-        sCButtonPosX[i] = posX - 160;
-        sCButtonPosY[i] = 120 - posY;
-    }
+    // Equip target moves along with its button
+    GameInteractor_ExecuteOnHudElementPosition(HUD_ELEMENT_ITEM_BUTTON(pauseCtx->equipTargetCBtn + 1), &shiftX, &shiftY,
+                                               NULL);
 
     if (sEquipState == 0) {
         pauseCtx->equipAnimAlpha += 14;
@@ -921,8 +910,10 @@ void KaleidoScope_UpdateItemEquip(PlayState* play) {
         offsetX = ABS(pauseCtx->equipAnimX - bowItemVtx->v.ob[0] * 10) / sEquipMoveTimer;
         offsetY = ABS(pauseCtx->equipAnimY - bowItemVtx->v.ob[1] * 10) / sEquipMoveTimer;
     } else {
-        offsetX = ABS(pauseCtx->equipAnimX - sCButtonPosX[pauseCtx->equipTargetCBtn] * 10) / sEquipMoveTimer;
-        offsetY = ABS(pauseCtx->equipAnimY - sCButtonPosY[pauseCtx->equipTargetCBtn] * 10) / sEquipMoveTimer;
+        offsetX = ABS(pauseCtx->equipAnimX -
+                      (OTRGetRectDimensionFromRightEdge(sCButtonPosX[pauseCtx->equipTargetCBtn]) + shiftX) * 10) /
+                  sEquipMoveTimer;
+        offsetY = ABS(pauseCtx->equipAnimY - (sCButtonPosY[pauseCtx->equipTargetCBtn] - shiftY) * 10) / sEquipMoveTimer;
     }
 
     if ((pauseCtx->equipTargetItem >= 0xBF) && (pauseCtx->equipAnimAlpha < 254)) {
@@ -951,13 +942,14 @@ void KaleidoScope_UpdateItemEquip(PlayState* play) {
                 pauseCtx->equipAnimY += offsetY;
             }
         } else {
-            if (pauseCtx->equipAnimX >= sCButtonPosX[pauseCtx->equipTargetCBtn] * 10) {
+            if (pauseCtx->equipAnimX >=
+                (OTRGetRectDimensionFromRightEdge(sCButtonPosX[pauseCtx->equipTargetCBtn]) + shiftX) * 10) {
                 pauseCtx->equipAnimX -= offsetX;
             } else {
                 pauseCtx->equipAnimX += offsetX;
             }
 
-            if (pauseCtx->equipAnimY >= sCButtonPosY[pauseCtx->equipTargetCBtn] * 10) {
+            if (pauseCtx->equipAnimY >= (sCButtonPosY[pauseCtx->equipTargetCBtn] - shiftY) * 10) {
                 pauseCtx->equipAnimY -= offsetY;
             } else {
                 pauseCtx->equipAnimY += offsetY;

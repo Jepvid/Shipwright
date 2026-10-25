@@ -611,16 +611,13 @@ void Minimap_DrawCompassIcons(PlayState* play) {
     s32 pad;
     Player* player = GET_PLAYER(play);
     s16 tempX, tempZ;
-    Color_RGB8 lastEntranceColor = { 200, 0, 0 };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.MinimapEntrance.Changed"), 0)) {
-        lastEntranceColor = CVarGetColor24(CVAR_COSMETIC("HUD.MinimapEntrance.Value"), lastEntranceColor);
-    }
-    Color_RGB8 currentPositionColor = { 200, 255, 0 };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.MinimapPosition.Changed"), 0)) {
-        currentPositionColor = CVarGetColor24(CVAR_COSMETIC("HUD.MinimapPosition.Value"), currentPositionColor);
-    }
+    Color_RGBA8 currentPositionColor = { 200, 255, 0, 255 };
+    Color_RGBA8 lastEntranceColor = { 200, 0, 0, 255 };
     s16 shiftX = 0;
     s16 shiftY = 0;
+
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MINIMAP_POSITION, &currentPositionColor);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MINIMAP_ENTRANCE, &lastEntranceColor);
 
     // Compass icons move along with the minimap
     GameInteractor_ExecuteOnHudElementPosition(HUD_ELEMENT_MINIMAP, &shiftX, &shiftY, NULL);
@@ -668,7 +665,7 @@ void Minimap_DrawCompassIcons(PlayState* play) {
         Matrix_RotateY(tempX / 10.0f, MTXMODE_APPLY);
         gSPMatrix(OVERLAY_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
 
-        gDPSetPrimColor(OVERLAY_DISP++, 0, 0xFF, currentPositionColor.r, currentPositionColor.g, currentPositionColor.b,
+        gDPSetPrimColor(OVERLAY_DISP++, 0, 0, currentPositionColor.r, currentPositionColor.g, currentPositionColor.b,
                         255);
         gSPDisplayList(OVERLAY_DISP++, gCompassArrowDL);
 
@@ -701,10 +698,6 @@ void Minimap_Draw(PlayState* play) {
     s32 pad[2];
     InterfaceContext* interfaceCtx = &play->interfaceCtx;
     s32 mapIndex = gSaveContext.mapIndex;
-    Color_RGB8 minimapColor = { 0, 255, 255 };
-    if (CVarGetInteger(CVAR_COSMETIC("HUD.Minimap.Changed"), 0)) {
-        minimapColor = CVarGetColor24(CVAR_COSMETIC("HUD.Minimap.Value"), minimapColor);
-    }
 
     OPEN_DISPS(play->state.gfxCtx);
 
@@ -731,6 +724,9 @@ void Minimap_Draw(PlayState* play) {
                                       TEXEL0, 0, PRIMITIVE, 0);
 
                     if (CHECK_DUNGEON_ITEM(DUNGEON_MAP, mapIndex)) {
+                        Color_RGBA8 minimapColor = { 100, 255, 255, 255 };
+
+                        GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MINIMAP_DUNGEON, &minimapColor);
                         gDPSetPrimColor(OVERLAY_DISP++, 0, 0, minimapColor.r, minimapColor.g, minimapColor.b,
                                         interfaceCtx->minimapAlpha);
 
@@ -800,6 +796,9 @@ void Minimap_Draw(PlayState* play) {
                     Gfx_SetupDL_39Overlay(play->state.gfxCtx);
 
                     gDPSetCombineMode(OVERLAY_DISP++, G_CC_MODULATEIA_PRIM, G_CC_MODULATEIA_PRIM);
+                    Color_RGBA8 minimapColor = { R_MINIMAP_COLOR(0), R_MINIMAP_COLOR(1), R_MINIMAP_COLOR(2), 255 };
+
+                    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MINIMAP_OVERWORLD, &minimapColor);
                     gDPSetPrimColor(OVERLAY_DISP++, 0, 0, minimapColor.r, minimapColor.g, minimapColor.b,
                                     interfaceCtx->minimapAlpha);
 
@@ -823,9 +822,6 @@ void Minimap_Draw(PlayState* play) {
                                             (oWMiniMapX + gMapData->owMinimapWidth[mapIndex]) << 2,
                                             (oWMiniMapY + gMapData->owMinimapHeight[mapIndex]) << 2, G_TX_RENDERTILE,
                                             sValue, 0, 1 << 10, 1 << 10);
-
-                    gDPSetPrimColor(OVERLAY_DISP++, 0, 0, minimapColor.r, minimapColor.g, minimapColor.b,
-                                    interfaceCtx->minimapAlpha);
 
                     s16 iconSize = 8;
 

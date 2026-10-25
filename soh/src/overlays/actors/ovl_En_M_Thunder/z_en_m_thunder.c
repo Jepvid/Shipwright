@@ -1,5 +1,7 @@
 #include "z_en_m_thunder.h"
 #include "objects/gameplay_keep/gameplay_keep.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 
 #define FLAGS 0
 
@@ -338,26 +340,20 @@ void EnMThunder_Draw(Actor* thisx, PlayState* play2) {
             break;
     }
 
+    Color_RGBA8 level2Color = { 255, 255, 170, 255 };
+    Color_RGBA8 level1Color = { 170, 255, 255, 255 };
     switch (this->attackStrength) {
         case 0:
-            if (CVarGetInteger(CVAR_COSMETIC("SpinAttack.Level2Primary.Changed"), 0)) {
-                Color_RGB8 color =
-                    CVarGetColor24(CVAR_COSMETIC("SpinAttack.Level2Primary.Value"), (Color_RGB8){ 255, 255, 170 });
-                gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, color.r, color.g, color.b, (u8)(this->spinAttackAlpha * 255));
-            } else {
-                gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, 255, 255, 170, (u8)(this->spinAttackAlpha * 255));
-            }
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_SPIN_ATTACK_LEVEL2_PRIM, &level2Color);
+            gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, level2Color.r, level2Color.g, level2Color.b,
+                            (u8)(this->spinAttackAlpha * 255));
             gSPDisplayList(POLY_XLU_DISP++, gSpinAttack3DL);
             gSPDisplayList(POLY_XLU_DISP++, gSpinAttack4DL);
             break;
         case 1:
-            if (CVarGetInteger(CVAR_COSMETIC("SpinAttack.Level1Primary.Changed"), 0)) {
-                Color_RGB8 color =
-                    CVarGetColor24(CVAR_COSMETIC("SpinAttack.Level1Primary.Value"), (Color_RGB8){ 170, 255, 255 });
-                gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, color.r, color.g, color.b, (u8)(this->spinAttackAlpha * 255));
-            } else {
-                gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, 170, 255, 255, (u8)(this->spinAttackAlpha * 255));
-            }
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_SPIN_ATTACK_LEVEL1_PRIM, &level1Color);
+            gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, level1Color.r, level1Color.g, level1Color.b,
+                            (u8)(this->spinAttackAlpha * 255));
             gSPDisplayList(POLY_XLU_DISP++, gSpinAttack1DL);
             gSPDisplayList(POLY_XLU_DISP++, gSpinAttack2DL);
             break;
@@ -385,37 +381,21 @@ void EnMThunder_Draw(Actor* thisx, PlayState* play2) {
 
     if (this->spinChargePercent >= 0.85f) {
         phi_f14 = (sSpinChargeScale[(play->gameplayFrames & 7)] * 6.0f) + 1.0f;
-        if (CVarGetInteger(CVAR_COSMETIC("SpinAttack.Level2Primary.Changed"), 0)) {
-            Color_RGB8 color =
-                CVarGetColor24(CVAR_COSMETIC("SpinAttack.Level2Primary.Value"), (Color_RGB8){ 255, 255, 170 });
-            gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, color.r, color.g, color.b, this->chargeAlpha);
-        } else {
-            gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, 255, 255, 170, this->chargeAlpha);
-        }
-        if (CVarGetInteger(CVAR_COSMETIC("SpinAttack.Level2Secondary.Changed"), 0)) {
-            Color_RGB8 color =
-                CVarGetColor24(CVAR_COSMETIC("SpinAttack.Level2Secondary.Value"), (Color_RGB8){ 255, 100, 0 });
-            gDPSetEnvColor(POLY_XLU_DISP++, color.r, color.g, color.b, 128);
-        } else {
-            gDPSetEnvColor(POLY_XLU_DISP++, 255, 100, 0, 128);
-        }
+        Color_RGBA8 primColor = { 255, 255, 170, 255 };
+        GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_SPIN_CHARGE_LEVEL2_PRIM, &primColor);
+        gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, primColor.r, primColor.g, primColor.b, this->chargeAlpha);
+        Color_RGBA8 envColor = { 255, 100, 0, 255 };
+        GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_SPIN_CHARGE_LEVEL2_ENV, &envColor);
+        gDPSetEnvColor(POLY_XLU_DISP++, envColor.r, envColor.g, envColor.b, 128);
         phi_t1 = 0x28;
     } else {
         phi_f14 = (sSpinChargeScale[play->gameplayFrames & 7] * 2.0f) + 1.0f;
-        if (CVarGetInteger(CVAR_COSMETIC("SpinAttack.Level1Primary.Changed"), 0)) {
-            Color_RGB8 color =
-                CVarGetColor24(CVAR_COSMETIC("SpinAttack.Level1Primary.Value"), (Color_RGB8){ 170, 255, 255 });
-            gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, color.r, color.g, color.b, this->chargeAlpha);
-        } else {
-            gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, 170, 255, 255, this->chargeAlpha);
-        }
-        if (CVarGetInteger(CVAR_COSMETIC("SpinAttack.Level1Secondary.Changed"), 0)) {
-            Color_RGB8 color =
-                CVarGetColor24(CVAR_COSMETIC("SpinAttack.Level1Secondary.Value"), (Color_RGB8){ 0, 100, 255 });
-            gDPSetEnvColor(POLY_XLU_DISP++, color.r, color.g, color.b, 128);
-        } else {
-            gDPSetEnvColor(POLY_XLU_DISP++, 0, 100, 255, 128);
-        }
+        Color_RGBA8 primColor = { 170, 255, 255, 255 };
+        GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_SPIN_CHARGE_LEVEL1_PRIM, &primColor);
+        gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, primColor.r, primColor.g, primColor.b, this->chargeAlpha);
+        Color_RGBA8 envColor = { 0, 100, 255, 255 };
+        GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_SPIN_CHARGE_LEVEL1_ENV, &envColor);
+        gDPSetEnvColor(POLY_XLU_DISP++, envColor.r, envColor.g, envColor.b, 128);
         phi_t1 = 0x14;
     }
     Matrix_Scale(1.0f, phi_f14, phi_f14, MTXMODE_APPLY);
