@@ -314,15 +314,6 @@ NaviColor sNaviColorList[] = {
     { { 0, 255, 0, 255 }, { 0, 255, 0, 0 } },
 };
 
-static Color_RGBA8 defaultIdlePrimaryColor = { 255, 255, 255, 255 };
-static Color_RGBA8 defaultIdleSecondaryColor = { 0, 0, 255, 0 };
-static Color_RGBA8 defaultNPCPrimaryColor = { 150, 150, 255, 255 };
-static Color_RGBA8 defaultNPCSecondaryColor = { 150, 150, 255, 0 };
-static Color_RGBA8 defaultEnemyPrimaryColor = { 255, 255, 0, 255 };
-static Color_RGBA8 defaultEnemySecondaryColor = { 200, 155, 0, 0 };
-static Color_RGBA8 defaultPropsPrimaryColor = { 0, 255, 0, 255 };
-static Color_RGBA8 defaultPropsSecondaryColor = { 0, 255, 0, 0 };
-
 // unused
 Gfx D_80115FF0[] = {
     gsSPEndDisplayList(),
@@ -357,65 +348,9 @@ void Attention_InitReticle(TargetContext* targetCtx, s32 actorCategory, PlayStat
 }
 
 void Attention_SetNaviState(TargetContext* targetCtx, Actor* actor, s32 actorCategory, PlayState* play) {
-    if (CVarGetInteger(CVAR_COSMETIC("Navi.IdlePrimary.Changed"), 0)) {
-        sNaviColorList[ACTORCAT_PLAYER].inner =
-            CVarGetColor(CVAR_COSMETIC("Navi.IdlePrimary.Value"), defaultIdlePrimaryColor);
-    } else {
-        sNaviColorList[ACTORCAT_PLAYER].inner = defaultIdlePrimaryColor;
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("Navi.IdleSecondary.Changed"), 0)) {
-        sNaviColorList[ACTORCAT_PLAYER].outer =
-            CVarGetColor(CVAR_COSMETIC("Navi.IdleSecondary.Value"), defaultIdleSecondaryColor);
-    } else {
-        sNaviColorList[ACTORCAT_PLAYER].outer = defaultIdleSecondaryColor;
-    }
-
-    if (CVarGetInteger(CVAR_COSMETIC("Navi.NPCPrimary.Changed"), 0)) {
-        sNaviColorList[ACTORCAT_NPC].inner =
-            CVarGetColor(CVAR_COSMETIC("Navi.NPCPrimary.Value"), defaultNPCPrimaryColor);
-    } else {
-        sNaviColorList[ACTORCAT_NPC].inner = defaultNPCPrimaryColor;
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("Navi.NPCSecondary.Changed"), 0)) {
-        sNaviColorList[ACTORCAT_NPC].outer =
-            CVarGetColor(CVAR_COSMETIC("Navi.NPCSecondary.Value"), defaultNPCSecondaryColor);
-    } else {
-        sNaviColorList[ACTORCAT_NPC].outer = defaultNPCSecondaryColor;
-    }
-
-    if (CVarGetInteger(CVAR_COSMETIC("Navi.EnemyPrimary.Changed"), 0)) {
-        sNaviColorList[ACTORCAT_ENEMY].inner =
-            CVarGetColor(CVAR_COSMETIC("Navi.EnemyPrimary.Value"), defaultEnemyPrimaryColor);
-        sNaviColorList[ACTORCAT_BOSS].inner =
-            CVarGetColor(CVAR_COSMETIC("Navi.EnemyPrimary.Value"), defaultEnemyPrimaryColor);
-    } else {
-        sNaviColorList[ACTORCAT_ENEMY].inner = defaultEnemyPrimaryColor;
-        sNaviColorList[ACTORCAT_BOSS].inner = defaultEnemyPrimaryColor;
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("Navi.EnemySecondary.Changed"), 0)) {
-        sNaviColorList[ACTORCAT_ENEMY].outer =
-            CVarGetColor(CVAR_COSMETIC("Navi.EnemySecondary.Value"), defaultEnemySecondaryColor);
-        sNaviColorList[ACTORCAT_BOSS].outer =
-            CVarGetColor(CVAR_COSMETIC("Navi.EnemySecondary.Value"), defaultEnemySecondaryColor);
-    } else {
-        sNaviColorList[ACTORCAT_ENEMY].outer = defaultEnemySecondaryColor;
-        sNaviColorList[ACTORCAT_BOSS].outer = defaultEnemySecondaryColor;
-    }
-
-    if (CVarGetInteger(CVAR_COSMETIC("Navi.PropsPrimary.Changed"), 0)) {
-        sNaviColorList[ACTORCAT_PROP].inner =
-            CVarGetColor(CVAR_COSMETIC("Navi.PropsPrimary.Value"), defaultPropsPrimaryColor);
-    } else {
-        sNaviColorList[ACTORCAT_PROP].inner = defaultPropsPrimaryColor;
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("Navi.PropsSecondary.Changed"), 0)) {
-        sNaviColorList[ACTORCAT_PROP].outer =
-            CVarGetColor(CVAR_COSMETIC("Navi.PropsSecondary.Value"), defaultPropsSecondaryColor);
-    } else {
-        sNaviColorList[ACTORCAT_PROP].outer = defaultPropsSecondaryColor;
-    }
-
     NaviColor* naviColor = &sNaviColorList[actorCategory];
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_NAVI_INNER_CATEGORY(actorCategory), &naviColor->inner);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_NAVI_OUTER_CATEGORY(actorCategory), &naviColor->outer);
     targetCtx->naviRefPos.x = actor->focus.pos.x;
     targetCtx->naviRefPos.y = actor->focus.pos.y + (actor->targetArrowOffset * actor->scale.y);
     targetCtx->naviRefPos.z = actor->focus.pos.z;
