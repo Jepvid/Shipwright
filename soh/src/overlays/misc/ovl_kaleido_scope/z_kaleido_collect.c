@@ -472,52 +472,6 @@ void KaleidoScope_DrawQuestStatus(PlayState* play, GraphicsContext* gfxCtx) {
     }
 
     if (pauseCtx->state == 6) {
-        Color_RGB8 aButtonColor = { 80, 150, 255 };
-        if (CVarGetInteger(CVAR_COSMETIC("HUD.AButton.Changed"), 0)) {
-            aButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.AButton.Value"), aButtonColor);
-        } else if (CVarGetInteger(CVAR_COSMETIC("DefaultColorScheme"), COLORSCHEME_N64) == COLORSCHEME_GAMECUBE) {
-            aButtonColor = (Color_RGB8){ 80, 255, 150 };
-        }
-        if (!GameInteractor_Should(VB_HAVE_OCARINA_NOTE_D4, true)) {
-            aButtonColor = (Color_RGB8){ 191, 191, 191 };
-        }
-
-        Color_RGB8 cButtonsColor = { 255, 255, 50 };
-        if (CVarGetInteger(CVAR_COSMETIC("HUD.CButtons.Changed"), 0)) {
-            cButtonsColor = CVarGetColor24(CVAR_COSMETIC("HUD.CButtons.Value"), cButtonsColor);
-        }
-        Color_RGB8 cUpButtonColor = cButtonsColor;
-        if (CVarGetInteger(CVAR_COSMETIC("HUD.CUpButton.Changed"), 0)) {
-            cUpButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.CUpButton.Value"), cUpButtonColor);
-        }
-        if (!GameInteractor_Should(VB_HAVE_OCARINA_NOTE_D5, true)) {
-            cUpButtonColor = (Color_RGB8){ 191, 191, 191 };
-        }
-
-        Color_RGB8 cDownButtonColor = cButtonsColor;
-        if (CVarGetInteger(CVAR_COSMETIC("HUD.CDownButton.Changed"), 0)) {
-            cDownButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.CDownButton.Value"), cDownButtonColor);
-        }
-        if (!GameInteractor_Should(VB_HAVE_OCARINA_NOTE_F4, true)) {
-            cDownButtonColor = (Color_RGB8){ 191, 191, 191 };
-        }
-
-        Color_RGB8 cLeftButtonColor = cButtonsColor;
-        if (CVarGetInteger(CVAR_COSMETIC("HUD.CLeftButton.Changed"), 0)) {
-            cLeftButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.CLeftButton.Value"), cLeftButtonColor);
-        }
-        if (!GameInteractor_Should(VB_HAVE_OCARINA_NOTE_B4, true)) {
-            cLeftButtonColor = (Color_RGB8){ 191, 191, 191 };
-        }
-
-        Color_RGB8 cRightButtonColor = cButtonsColor;
-        if (CVarGetInteger(CVAR_COSMETIC("HUD.CRightButton.Changed"), 0)) {
-            cRightButtonColor = CVarGetColor24(CVAR_COSMETIC("HUD.CRightButton.Value"), cRightButtonColor);
-        }
-        if (!GameInteractor_Should(VB_HAVE_OCARINA_NOTE_A4, true)) {
-            cRightButtonColor = (Color_RGB8){ 191, 191, 191 };
-        }
-
         gDPPipeSync(POLY_OPA_DISP++);
         gDPSetCombineMode(POLY_OPA_DISP++, G_CC_MODULATEIA_PRIM, G_CC_MODULATEIA_PRIM);
 
@@ -565,28 +519,15 @@ void KaleidoScope_DrawQuestStatus(PlayState* play, GraphicsContext* gfxCtx) {
 
                     gDPPipeSync(POLY_OPA_DISP++);
 
-                    s16 Notes_alpha = D_8082A150[sp218];
+                    Color_RGBA8 noteColor = { 255, 255, 50, 255 };
+
                     if (D_8082A124[sp218] == 0) {
-                        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, aButtonColor.r, aButtonColor.g, aButtonColor.b,
-                                        Notes_alpha);
-                    } else {
-                        if (D_8082A124[sp218] == OCARINA_BTN_C_UP) {
-                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cUpButtonColor.r, cUpButtonColor.g, cUpButtonColor.b,
-                                            Notes_alpha);
-                        } else if (D_8082A124[sp218] == OCARINA_BTN_C_LEFT) {
-                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cLeftButtonColor.r, cLeftButtonColor.g,
-                                            cLeftButtonColor.b, Notes_alpha);
-                        } else if (D_8082A124[sp218] == OCARINA_BTN_C_RIGHT) {
-                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cRightButtonColor.r, cRightButtonColor.g,
-                                            cRightButtonColor.b, Notes_alpha);
-                        } else if (D_8082A124[sp218] == OCARINA_BTN_C_DOWN) {
-                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cDownButtonColor.r, cDownButtonColor.g,
-                                            cDownButtonColor.b, Notes_alpha);
-                        } else {
-                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cButtonsColor.r, cButtonsColor.g, cButtonsColor.b,
-                                            Notes_alpha);
-                        }
+                        noteColor = (Color_RGBA8){ 80, 255, 150, 255 };
                     }
+                    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_PAUSE_OCARINA_NOTE_BUTTON(D_8082A124[sp218]),
+                                                          &noteColor);
+                    GameInteractor_Should(VB_APPLY_PAUSE_OCARINA_NOTE_COLOR, true, D_8082A124[sp218], &noteColor);
+                    gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, noteColor.r, noteColor.g, noteColor.b, D_8082A150[sp218]);
 
                     gDPSetEnvColor(POLY_OPA_DISP++, 10, 10, 10, 0);
                     gSPVertex(POLY_OPA_DISP++, &pauseCtx->questVtx[sp21A], 4, 0);
@@ -614,28 +555,17 @@ void KaleidoScope_DrawQuestStatus(PlayState* play, GraphicsContext* gfxCtx) {
                 gDPPipeSync(POLY_OPA_DISP++);
 
                 if (pauseCtx->unk_1E4 == 8) {
-                    s16 Notes_alpha = 200;
+                    Color_RGBA8 noteColor = { 255, 255, 50, 255 };
+
                     if (gOcarinaSongButtons[sp224].buttonsIndex[phi_s3] == 0) {
-                        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, aButtonColor.r, aButtonColor.g, aButtonColor.b,
-                                        Notes_alpha);
-                    } else {
-                        if (gOcarinaSongButtons[sp224].buttonsIndex[phi_s3] == OCARINA_BTN_C_UP) {
-                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cUpButtonColor.r, cUpButtonColor.g, cUpButtonColor.b,
-                                            Notes_alpha);
-                        } else if (gOcarinaSongButtons[sp224].buttonsIndex[phi_s3] == OCARINA_BTN_C_LEFT) {
-                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cLeftButtonColor.r, cLeftButtonColor.g,
-                                            cLeftButtonColor.b, Notes_alpha);
-                        } else if (gOcarinaSongButtons[sp224].buttonsIndex[phi_s3] == OCARINA_BTN_C_RIGHT) {
-                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cRightButtonColor.r, cRightButtonColor.g,
-                                            cRightButtonColor.b, Notes_alpha);
-                        } else if (gOcarinaSongButtons[sp224].buttonsIndex[phi_s3] == OCARINA_BTN_C_DOWN) {
-                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cDownButtonColor.r, cDownButtonColor.g,
-                                            cDownButtonColor.b, Notes_alpha);
-                        } else {
-                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cButtonsColor.r, cButtonsColor.g, cButtonsColor.b,
-                                            Notes_alpha);
-                        }
+                        noteColor = (Color_RGBA8){ 80, 255, 150, 255 };
                     }
+                    GameInteractor_ExecuteOnCosmeticColor(
+                        COSMETIC_COLOR_PAUSE_OCARINA_NOTE_BUTTON(gOcarinaSongButtons[sp224].buttonsIndex[phi_s3]),
+                        &noteColor);
+                    GameInteractor_Should(VB_APPLY_PAUSE_OCARINA_NOTE_COLOR, true,
+                                          gOcarinaSongButtons[sp224].buttonsIndex[phi_s3], &noteColor);
+                    gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, noteColor.r, noteColor.g, noteColor.b, 200);
                 } else {
                     gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, 150, 150, 150, 150);
                 }
@@ -686,28 +616,15 @@ void KaleidoScope_DrawQuestStatus(PlayState* play, GraphicsContext* gfxCtx) {
 
                     gDPPipeSync(POLY_OPA_DISP++);
 
-                    s16 Notes_alpha = D_8082A150[phi_s3];
+                    Color_RGBA8 noteColor = { 255, 255, 50, 255 };
+
                     if (D_8082A124[phi_s3] == 0) {
-                        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, aButtonColor.r, aButtonColor.g, aButtonColor.b,
-                                        Notes_alpha);
-                    } else {
-                        if (gOcarinaSongButtons[sp224].buttonsIndex[phi_s3] == OCARINA_BTN_C_UP) {
-                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cUpButtonColor.r, cUpButtonColor.g, cUpButtonColor.b,
-                                            Notes_alpha);
-                        } else if (gOcarinaSongButtons[sp224].buttonsIndex[phi_s3] == OCARINA_BTN_C_LEFT) {
-                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cLeftButtonColor.r, cLeftButtonColor.g,
-                                            cLeftButtonColor.b, Notes_alpha);
-                        } else if (gOcarinaSongButtons[sp224].buttonsIndex[phi_s3] == OCARINA_BTN_C_RIGHT) {
-                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cRightButtonColor.r, cRightButtonColor.g,
-                                            cRightButtonColor.b, Notes_alpha);
-                        } else if (gOcarinaSongButtons[sp224].buttonsIndex[phi_s3] == OCARINA_BTN_C_DOWN) {
-                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cDownButtonColor.r, cDownButtonColor.g,
-                                            cDownButtonColor.b, Notes_alpha);
-                        } else {
-                            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, cButtonsColor.r, cButtonsColor.g, cButtonsColor.b,
-                                            Notes_alpha);
-                        }
+                        noteColor = (Color_RGBA8){ 80, 255, 150, 255 };
                     }
+                    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_PAUSE_OCARINA_NOTE_BUTTON(D_8082A124[phi_s3]),
+                                                          &noteColor);
+                    GameInteractor_Should(VB_APPLY_PAUSE_OCARINA_NOTE_COLOR, true, D_8082A124[phi_s3], &noteColor);
+                    gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, noteColor.r, noteColor.g, noteColor.b, D_8082A150[phi_s3]);
 
                     gDPSetEnvColor(POLY_OPA_DISP++, 10, 10, 10, 0);
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vanilla-behavior/GIVanillaBehavior.h"
+#include <ship/utils/color.h>
 
 typedef enum {
     /* 0x00 */ GI_LINK_SIZE_NORMAL,

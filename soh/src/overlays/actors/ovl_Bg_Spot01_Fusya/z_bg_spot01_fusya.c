@@ -6,6 +6,8 @@
 
 #include "z_bg_spot01_fusya.h"
 #include "objects/object_spot01_objects/object_spot01_objects.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 
 #define FLAGS ACTOR_FLAG_UPDATE_CULLING_DISABLED
 
@@ -60,12 +62,7 @@ void func_808AAA50(BgSpot01Fusya* this, PlayState* play) {
     f32 temp;
     Actor* thisx = &this->actor;
 
-    if (CVarGetInteger(CVAR_COSMETIC("Kak.Windmill_Speed.Changed"), 0)) {
-        this->unk_158 = CVarGetFloat(CVAR_COSMETIC("Kak.Windmill_Speed.Value"), 100.0f);
-    } else {
-        this->unk_158 = 100.0f;
-    }
-
+    GameInteractor_ExecuteOnCosmeticValue(COSMETIC_VALUE_WINDMILL_SPEED, &this->unk_158);
     if (Flags_GetEventChkInf(EVENTCHKINF_PLAYED_SONG_OF_STORMS_IN_WINDMILL)) {
         this->unk_158 = 1800.0f;
     }

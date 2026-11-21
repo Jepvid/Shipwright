@@ -8,6 +8,7 @@
 #include "scenes/dungeons/jyasinboss/jyasinboss_scene.h"
 #include "objects/object_ik/object_ik.h"
 #include "vt.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include <libultraship/bridge/consolevariablebridge.h>
 
@@ -817,12 +818,9 @@ Gfx* func_80A761B0(GraphicsContext* gfxCtx, u8 primR, u8 primG, u8 primB, u8 env
     displayListHead = displayList;
 
     gDPPipeSync(displayListHead++);
-    if (CVarGetInteger(CVAR_COSMETIC("NPC.IronKnuckles.Changed"), 0)) {
-        Color_RGB8 color = CVarGetColor24(CVAR_COSMETIC("NPC.IronKnuckles.Value"), (Color_RGB8){ primR, primG, primB });
-        gDPSetPrimColor(displayListHead++, 0, 0, color.r, color.g, color.b, 255);
-    } else {
-        gDPSetPrimColor(displayListHead++, 0, 0, primR, primG, primB, 255);
-    }
+    Color_RGBA8 primColor = { primR, primG, primB, 255 };
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_IRON_KNUCKLE, &primColor);
+    gDPSetPrimColor(displayListHead++, 0, 0, primColor.r, primColor.g, primColor.b, 255);
     gDPSetEnvColor(displayListHead++, envR, envG, envB, 255);
     gSPEndDisplayList(displayListHead++);
 

@@ -18,6 +18,7 @@
 #include "soh/Enhancements/boss-rush/BossRush.h"
 #include "soh/Enhancements/speedrun/Speedrun.h"
 #include "soh/Enhancements/FileSelectEnhancements.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include <assert.h>
 #include "z64save.h"
@@ -139,7 +140,7 @@ static Gfx sScreenFillSetupDL[] = {
 
 static s16 sFileInfoBoxPartWidths[] = { 36, 36, 36, 36, 24 };
 
-s16 sWindowContentColors[2][3] = {
+static s16 sWindowContentColors[2][3] = {
     { 100, 150, 255 }, // blue
     { 100, 100, 100 }, // gray
 };
@@ -1516,6 +1517,8 @@ static s16 sQuestItemBlue[] = { 255, 255, 255, 0, 0, 255, 0, 255, 0 };
 static s16 sQuestItemFlags[] = { 0x0012, 0x0013, 0x0014, 0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005 };
 static s16 sNamePrimColors[2][3] = { { 255, 255, 255 }, { 100, 100, 100 } };
 static void* sHeartTextures[] = { gHeartFullTex, gDefenseHeartFullTex };
+static s16 sHeartPrimColors[2][3] = { { 255, 70, 50 }, { 200, 0, 0 } };
+static s16 sHeartEnvColors[2][3] = { { 50, 40, 60 }, { 255, 255, 255 } };
 
 void FileChoose_DrawFileInfo(GameState* thisx, s16 fileIndex, s16 isActive) {
     FileChooseContext* this = (FileChooseContext*)thisx;
@@ -1525,23 +1528,6 @@ void FileChoose_DrawFileInfo(GameState* thisx, s16 fileIndex, s16 isActive) {
     s16 vtxOffset;
     s16 j;
     s16 deathCountSplit[3];
-
-    Color_RGB8 heartColor = { HEARTS_PRIM_R, HEARTS_PRIM_G, HEARTS_PRIM_B };
-    if (CVarGetInteger(CVAR_COSMETIC("Consumable.Hearts.Changed"), 0)) {
-        heartColor = CVarGetColor24(CVAR_COSMETIC("Consumable.Hearts.Value"), heartColor);
-    }
-    Color_RGB8 heartBorder = { HEARTS_ENV_R, HEARTS_ENV_G, HEARTS_ENV_B };
-    if (CVarGetInteger(CVAR_COSMETIC("Consumable.HeartBorder.Changed"), 0)) {
-        heartBorder = CVarGetColor24(CVAR_COSMETIC("Consumable.HeartBorder.Value"), heartBorder);
-    }
-    Color_RGB8 ddColor = { HEARTS_DD_ENV_R, HEARTS_DD_ENV_G, HEARTS_DD_ENV_B };
-    if (CVarGetInteger(CVAR_COSMETIC("Consumable.DDHearts.Changed"), 0)) {
-        ddColor = CVarGetColor24(CVAR_COSMETIC("Consumable.DDHearts.Value"), ddColor);
-    }
-    Color_RGB8 ddBorder = { HEARTS_DD_PRIM_R, HEARTS_DD_PRIM_G, HEARTS_DD_PRIM_B };
-    if (CVarGetInteger(CVAR_COSMETIC("Consumable.DDHeartBorder.Changed"), 0)) {
-        ddBorder = CVarGetColor24(CVAR_COSMETIC("Consumable.DDHeartBorder.Value"), ddBorder);
-    }
 
     OPEN_DISPS(this->state.gfxCtx);
 
@@ -1619,15 +1605,16 @@ void FileChoose_DrawFileInfo(GameState* thisx, s16 fileIndex, s16 isActive) {
         gDPPipeSync(POLY_OPA_DISP++);
         gDPSetCombineLERP(POLY_OPA_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0,
                           PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0);
-        if (heartType) {
-            gDPSetPrimColor(POLY_OPA_DISP++, 0x00, 0x00, ddColor.r, ddColor.g, ddColor.b,
-                            this->fileInfoAlpha[fileIndex]);
-            gDPSetEnvColor(POLY_OPA_DISP++, ddBorder.r, ddBorder.g, ddBorder.b, 255);
-        } else {
-            gDPSetPrimColor(POLY_OPA_DISP++, 0x00, 0x00, heartColor.r, heartColor.g, heartColor.b,
-                            this->fileInfoAlpha[fileIndex]);
-            gDPSetEnvColor(POLY_OPA_DISP++, heartBorder.r, heartBorder.g, heartBorder.b, 255);
-        }
+        Color_RGBA8 heartPrim = { sHeartPrimColors[heartType][0], sHeartPrimColors[heartType][1],
+                                  sHeartPrimColors[heartType][2], 255 };
+        Color_RGBA8 heartEnv = { sHeartEnvColors[heartType][0], sHeartEnvColors[heartType][1],
+                                 sHeartEnvColors[heartType][2], 255 };
+
+        GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_FILE_SELECT_HEART_PRIM_TYPE(heartType), &heartPrim);
+        GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_FILE_SELECT_HEART_ENV_TYPE(heartType), &heartEnv);
+        gDPSetPrimColor(POLY_OPA_DISP++, 0x00, 0x00, heartPrim.r, heartPrim.g, heartPrim.b,
+                        this->fileInfoAlpha[fileIndex]);
+        gDPSetEnvColor(POLY_OPA_DISP++, heartEnv.r, heartEnv.g, heartEnv.b, 255);
 
         i = Save_GetSaveMetaInfo(fileIndex)->healthCapacity / FULL_HEART_HEALTH;
 
@@ -2105,13 +2092,15 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
             gSPVertex(POLY_OPA_DISP++, &this->windowContentVtx[temp], 20, 0);
 
             isActive = ((this->n64ddFlag == this->n64ddFlags[i]) || (this->nameBoxAlpha[i] == 0)) ? 0 : 1;
+            Color_RGBA8 contentColor = { sWindowContentColors[isActive][0], sWindowContentColors[isActive][1],
+                                         sWindowContentColors[isActive][2], 255 };
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_FILE_SELECT_CONTENT_TYPE(isActive), &contentColor);
 
             if (!FileChoose_IsSaveCompatible(Save_GetSaveMetaInfo(i)) && Save_GetSaveMetaInfo(i)->valid) {
                 gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[1][0], sWindowContentColors[1][1],
                                 sWindowContentColors[1][2], this->fileButtonAlpha[i]);
             } else {
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[isActive][0],
-                                sWindowContentColors[isActive][1], sWindowContentColors[isActive][2],
+                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, contentColor.r, contentColor.g, contentColor.b,
                                 this->fileButtonAlpha[i]);
             }
 
@@ -2125,8 +2114,7 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
                 gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[1][0], sWindowContentColors[1][1],
                                 sWindowContentColors[1][2], this->nameBoxAlpha[i]);
             } else {
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[isActive][0],
-                                sWindowContentColors[isActive][1], sWindowContentColors[isActive][2],
+                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, contentColor.r, contentColor.g, contentColor.b,
                                 this->nameBoxAlpha[i]);
             }
 
@@ -2137,8 +2125,7 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
 
             // draw disk label for 64DD
             if (this->n64ddFlags[i]) {
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[isActive][0],
-                                sWindowContentColors[isActive][1], sWindowContentColors[isActive][2],
+                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, contentColor.r, contentColor.g, contentColor.b,
                                 this->nameBoxAlpha[i]);
                 gDPLoadTextureBlock(POLY_OPA_DISP++, gFileSelDISKButtonTex, G_IM_FMT_IA, G_IM_SIZ_16b, 44, 16, 0,
                                     G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK,
@@ -2171,8 +2158,7 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
                                     sWindowContentColors[1][2], questLabelAlpha);
                 } else {
                     questLabelAlpha = this->nameAlpha[i];
-                    gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[isActive][0],
-                                    sWindowContentColors[isActive][1], sWindowContentColors[isActive][2],
+                    gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, contentColor.r, contentColor.g, contentColor.b,
                                     questLabelAlpha);
                 }
                 FileChoose_DrawQuestLabelBox(this, &this->windowContentVtx[temp + 8]);
@@ -2185,8 +2171,7 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
                 gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[1][0], sWindowContentColors[1][1],
                                 sWindowContentColors[1][2], this->fileButtonAlpha[i]);
             } else {
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[isActive][0],
-                                sWindowContentColors[isActive][1], sWindowContentColors[isActive][2],
+                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, contentColor.r, contentColor.g, contentColor.b,
                                 this->connectorAlpha[i]);
             }
             gDPLoadTextureBlock(POLY_OPA_DISP++, gFileSelConnectorTex, G_IM_FMT_IA, G_IM_SIZ_8b, 24, 16, 0,
@@ -2925,36 +2910,7 @@ void FileChoose_Main(GameState* thisx) {
     FileChooseContext* this = (FileChooseContext*)thisx;
     Input* input = &this->state.input[0];
 
-    Color_RGB8 helpTextColor = { 100, 255, 255 };
-
     GameInteractor_ExecuteOnFileChooseMain(thisx);
-
-    if (CVarGetInteger(CVAR_COSMETIC("Title.FileChoose.Changed"), 0)) {
-        Color_RGB8 backgroundColor =
-            CVarGetColor24(CVAR_COSMETIC("Title.FileChoose.Value"), (Color_RGB8){ 100, 150, 255 });
-        this->windowColor[0] = backgroundColor.r;
-        this->windowColor[1] = backgroundColor.g;
-        this->windowColor[2] = backgroundColor.b;
-        this->highlightColor[0] = MIN(backgroundColor.r + 100, 255);
-        this->highlightColor[1] = MIN(backgroundColor.g + 100, 255);
-        this->highlightColor[2] = MIN(backgroundColor.b + 100, 255);
-        helpTextColor.r = MIN(backgroundColor.r + 100, 255);
-        helpTextColor.g = MIN(backgroundColor.g + 100, 255);
-        helpTextColor.b = MIN(backgroundColor.b + 100, 255);
-        sWindowContentColors[0][0] = backgroundColor.r;
-        sWindowContentColors[0][1] = backgroundColor.g;
-        sWindowContentColors[0][2] = backgroundColor.b;
-    } else {
-        this->windowColor[0] = 100;
-        this->windowColor[1] = 150;
-        this->windowColor[2] = 255;
-        this->highlightColor[0] = 155;
-        this->highlightColor[1] = 255;
-        this->highlightColor[2] = 255;
-        sWindowContentColors[0][0] = 100;
-        sWindowContentColors[0][1] = 150;
-        sWindowContentColors[0][2] = 255;
-    }
 
     OPEN_DISPS(this->state.gfxCtx);
 
@@ -3085,7 +3041,9 @@ void FileChoose_Main(GameState* thisx) {
 
         gDPSetCombineLERP(POLY_OPA_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0,
                           PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0);
-        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, helpTextColor.r, helpTextColor.g, helpTextColor.b, this->controlsAlpha);
+        Color_RGBA8 controlsColor = { 100, 255, 255, 255 };
+        GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_FILE_SELECT_CONTROLS, &controlsColor);
+        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, controlsColor.r, controlsColor.g, controlsColor.b, this->controlsAlpha);
         gDPSetEnvColor(POLY_OPA_DISP++, 0, 0, 0, 0);
         gDPLoadTextureBlock(POLY_OPA_DISP++, controlsTextures[gSaveContext.language], G_IM_FMT_IA, G_IM_SIZ_8b, 144, 16,
                             0, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK,

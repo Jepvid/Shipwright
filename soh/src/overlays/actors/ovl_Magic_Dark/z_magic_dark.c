@@ -6,6 +6,8 @@
 
 #include "z_magic_dark.h"
 #include "objects/gameplay_keep/gameplay_keep.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 
 #define FLAGS (ACTOR_FLAG_UPDATE_CULLING_DISABLED | ACTOR_FLAG_UPDATE_DURING_OCARINA)
 
@@ -198,15 +200,6 @@ void MagicDark_DiamondDraw(Actor* thisx, PlayState* play) {
     MagicDark* this = (MagicDark*)thisx;
     s32 pad;
     u16 gameplayFrames = play->gameplayFrames;
-    Color_RGB8 Spell_env = { 0, 100, 255 };
-    Color_RGB8 Spell_col = { 170, 255, 255 };
-    if (CVarGetInteger(CVAR_COSMETIC("Magic.NayrusSecondary.Changed"), 0)) {
-        Spell_env = CVarGetColor24(CVAR_COSMETIC("Magic.NayrusSecondary.Value"), Spell_env);
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("Magic.NayrusPrimary.Changed"), 0)) {
-        Spell_col = CVarGetColor24(CVAR_COSMETIC("Magic.NayrusPrimary.Value"), Spell_col);
-    }
-
     OPEN_DISPS(play->state.gfxCtx);
 
     Gfx_SetupDL_25Xlu(play->state.gfxCtx);
@@ -227,9 +220,13 @@ void MagicDark_DiamondDraw(Actor* thisx, PlayState* play) {
         Matrix_Scale(this->actor.scale.x, this->actor.scale.y, this->actor.scale.z, MTXMODE_APPLY);
         Matrix_RotateY(this->actor.shape.rot.y * (M_PI / 0x8000), MTXMODE_APPLY);
         gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-        gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, Spell_col.r, Spell_col.g, Spell_col.b,
+        Color_RGBA8 primColor = { 170, 255, 255, 255 };
+        Color_RGBA8 envColor = { 0, 100, 255, 255 };
+        GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MAGIC_NAYRUS_DIAMOND_PRIM, &primColor);
+        GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MAGIC_NAYRUS_DIAMOND_ENV, &envColor);
+        gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, primColor.r, primColor.g, primColor.b,
                         (s32)(this->primAlpha * 0.6f) & 0xFF);
-        gDPSetEnvColor(POLY_XLU_DISP++, Spell_env.r, Spell_env.g, Spell_env.b, 128);
+        gDPSetEnvColor(POLY_XLU_DISP++, envColor.r, envColor.g, envColor.b, 128);
         gSPDisplayList(POLY_XLU_DISP++, sDiamondMaterialDL);
         gSPDisplayList(POLY_XLU_DISP++,
                        Gfx_TwoTexScrollEx(play->state.gfxCtx, 0, gameplayFrames * 2, gameplayFrames * -4, 32, 32, 1, 0,
@@ -271,17 +268,12 @@ void MagicDark_OrbDraw(Actor* thisx, PlayState* play) {
 
     Gfx_SetupDL_25Xlu(play->state.gfxCtx);
 
-    Color_RGB8 Spell_env = { 0, 150, 255 };
-    Color_RGB8 Spell_col = { 170, 255, 255 };
-    if (CVarGetInteger(CVAR_COSMETIC("Magic.NayrusSecondary.Changed"), 0)) {
-        Spell_env = CVarGetColor24(CVAR_COSMETIC("Magic.NayrusSecondary.Value"), Spell_env);
-    }
-    if (CVarGetInteger(CVAR_COSMETIC("Magic.NayrusPrimary.Changed"), 0)) {
-        Spell_col = CVarGetColor24(CVAR_COSMETIC("Magic.NayrusPrimary.Value"), Spell_col);
-    }
-
-    gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, Spell_col.r, Spell_col.g, Spell_col.b, 255);
-    gDPSetEnvColor(POLY_XLU_DISP++, Spell_env.r, Spell_env.g, Spell_env.b, 255);
+    Color_RGBA8 primColor = { 170, 255, 255, 255 };
+    Color_RGBA8 envColor = { 0, 150, 255, 255 };
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MAGIC_NAYRUS_ORB_PRIM, &primColor);
+    GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_MAGIC_NAYRUS_ORB_ENV, &envColor);
+    gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, primColor.r, primColor.g, primColor.b, 255);
+    gDPSetEnvColor(POLY_XLU_DISP++, envColor.r, envColor.g, envColor.b, 255);
     Matrix_Translate(pos.x, pos.y, pos.z, MTXMODE_NEW);
     Matrix_Scale(this->actor.scale.x, this->actor.scale.y, this->actor.scale.z, MTXMODE_APPLY);
     Matrix_Mult(&play->billboardMtxF, MTXMODE_APPLY);
