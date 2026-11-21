@@ -67,6 +67,8 @@ DEFINE_HOOK(OnInterfaceUpdate, ());
 DEFINE_HOOK(OnKaleidoscopeUpdate, (int16_t inDungeonScene));
 DEFINE_HOOK(OnMinimapDrawCompassIcons, ());
 DEFINE_HOOK(OnHudElementPosition, (int32_t element, int16_t* x, int16_t* y, float* scale));
+DEFINE_HOOK(OnHudElementDrawBegin, (int32_t element, Gfx* gfx));
+DEFINE_HOOK(OnHudElementDrawEnd, (int32_t element, Gfx* gfx));
 DEFINE_HOOK(OnCosmeticColor, (int32_t option, Color_RGBA8* color));
 DEFINE_HOOK(OnCosmeticTint, (int32_t option, Gfx** gfx, bool enable));
 DEFINE_HOOK(OnEffectBlureUpdate, (void* effect));

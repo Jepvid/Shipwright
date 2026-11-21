@@ -3720,8 +3720,10 @@ void Interface_DrawItemButtons(PlayState* play) {
     posX = OTRGetRectDimensionFromRightEdge(R_ITEM_BTN_X(0));
     posY = R_ITEM_BTN_Y(0);
     GameInteractor_ExecuteOnHudElementPosition(HUD_ELEMENT_B_BUTTON, &posX, &posY, NULL);
+    GameInteractor_ExecuteOnHudElementDrawBegin(HUD_ELEMENT_B_BUTTON, OVERLAY_DISP);
     OVERLAY_DISP = Gfx_TextureIA8(OVERLAY_DISP, gButtonBackgroundTex, 32, 32, posX, posY, R_ITEM_BTN_WIDTH(0),
                                   R_ITEM_BTN_WIDTH(0), R_ITEM_BTN_DD(0) << 1, R_ITEM_BTN_DD(0) << 1);
+    GameInteractor_ExecuteOnHudElementDrawEnd(HUD_ELEMENT_B_BUTTON, OVERLAY_DISP);
 
     // C-Left Button Color & Texture
     gDPPipeSync(OVERLAY_DISP++);
@@ -3885,6 +3887,7 @@ void Interface_DrawItemIconTexture(PlayState* play, void* texture, s16 button) {
     OPEN_DISPS(play->state.gfxCtx);
 
     GameInteractor_ExecuteOnHudElementPosition(HUD_ELEMENT_ITEM_BUTTON(button), &posX, &posY, NULL);
+    GameInteractor_ExecuteOnHudElementDrawBegin(HUD_ELEMENT_ITEM_BUTTON(button), OVERLAY_DISP);
 
     gDPLoadTextureBlock(OVERLAY_DISP++, texture, G_IM_FMT_RGBA, G_IM_SIZ_32b, 32, 32, 0, G_TX_NOMIRROR | G_TX_WRAP,
                         G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOLOD);
@@ -3892,6 +3895,7 @@ void Interface_DrawItemIconTexture(PlayState* play, void* texture, s16 button) {
     gSPWideTextureRectangle(OVERLAY_DISP++, posX << 2, posY << 2, (posX + gItemIconWidth[button]) << 2,
                             (posY + gItemIconWidth[button]) << 2, G_TX_RENDERTILE, 0, 0, gItemIconDD[button] << 1,
                             gItemIconDD[button] << 1);
+    GameInteractor_ExecuteOnHudElementDrawEnd(HUD_ELEMENT_ITEM_BUTTON(button), OVERLAY_DISP);
 
     CLOSE_DISPS(play->state.gfxCtx);
 }
@@ -3914,6 +3918,7 @@ void Interface_DrawAmmoCount(PlayState* play, s16 button, s16 alpha) {
     OPEN_DISPS(play->state.gfxCtx);
 
     GameInteractor_ExecuteOnHudElementPosition(HUD_ELEMENT_ITEM_BUTTON(button), &posX, &posY, NULL);
+    GameInteractor_ExecuteOnHudElementDrawBegin(HUD_ELEMENT_ITEM_BUTTON(button), OVERLAY_DISP);
 
     i = gSaveContext.equips.buttonItems[button];
 
@@ -3967,6 +3972,7 @@ void Interface_DrawAmmoCount(PlayState* play, s16 button, s16 alpha) {
             Gfx_TextureIA8(OVERLAY_DISP, (u8*)_gAmmoDigit0Tex[ammo], 8, 8, posX + 6, posY, 8, 8, 1 << 10, 1 << 10);
     }
 
+    GameInteractor_ExecuteOnHudElementDrawEnd(HUD_ELEMENT_ITEM_BUTTON(button), OVERLAY_DISP);
     CLOSE_DISPS(play->state.gfxCtx);
 }
 
@@ -4396,6 +4402,7 @@ void Interface_Draw(PlayState* play) {
             s16 BbtnPosX = OTRGetRectDimensionFromRightEdge(R_B_LABEL_X(languageOffset));
             s16 BbtnPosY = R_B_LABEL_Y(languageOffset);
             GameInteractor_ExecuteOnHudElementPosition(HUD_ELEMENT_B_BUTTON, &BbtnPosX, &BbtnPosY, NULL);
+            GameInteractor_ExecuteOnHudElementDrawBegin(HUD_ELEMENT_B_BUTTON, OVERLAY_DISP);
             gDPPipeSync(OVERLAY_DISP++);
             gDPSetCombineLERP(OVERLAY_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0,
                               PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0);
@@ -4409,6 +4416,7 @@ void Interface_Draw(PlayState* play) {
             gSPWideTextureRectangle(OVERLAY_DISP++, BbtnPosX << 2, BbtnPosY << 2,
                                     (BbtnPosX + DO_ACTION_TEX_WIDTH()) << 2, (BbtnPosY + DO_ACTION_TEX_HEIGHT()) << 2,
                                     G_TX_RENDERTILE, 0, 0, R_B_LABEL_DD, R_B_LABEL_DD);
+            GameInteractor_ExecuteOnHudElementDrawEnd(HUD_ELEMENT_B_BUTTON, OVERLAY_DISP);
         }
 
         gDPPipeSync(OVERLAY_DISP++);

@@ -6,6 +6,7 @@
 #include <ship/controller/controldeck/ControlDeck.h>
 #include <ship/Context.h>
 #include <algorithm>
+#include <cmath>
 #include <string>
 
 #include "soh/SohGui/UIWidgets.hpp"
@@ -499,6 +500,7 @@ void ResetPositionAll() {
             std::string cvarNameMargins = std::string(cvarName).append(".UseMargins");
             CVarSetInteger(cvarPosType.c_str(), 0);
             CVarSetInteger(cvarNameMargins.c_str(), false); // Turn margin off to everythings as that original position.
+            CVarClear((std::string(cvarName) + ".Scale").c_str());
         }
         CVarClear(CVAR_COSMETIC("HUD.Hearts.LineLength"));
     }
@@ -520,10 +522,11 @@ struct HudElementInfo {
     int16_t noAnchorOffsetX = 0;      // added to the editor position without anchor
     int16_t leftAnchorOffsetX = 0;    // added to the editor position anchored left
     const char* marginCvar = nullptr; // UseMargins prefix when it differs from cvar
+    bool scalable = false;            // has a scale slider
 };
 
 static const HudElementInfo hudElements[HUD_ELEMENT_MAX] = {
-    { .cvar = CVAR_COSMETIC("HUD.BButton"), .originX = B_BUTTON_X, .originY = B_BUTTON_Y },
+    { .cvar = CVAR_COSMETIC("HUD.BButton"), .originX = B_BUTTON_X, .originY = B_BUTTON_Y, .scalable = true },
     { .cvar = CVAR_COSMETIC("HUD.CLeftButton"), .originX = C_LEFT_BUTTON_X, .originY = C_LEFT_BUTTON_Y },
     { .cvar = CVAR_COSMETIC("HUD.CDownButton"), .originX = C_DOWN_BUTTON_X, .originY = C_DOWN_BUTTON_Y },
     { .cvar = CVAR_COSMETIC("HUD.CRightButton"), .originX = C_RIGHT_BUTTON_X, .originY = C_RIGHT_BUTTON_Y },
@@ -590,7 +593,19 @@ static int16_t HudElement_ExtraHeartRows() {
     return lineLength == 0 ? 0 : (gSaveContext.healthCapacity - 1) / (FULL_HEART_HEALTH * lineLength);
 }
 
-// TODO: scale is passed through but unused until the scale slider is re-enabled and made consistent
+// Vanilla X position converted to the screen edge the element is anchored to
+static int16_t HudElement_EdgeOriginX(const HudElementInfo& info, int16_t vanillaX) {
+    if (info.edge == HUD_EDGE_LEFT) {
+        return info.truncOrigin ? (int16_t)OTRGetDimensionFromLeftEdge(vanillaX)
+                                : (int16_t)OTRGetRectDimensionFromLeftEdge(vanillaX);
+    } else if (info.edge == HUD_EDGE_RIGHT) {
+        return info.truncOrigin ? (int16_t)OTRGetDimensionFromRightEdge(vanillaX)
+                                : (int16_t)OTRGetRectDimensionFromRightEdge(vanillaX);
+    }
+    return vanillaX;
+}
+
+// TODO: scale is passed through but unused, scaling goes through OnHudElementDrawBegin/End
 // Moves a HUD element part from its vanilla position along with its element's editor placement
 void HudElement_ApplyPosition(int32_t element, int16_t* x, int16_t* y, float* scale) {
     const HudElementInfo& info = hudElements[element];
@@ -621,14 +636,7 @@ void HudElement_ApplyPosition(int32_t element, int16_t* x, int16_t* y, float* sc
         placementOffsetY = vanillaY;
     }
 
-    int16_t originX = vanillaX;
-    if (info.edge == HUD_EDGE_LEFT) {
-        originX = info.truncOrigin ? (int16_t)OTRGetDimensionFromLeftEdge(vanillaX)
-                                   : (int16_t)OTRGetRectDimensionFromLeftEdge(vanillaX);
-    } else if (info.edge == HUD_EDGE_RIGHT) {
-        originX = info.truncOrigin ? (int16_t)OTRGetDimensionFromRightEdge(vanillaX)
-                                   : (int16_t)OTRGetRectDimensionFromRightEdge(vanillaX);
-    }
+    int16_t originX = HudElement_EdgeOriginX(info, vanillaX);
     int16_t partX = info.dynamicOrigin ? 0 : *x - originX;
     int16_t partY = info.dynamicOrigin ? 0 : *y - vanillaY;
     if (posType == ANCHOR_NONE) {
@@ -683,6 +691,183 @@ void HudElement_ApplyPosition(int32_t element, int16_t* x, int16_t* y, float* sc
         case HIDDEN:
             *x = -9999;
             break;
+    }
+}
+
+// Scale of a moved HUD element, 1 when it has no slider or keeps its original location
+static float HudElement_GetScale(int32_t element) {
+    const HudElementInfo& info = hudElements[element];
+    if (!info.scalable) {
+        return 1.0f;
+    }
+    std::string cvar = info.cvar;
+    int32_t posType = CVarGetInteger((cvar + ".PosType").c_str(), ORIGINAL_LOCATION);
+    if (posType == ORIGINAL_LOCATION || posType == HIDDEN) {
+        return 1.0f;
+    }
+    return CVarGetFloat((cvar + ".Scale").c_str(), 1.0f);
+}
+
+// Gfx words a command spans, 0 when walking past it is unsafe
+static int32_t HudGfx_CommandLength(const Gfx* cmd) {
+    switch ((uint8_t)(cmd->words.w0 >> 24)) {
+        case G_TEXRECT:
+        case G_TEXRECTFLIP:
+        case G_TEXRECT_WIDE:
+        case G_IMAGERECT:
+        case G_SETTILESIZE_INTERP:
+            return 3;
+        case G_SETTILESIZE_LERP:
+            return 5;
+        case G_SETTIMG_OTR_HASH:
+        case G_VTX_OTR_HASH:
+        case G_VTX_OTR_FILEPATH:
+        case G_MTX_OTR:
+        case G_MARKER:
+        case G_MOVEMEM_OTR:
+        case G_READFB:
+        case G_REGBLENDEDTEX:
+        case G_LOADBLOCK_WIDE:
+        case G_FILLWIDERECT:
+            return 2;
+        case G_DL_OTR_HASH:
+            return ((cmd->words.w0 >> 16) & 1) ? 0 : 2;
+        case G_DL:
+        case G_DL_OTR_FILEPATH:
+        case G_DL_INDEX:
+            return ((cmd->words.w0 >> 16) & 1) ? 0 : 1;
+        case G_NOOP:
+        case G_SPNOOP:
+        case G_MTX:
+        case G_POPMTX:
+        case G_MOVEMEM:
+        case G_MOVEWORD:
+        case G_TEXTURE:
+        case G_VTX:
+        case G_MODIFYVTX:
+        case G_CULLDL:
+        case G_GEOMETRYMODE:
+        case G_TRI1:
+        case G_TRI2:
+        case G_QUAD:
+        case G_SETOTHERMODE_L:
+        case G_SETOTHERMODE_H:
+        case G_RDPHALF_1:
+        case G_RDPHALF_2:
+        case G_SETCIMG:
+        case G_SETZIMG:
+        case G_SETTIMG:
+        case G_SETCOMBINE:
+        case G_SETENVCOLOR:
+        case G_SETPRIMCOLOR:
+        case G_SETBLENDCOLOR:
+        case G_SETFOGCOLOR:
+        case G_SETFILLCOLOR:
+        case G_FILLRECT:
+        case G_SETTILE:
+        case G_LOADTILE:
+        case G_LOADBLOCK:
+        case G_SETTILESIZE:
+        case G_LOADTLUT:
+        case G_RDPSETOTHERMODE:
+        case G_SETPRIMDEPTH:
+        case G_SETSCISSOR:
+        case G_SETCONVERT:
+        case G_SETKEYR:
+        case G_SETKEYGB:
+        case G_RDPFULLSYNC:
+        case G_RDPTILESYNC:
+        case G_RDPPIPESYNC:
+        case G_RDPLOADSYNC:
+        case G_SETTIMG_OTR_FILEPATH:
+        case G_MTX_OTR_FILEPATH:
+        case G_SETGRAYSCALE:
+        case G_EXTRAGEOMETRYMODE:
+        case G_SETINTENSITY:
+        case G_INVALTEXCACHE:
+        case G_PUSHCD:
+        case G_TRI1_OTR:
+        case G_SETTARGETINTERPINDEX:
+        case G_PUSH_SHADER:
+        case G_POP_SHADER:
+        case G_SETFB:
+        case G_RESETFB:
+        case G_SETTIMG_FB:
+        case G_COPYFB:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+// Scales a rect coordinate in quarter pixels around the anchor
+static int32_t HudGfx_ScaleCoord(int32_t coord, int32_t anchor, float scale) {
+    return anchor + (int32_t)lroundf((coord - anchor) * scale);
+}
+
+// Scales a signed 5.10 texture step inversely so the texture fills the scaled rect
+static uint32_t HudGfx_ScaleStep(uint32_t step, float scale) {
+    return (uint16_t)(int16_t)CLAMP(lroundf((int16_t)step / scale), INT16_MIN, INT16_MAX);
+}
+
+// Scales a texture rectangle command around the anchor in quarter pixels
+static void HudGfx_ScaleTexRect(Gfx* cmd, int32_t anchorX, int32_t anchorY, float scale) {
+    uint32_t steps = (uint32_t)cmd[2].words.w1;
+    cmd[2].words.w1 = (HudGfx_ScaleStep(steps >> 16, scale) << 16) | HudGfx_ScaleStep(steps & 0xFFFF, scale);
+    if ((uint8_t)(cmd->words.w0 >> 24) == G_TEXRECT_WIDE) {
+        uintptr_t* coords[] = { &cmd[1].words.w0, &cmd[1].words.w1, &cmd[0].words.w0, &cmd[0].words.w1 };
+        for (int32_t i = 0; i < 4; i++) {
+            int32_t coord = (int32_t)((uint32_t)*coords[i] << 8) >> 8;
+            coord = HudGfx_ScaleCoord(coord, (i % 2) ? anchorY : anchorX, scale);
+            *coords[i] = (*coords[i] & 0xFF000000) | ((uint32_t)coord & 0xFFFFFF);
+        }
+        return;
+    }
+    uintptr_t* words[] = { &cmd[1].words.w1, &cmd[0].words.w0 };
+    for (int32_t i = 0; i < 2; i++) {
+        int32_t x = HudGfx_ScaleCoord((int32_t)((*words[i] >> 12) & 0xFFF), anchorX, scale);
+        int32_t y = HudGfx_ScaleCoord((int32_t)(*words[i] & 0xFFF), anchorY, scale);
+        *words[i] = (*words[i] & 0xFF000000) | (CLAMP(x, 0, 0xFFF) << 12) | CLAMP(y, 0, 0xFFF);
+    }
+}
+
+static Gfx* sHudElementDrawStart[HUD_ELEMENT_MAX];
+
+// Marks where a HUD element part starts drawing
+void HudElement_DrawBegin(int32_t element, Gfx* gfx) {
+    sHudElementDrawStart[element] = gfx;
+}
+
+// Scales the texture rectangles drawn since DrawBegin around the element's placed origin
+void HudElement_DrawEnd(int32_t element, Gfx* gfx) {
+    Gfx* start = sHudElementDrawStart[element];
+    sHudElementDrawStart[element] = nullptr;
+    float scale = HudElement_GetScale(element);
+    if (start == nullptr || scale == 1.0f) {
+        return;
+    }
+
+    Gfx* cmd = start;
+    while (cmd < gfx) {
+        int32_t length = HudGfx_CommandLength(cmd);
+        if (length == 0) {
+            return;
+        }
+        cmd += length;
+    }
+    if (cmd != gfx) {
+        return;
+    }
+
+    const HudElementInfo& info = hudElements[element];
+    int16_t anchorX = HudElement_EdgeOriginX(info, info.originX);
+    int16_t anchorY = info.originY;
+    HudElement_ApplyPosition(element, &anchorX, &anchorY, nullptr);
+    for (cmd = start; cmd < gfx; cmd += HudGfx_CommandLength(cmd)) {
+        uint8_t opcode = (uint8_t)(cmd->words.w0 >> 24);
+        if (opcode == G_TEXRECT || opcode == G_TEXRECTFLIP || opcode == G_TEXRECT_WIDE) {
+            HudGfx_ScaleTexRect(cmd, anchorX << 2, anchorY << 2, scale);
+        }
     }
 }
 
@@ -2397,12 +2582,28 @@ void DrawPositionSlider(const std::string CvarName, int MinY, int MaxY, int MinX
                                  .Tooltip("This slider is used to move Left and Right your elements."));
 }
 
+// TODO: DefaultValue is unused, remove it once every element is scalable
 void DrawScaleSlider(const std::string CvarName, float DefaultValue) {
-    std::string InvisibleLabel = "##" + CvarName;
-    std::string CvarLabel = CvarName + ".Scale";
-    // Disabled for now. feature not done and several fixes needed to be merged.
-    // UIWidgets::EnhancementSliderFloat("Scale : %dx", InvisibleLabel.c_str(), CvarLabel.c_str(),
-    // 0.1f, 3.0f,"",DefaultValue,true);
+    bool scalable = false;
+    for (const HudElementInfo& info : hudElements) {
+        scalable |= info.scalable && CvarName == info.cvar;
+    }
+    if (!scalable) {
+        return;
+    }
+    std::string label = "Scale##" + CvarName;
+    std::string cvarScale = CvarName + ".Scale";
+    UIWidgets::FloatSliderOptions options = UIWidgets::FloatSliderOptions()
+                                                .Format("%.2fx")
+                                                .Min(0.25f)
+                                                .Max(3.0f)
+                                                .DefaultValue(1.0f)
+                                                .Step(0.05f)
+                                                .Size(ImVec2(300.0f, 0.0f))
+                                                .Color(THEME_COLOR);
+    options.disabled = CVarGetInteger((CvarName + ".PosType").c_str(), ORIGINAL_LOCATION) == ORIGINAL_LOCATION;
+    options.disabledTooltip = "Move the element away from its original location to scale it";
+    UIWidgets::CVarSliderFloat(label.c_str(), cvarScale.c_str(), options);
 }
 
 void Draw_Table_Dropdown(const char* Header_Title, const char* Table_ID, const char* Column_Title,
@@ -3439,6 +3640,8 @@ void RegisterCosmeticHooks() {
     // TODO: UnfixGoronSpin is still read in z_en_go2.c EnGo2_WakeUp
     // TODO: Goron shopkeeper limb override in z_en_ossan.c was added by #3289 for the neck slider
     COND_HOOK(OnHudElementPosition, true, HudElement_ApplyPosition);
+    COND_HOOK(OnHudElementDrawBegin, true, HudElement_DrawBegin);
+    COND_HOOK(OnHudElementDrawEnd, true, HudElement_DrawEnd);
     COND_HOOK(OnCosmeticColor, true, CosmeticColor_Apply);
     COND_HOOK(OnCosmeticTint, true, CosmeticColor_ApplyTint);
     COND_HOOK(OnMessageTextColor, true, MessageTextColor_Apply);

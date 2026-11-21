@@ -320,6 +320,14 @@ void GameInteractor_ExecuteOnHudElementPosition(int32_t element, int16_t* x, int
     GameInteractor::Instance->ExecuteHooks<GameInteractor::OnHudElementPosition>(element, x, y, scale);
 }
 
+void GameInteractor_ExecuteOnHudElementDrawBegin(int32_t element, Gfx* gfx) {
+    GameInteractor::Instance->ExecuteHooks<GameInteractor::OnHudElementDrawBegin>(element, gfx);
+}
+
+void GameInteractor_ExecuteOnHudElementDrawEnd(int32_t element, Gfx* gfx) {
+    GameInteractor::Instance->ExecuteHooks<GameInteractor::OnHudElementDrawEnd>(element, gfx);
+}
+
 void GameInteractor_ExecuteOnCosmeticColor(int32_t option, Color_RGBA8* color) {
     GameInteractor::Instance->ExecuteHooks<GameInteractor::OnCosmeticColor>(option, color);
 }
