@@ -870,6 +870,9 @@ static const CosmeticColorInfo cosmeticColors[COSMETIC_COLOR_MAX] = {
       .flash = true,
       .vanillaFlashColor = { 0, 150, 150 },
       .customKeepsVanilla = true },
+    // File select window contents: active, inactive
+    { .option = "Title.FileChoose" },
+    { .option = nullptr },
     { .option = "Consumable.Magic" },
     { .option = "Consumable.MagicActive" },
     // Magic border while idle, and while the meter is consuming or flashing
@@ -1199,9 +1202,6 @@ void EffectBlure_ApplyTrailCosmetics(void* effect) {
     }
 }
 
-// TODO: sWindowContentColors lost its static in src for this; decide on per-site hooks instead
-extern "C" s16 sWindowContentColors[2][3];
-
 // Applies the cosmetics editor window colors to the file select screen
 void FileChoose_ApplyWindowColors(void* gameState) {
     FileChooseContext* fileChoose = (FileChooseContext*)gameState;
@@ -1209,9 +1209,9 @@ void FileChoose_ApplyWindowColors(void* gameState) {
     Color_RGBA8 highlight = { 155, 255, 255, 255 };
     CosmeticColor_Apply(COSMETIC_COLOR_FILE_SELECT_WINDOW, &window);
     CosmeticColor_Apply(COSMETIC_COLOR_FILE_SELECT_HIGHLIGHT, &highlight);
-    fileChoose->windowColor[0] = sWindowContentColors[0][0] = window.r;
-    fileChoose->windowColor[1] = sWindowContentColors[0][1] = window.g;
-    fileChoose->windowColor[2] = sWindowContentColors[0][2] = window.b;
+    fileChoose->windowColor[0] = window.r;
+    fileChoose->windowColor[1] = window.g;
+    fileChoose->windowColor[2] = window.b;
     fileChoose->highlightColor[0] = highlight.r;
     fileChoose->highlightColor[1] = highlight.g;
     fileChoose->highlightColor[2] = highlight.b;

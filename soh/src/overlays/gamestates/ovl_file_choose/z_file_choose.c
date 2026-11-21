@@ -140,7 +140,7 @@ static Gfx sScreenFillSetupDL[] = {
 
 static s16 sFileInfoBoxPartWidths[] = { 36, 36, 36, 36, 24 };
 
-s16 sWindowContentColors[2][3] = {
+static s16 sWindowContentColors[2][3] = {
     { 100, 150, 255 }, // blue
     { 100, 100, 100 }, // gray
 };
@@ -2092,13 +2092,15 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
             gSPVertex(POLY_OPA_DISP++, &this->windowContentVtx[temp], 20, 0);
 
             isActive = ((this->n64ddFlag == this->n64ddFlags[i]) || (this->nameBoxAlpha[i] == 0)) ? 0 : 1;
+            Color_RGBA8 contentColor = { sWindowContentColors[isActive][0], sWindowContentColors[isActive][1],
+                                         sWindowContentColors[isActive][2], 255 };
+            GameInteractor_ExecuteOnCosmeticColor(COSMETIC_COLOR_FILE_SELECT_CONTENT_TYPE(isActive), &contentColor);
 
             if (!FileChoose_IsSaveCompatible(Save_GetSaveMetaInfo(i)) && Save_GetSaveMetaInfo(i)->valid) {
                 gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[1][0], sWindowContentColors[1][1],
                                 sWindowContentColors[1][2], this->fileButtonAlpha[i]);
             } else {
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[isActive][0],
-                                sWindowContentColors[isActive][1], sWindowContentColors[isActive][2],
+                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, contentColor.r, contentColor.g, contentColor.b,
                                 this->fileButtonAlpha[i]);
             }
 
@@ -2112,8 +2114,7 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
                 gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[1][0], sWindowContentColors[1][1],
                                 sWindowContentColors[1][2], this->nameBoxAlpha[i]);
             } else {
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[isActive][0],
-                                sWindowContentColors[isActive][1], sWindowContentColors[isActive][2],
+                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, contentColor.r, contentColor.g, contentColor.b,
                                 this->nameBoxAlpha[i]);
             }
 
@@ -2124,8 +2125,7 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
 
             // draw disk label for 64DD
             if (this->n64ddFlags[i]) {
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[isActive][0],
-                                sWindowContentColors[isActive][1], sWindowContentColors[isActive][2],
+                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, contentColor.r, contentColor.g, contentColor.b,
                                 this->nameBoxAlpha[i]);
                 gDPLoadTextureBlock(POLY_OPA_DISP++, gFileSelDISKButtonTex, G_IM_FMT_IA, G_IM_SIZ_16b, 44, 16, 0,
                                     G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK,
@@ -2158,8 +2158,7 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
                                     sWindowContentColors[1][2], questLabelAlpha);
                 } else {
                     questLabelAlpha = this->nameAlpha[i];
-                    gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[isActive][0],
-                                    sWindowContentColors[isActive][1], sWindowContentColors[isActive][2],
+                    gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, contentColor.r, contentColor.g, contentColor.b,
                                     questLabelAlpha);
                 }
                 FileChoose_DrawQuestLabelBox(this, &this->windowContentVtx[temp + 8]);
@@ -2172,8 +2171,7 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
                 gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[1][0], sWindowContentColors[1][1],
                                 sWindowContentColors[1][2], this->fileButtonAlpha[i]);
             } else {
-                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, sWindowContentColors[isActive][0],
-                                sWindowContentColors[isActive][1], sWindowContentColors[isActive][2],
+                gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, contentColor.r, contentColor.g, contentColor.b,
                                 this->connectorAlpha[i]);
             }
             gDPLoadTextureBlock(POLY_OPA_DISP++, gFileSelConnectorTex, G_IM_FMT_IA, G_IM_SIZ_8b, 24, 16, 0,
