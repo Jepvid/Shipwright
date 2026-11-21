@@ -70,6 +70,8 @@ DEFINE_HOOK(OnHudElementPosition, (int32_t element, int16_t* x, int16_t* y, floa
 DEFINE_HOOK(OnCosmeticColor, (int32_t option, Color_RGBA8* color));
 DEFINE_HOOK(OnCosmeticTint, (int32_t option, Gfx** gfx, bool enable));
 DEFINE_HOOK(OnEffectBlureUpdate, (void* effect));
+DEFINE_HOOK(OnCosmeticValue, (int32_t option, float* value));
+DEFINE_HOOK(OnPlayerOverrideLimbDraw, (int32_t limbIndex));
 
 DEFINE_HOOK(OnPresentFileSelect, ());
 DEFINE_HOOK(OnUpdateFileSelectSelection, (uint16_t optionIndex));

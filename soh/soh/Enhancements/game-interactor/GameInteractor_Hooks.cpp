@@ -332,6 +332,14 @@ void GameInteractor_ExecuteOnEffectBlureUpdate(void* effect) {
     GameInteractor::Instance->ExecuteHooks<GameInteractor::OnEffectBlureUpdate>(effect);
 }
 
+void GameInteractor_ExecuteOnCosmeticValue(int32_t option, float* value) {
+    GameInteractor::Instance->ExecuteHooks<GameInteractor::OnCosmeticValue>(option, value);
+}
+
+void GameInteractor_ExecuteOnPlayerOverrideLimbDraw(int32_t limbIndex) {
+    GameInteractor::Instance->ExecuteHooks<GameInteractor::OnPlayerOverrideLimbDraw>(limbIndex);
+}
+
 // MARK: - Main Menu
 
 void GameInteractor_ExecuteOnPresentFileSelect() {

@@ -20,6 +20,7 @@ extern "C" {
 #include "z64.h"
 #include "z64save.h"
 #include "variables.h"
+#include "functions.h"
 #include "message_data_fmt.h"
 #include "message_data_textbox_types.h"
 #include "overlays/actors/ovl_En_Elf/z_en_elf.h"
@@ -1214,6 +1215,76 @@ void FileChoose_ApplyWindowColors(void* gameState) {
     fileChoose->highlightColor[0] = highlight.r;
     fileChoose->highlightColor[1] = highlight.g;
     fileChoose->highlightColor[2] = highlight.b;
+}
+
+enum CosmeticValueOp { COSMETIC_VALUE_ADD, COSMETIC_VALUE_MULTIPLY, COSMETIC_VALUE_SET };
+
+struct CosmeticValueInfo {
+    const char* cvar;                  // slider value
+    const char* changedCvar = nullptr; // slider only applies while this is set
+    CosmeticValueOp op = COSMETIC_VALUE_ADD;
+    float factor = 1.0f;     // slider value multiplier
+    bool persistent = false; // stored value, unchanged writes vanillaValue back
+    float vanillaValue = 0.0f;
+};
+
+static const CosmeticValueInfo cosmeticValues[COSMETIC_VALUE_MAX] = {
+    { .cvar = CVAR_COSMETIC("Goron.NeckLength") },
+    { .cvar = CVAR_COSMETIC("Fairies.Size"), .op = COSMETIC_VALUE_MULTIPLY },
+    { .cvar = CVAR_COSMETIC("Moon.Size"), .op = COSMETIC_VALUE_MULTIPLY },
+    { .cvar = CVAR_COSMETIC("Kak.Windmill_Speed.Value"),
+      .changedCvar = CVAR_COSMETIC("Kak.Windmill_Speed.Changed"),
+      .op = COSMETIC_VALUE_SET,
+      .persistent = true,
+      .vanillaValue = 100.0f },
+    { .cvar = CVAR_COSMETIC("BunnyHood.EarLength"), .factor = -1.0f },
+    { .cvar = CVAR_COSMETIC("BunnyHood.EarSpread"), .factor = -1.0f },
+    { .cvar = CVAR_COSMETIC("BunnyHood.EarSpread") },
+};
+
+// Replaces a vanilla value with its cosmetics editor slider
+void CosmeticValue_Apply(int32_t option, float* value) {
+    const CosmeticValueInfo& info = cosmeticValues[option];
+    if (info.changedCvar != nullptr && !CVarGetInteger(info.changedCvar, 0)) {
+        if (info.persistent) {
+            *value = info.vanillaValue;
+        }
+        return;
+    }
+    float defaultValue = info.op == COSMETIC_VALUE_MULTIPLY ? 1.0f : info.op == COSMETIC_VALUE_SET ? *value : 0.0f;
+    float slider = CVarGetFloat(info.cvar, defaultValue);
+    switch (info.op) {
+        case COSMETIC_VALUE_ADD:
+            *value += slider * info.factor;
+            break;
+        case COSMETIC_VALUE_MULTIPLY:
+            *value *= slider;
+            break;
+        case COSMETIC_VALUE_SET:
+            *value = slider;
+            break;
+    }
+}
+
+// Scales Link's head and sword limbs by their cosmetics editor sliders
+void PlayerLimb_ApplyCosmeticScale(int32_t limbIndex) {
+    if (limbIndex == PLAYER_LIMB_HEAD && CVarGetInteger(CVAR_COSMETIC("Link.HeadScale.Changed"), 0)) {
+        float scale = CVarGetFloat(CVAR_COSMETIC("Link.HeadScale.Value"), 1.0f);
+        if (scale != 1.0f) {
+            Matrix_Scale(scale, scale, scale, MTXMODE_APPLY);
+            if (scale > 1.2f) {
+                Matrix_Translate(-((LINK_IS_ADULT ? 320.0f : 200.0f) * scale), 0.0f, 0.0f, MTXMODE_APPLY);
+            } else if (scale < 1.0f) {
+                Matrix_Translate((LINK_IS_ADULT ? 3600.0f : 2900.0f) * ABS(scale - 1.0f), 0.0f, 0.0f, MTXMODE_APPLY);
+            }
+        }
+    } else if (limbIndex == PLAYER_LIMB_L_HAND && CVarGetInteger(CVAR_COSMETIC("Link.SwordScale.Changed"), 0)) {
+        float scale = CVarGetFloat(CVAR_COSMETIC("Link.SwordScale.Value"), 1.0f);
+        if (scale != 1.0f) {
+            Matrix_Scale(scale, scale, scale, MTXMODE_APPLY);
+            Matrix_Translate(-((LINK_IS_ADULT ? 320.0f : 200.0f) * (scale - 1.0f)), 0.0f, 0.0f, MTXMODE_APPLY);
+        }
+    }
 }
 
 // Cosmetics editor option of a message text color and text box type
@@ -3365,12 +3436,16 @@ void RegisterCosmeticHooks() {
     COND_HOOK(OnGameFrameUpdate, true, CosmeticsUpdateTick);
     COND_HOOK(OnAssetAltChange, true, []() { ApplyOrResetCustomGfxPatches(true); });
     // TODO: enemy health bar PosType/PosX/PosY and Width are still read in z_parameter.c
+    // TODO: UnfixGoronSpin is still read in z_en_go2.c EnGo2_WakeUp
+    // TODO: Goron shopkeeper limb override in z_en_ossan.c was added by #3289 for the neck slider
     COND_HOOK(OnHudElementPosition, true, HudElement_ApplyPosition);
     COND_HOOK(OnCosmeticColor, true, CosmeticColor_Apply);
     COND_HOOK(OnCosmeticTint, true, CosmeticColor_ApplyTint);
     COND_HOOK(OnMessageTextColor, true, MessageTextColor_Apply);
     COND_HOOK(OnFileChooseMain, true, FileChoose_ApplyWindowColors);
     COND_HOOK(OnEffectBlureUpdate, true, EffectBlure_ApplyTrailCosmetics);
+    COND_HOOK(OnCosmeticValue, true, CosmeticValue_Apply);
+    COND_HOOK(OnPlayerOverrideLimbDraw, true, PlayerLimb_ApplyCosmeticScale);
     COND_ID_HOOK(OnActorUpdate, ACTOR_EN_ELF, true, Navi_FollowTargetColors);
     COND_HOOK(OnPlayerUpdate, true, Navi_FollowReticleColors);
     COND_VB_SHOULD(VB_START_HEART_ROW, true, {

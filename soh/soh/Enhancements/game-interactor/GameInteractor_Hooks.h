@@ -75,6 +75,8 @@ void GameInteractor_ExecuteOnHudElementPosition(int32_t element, int16_t* x, int
 void GameInteractor_ExecuteOnCosmeticColor(int32_t option, Color_RGBA8* color);
 void GameInteractor_ExecuteOnCosmeticTint(int32_t option, Gfx** gfx, bool enable);
 void GameInteractor_ExecuteOnEffectBlureUpdate(void* effect);
+void GameInteractor_ExecuteOnCosmeticValue(int32_t option, float* value);
+void GameInteractor_ExecuteOnPlayerOverrideLimbDraw(int32_t limbIndex);
 
 // MARK: - Main Menu
 void GameInteractor_ExecuteOnPresentFileSelect();

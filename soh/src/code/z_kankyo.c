@@ -1384,7 +1384,7 @@ void Environment_DrawSunAndMoon(PlayState* play) {
         color = CLAMP_MIN(color, 0.0f);
 
         scale = -15.0f * color + 25.0f;
-        scale *= CVarGetFloat(CVAR_COSMETIC("Moon.Size"), 1.0f);
+        GameInteractor_ExecuteOnCosmeticValue(COSMETIC_VALUE_MOON_SIZE, &scale);
         Matrix_Scale(scale, scale, scale, MTXMODE_APPLY);
 
         temp = -y / 80.0f;

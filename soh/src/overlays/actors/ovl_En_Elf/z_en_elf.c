@@ -7,6 +7,7 @@
 #include "z_en_elf.h"
 #include "objects/gameplay_keep/gameplay_keep.h"
 #include <assert.h>
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include <libultraship/bridge/consolevariablebridge.h>
 
@@ -1477,7 +1478,7 @@ s32 EnElf_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* p
         if (this->fairyFlags & FAIRY_FLAG_BIG) {
             scale *= 2.0f;
         }
-        scale *= CVarGetFloat(CVAR_COSMETIC("Fairies.Size"), 1.0f);
+        GameInteractor_ExecuteOnCosmeticValue(COSMETIC_VALUE_FAIRY_SIZE, &scale);
 
         scale *= (this->actor.scale.x * 124.99999f);
         Matrix_MultVec3f(&zeroVec, &mtxMult);

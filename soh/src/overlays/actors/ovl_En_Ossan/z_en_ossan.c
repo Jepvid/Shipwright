@@ -2497,7 +2497,9 @@ s32 EnGo2_OverrideLimbDrawGoronShopkeeper(PlayState* play, s32 limb, Gfx** dList
     EnOssan* this = (EnOssan*)thisx;
 
     if (limb == 17) {
-        Matrix_Translate(CVarGetFloat(CVAR_COSMETIC("Goron.NeckLength"), 0.0f), 0.0f, 0.0f, MTXMODE_APPLY);
+        f32 neckX = 0.0f;
+        GameInteractor_ExecuteOnCosmeticValue(COSMETIC_VALUE_GORON_NECK, &neckX);
+        Matrix_Translate(neckX, 0.0f, 0.0f, MTXMODE_APPLY);
     }
     return 0;
 }

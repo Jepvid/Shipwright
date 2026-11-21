@@ -170,6 +170,17 @@ typedef enum {
     COSMETIC_COLOR_MAX,
 } CosmeticColor;
 
+typedef enum {
+    COSMETIC_VALUE_GORON_NECK,
+    COSMETIC_VALUE_FAIRY_SIZE,
+    COSMETIC_VALUE_MOON_SIZE,
+    COSMETIC_VALUE_WINDMILL_SPEED,
+    COSMETIC_VALUE_BUNNY_EAR_Y,
+    COSMETIC_VALUE_BUNNY_EAR_RIGHT_Z,
+    COSMETIC_VALUE_BUNNY_EAR_LEFT_Z,
+    COSMETIC_VALUE_MAX,
+} CosmeticValue;
+
 // Rupee color of a rupee texture index (green, blue, red, pink, orange, silver)
 #define COSMETIC_COLOR_RUPEE_TEX(index) (COSMETIC_COLOR_RUPEE + (index))
 

@@ -24,6 +24,7 @@
 #include "soh/Enhancements/game-interactor/vanilla-behavior/GIVanillaBehavior.h"
 #include "soh/Enhancements/item-tables/ItemTableTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
+#include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "soh/Enhancements/randomizer/randomizer_entrance.h"
 #include "soh/Enhancements/randomizer/randomizer_grotto.h"
@@ -12362,20 +12363,25 @@ void Player_DrawGameplay(PlayState* play, Player* this, s32 lod, Gfx* cullDList,
             FrameInterpolation_RecordActorPosRotMatrix();
             gSPSegment(POLY_OPA_DISP++, 0x0B, bunnyEarMtx);
 
+            f32 earY = -1203.0f;
+            f32 rightEarZ = -240.0f;
+            f32 leftEarZ = 240.0f;
+            GameInteractor_ExecuteOnCosmeticValue(COSMETIC_VALUE_BUNNY_EAR_Y, &earY);
+            GameInteractor_ExecuteOnCosmeticValue(COSMETIC_VALUE_BUNNY_EAR_RIGHT_Z, &rightEarZ);
+            GameInteractor_ExecuteOnCosmeticValue(COSMETIC_VALUE_BUNNY_EAR_LEFT_Z, &leftEarZ);
+
             // Right ear
             earRot.x = sBunnyEarKinematics.rot.y + 0x3E2;
             earRot.y = sBunnyEarKinematics.rot.z + 0xDBE;
             earRot.z = sBunnyEarKinematics.rot.x - 0x348A;
-            Matrix_SetTranslateRotateYXZ(97.0f, -1203.0f - CVarGetFloat(CVAR_COSMETIC("BunnyHood.EarLength"), 0.0f),
-                                         -240.0f - CVarGetFloat(CVAR_COSMETIC("BunnyHood.EarSpread"), 0.0f), &earRot);
+            Matrix_SetTranslateRotateYXZ(97.0f, earY, rightEarZ, &earRot);
             MATRIX_TOMTX(bunnyEarMtx++);
 
             // Left ear
             earRot.x = sBunnyEarKinematics.rot.y - 0x3E2;
             earRot.y = -0xDBE - sBunnyEarKinematics.rot.z;
             earRot.z = sBunnyEarKinematics.rot.x - 0x348A;
-            Matrix_SetTranslateRotateYXZ(97.0f, -1203.0f - CVarGetFloat(CVAR_COSMETIC("BunnyHood.EarLength"), 0.0f),
-                                         240.0f + CVarGetFloat(CVAR_COSMETIC("BunnyHood.EarSpread"), 0.0f), &earRot);
+            Matrix_SetTranslateRotateYXZ(97.0f, earY, leftEarZ, &earRot);
             MATRIX_TOMTX(bunnyEarMtx);
         }
 
